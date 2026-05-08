@@ -1,0 +1,110 @@
+# Note: this runner is provided externally, so we minimize its access to
+# secrets.
+
+name: CI (riscv64)
+
+on:
+  push:
+    branches: [main]
+
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  RUSTFLAGS: -D warnings
+  CARGO_TERM_COLOR: always
+
+  LLVM_SRC: ${{ github.workspace }}
+  LLVM_BUILD_DIR: ${{ github.workspace }}/llvm-build
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: [self-hosted, linux, RISCV64]
+
+    # Optional:
+    # isolate runner environment
+    environment: riscv64
+
+    steps:
+      - name: Print environment
+        shell: bash
+        run: |
+          echo "------ uname ------"
+          uname -a
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 300
+          submodules: false
+
+      - name: Show compiler versions
+        shell: bash
+        run: |
+          gcc --version || true
+          clang --version || true
+          cmake --version
+          ninja --version
+          python3 --version
+
+      - name: Setup ccache
+        shell: bash
+        run: |
+          mkdir -p ~/.ccache
+
+          cat >> ~/.ccache/ccache.conf <<EOF
+          max_size = 20G
+          compression = true
+          hash_dir = false
+          EOF
+
+          ccache -z
+
+      - name: Configure LLVM
+        shell: bash
+        run: |
+          rm -rf "$LLVM_BUILD_DIR"
+
+          cmake -G Ninja \
+            -S "$LLVM_SRC/llvm" \
+            -B "$LLVM_BUILD_DIR/build" \
+            \
+            -DLLVM_ENABLE_PROJECTS="mlir;clang;openmp" \
+            -DLLVM_TARGETS_TO_BUILD="host;RISCV" \
+            \
+            -DLLVM_ENABLE_ASSERTIONS=ON \
+            -DCMAKE_BUILD_TYPE=Release \
+            \
+            -DMLIR_ENABLE_BINDINGS_PYTHON=ON \
+            -DPython3_EXECUTABLE=$(which python3) \
+            \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+
+      - name: Build LLVM
+        shell: bash
+        run: |
+          ninja -C "$LLVM_BUILD_DIR/build" -j$(nproc)
+
+      - name: Run LLVM tests
+        shell: bash
+        run: |
+          ninja -C "$LLVM_BUILD_DIR/build" \
+            check-clang \
+            check-mlir \
+            check-openmp \
+            || true
+
+      - name: Show ccache stats
+        if: always()
+        shell: bash
+        run: |
+          ccache -s || true
