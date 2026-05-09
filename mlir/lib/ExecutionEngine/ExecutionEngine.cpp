@@ -315,7 +315,7 @@ ExecutionEngine::create(Operation *m, const ExecutionEngineOptions &options,
   // process and dynamically linked libraries.
   auto objectLinkingLayerCreator = [&](ExecutionSession &session,
                                        llvm::jitlink::JITLinkMemoryManager
-                                           &IgnoredMemMgr) {
+                                           &MemMgr) {
     // Needed to respect AArch64 ABI requirements on the distance between
     // TEXT and GOT sections.
 
@@ -332,7 +332,7 @@ ExecutionEngine::create(Operation *m, const ExecutionEngineOptions &options,
 
     if (useJITLink) {
       // JITLink path
-      objectLayer = std::make_unique<llvm::orc::ObjectLinkingLayer>(session);
+      objectLayer = std::make_unique<llvm::orc::ObjectLinkingLayer>(session, MemMgr);
 
       LLVM_DEBUG(llvm::dbgs() << "Using ObjectLinkingLayer (JITLink)\n");
 
