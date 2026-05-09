@@ -290,12 +290,16 @@ static void print_ids(int level) {
 #elif KMP_ARCH_RISCV64
 #if __riscv_compressed
 // On RV64GC the inline-asm "nop" is assembled as a 4-byte NOP (not a
-// compressed C.NOP). In addition, the compiler may insert a J instruction
-// (targeting the successor basic block), which accounts for another 4 bytes.
+// compressed C.NOP). In addition, the compiler may insert a J or C.J
+// instruction (targeting the successor basic block). A standard J is 4 bytes
+// while a compressed C.J is only 2 bytes, so the possible offsets are:
+//   addr-4  (just the 4-byte NOP)
+//   addr-6  (2-byte C.J + 4-byte NOP)
+//   addr-8  (4-byte J  + 4-byte NOP)
 #define print_possible_return_addresses(addr)                                  \
-  printf("%" PRIu64 ": current_address=%p or %p\n",                            \
+  printf("%" PRIu64 ": current_address=%p or %p or %p\n",                      \
          ompt_get_thread_data()->value, ((char *)addr) - 4,                    \
-         ((char *)addr) - 8)
+         ((char *)addr) - 6, ((char *)addr) - 8)
 #else
 // On RV64G the NOP instruction is 4 byte long. In addition, the compiler
 // inserts a J instruction (targeting the successor basic block), which
