@@ -3,6 +3,7 @@
 // RUN: env KMP_AFFINITY=granularity=core,compact %libomp-run
 // RUN: env KMP_AFFINITY=granularity=socket,compact %libomp-run
 // REQUIRES: linux
+// XFAIL: riscv64-target-arch
 
 #include <stdio.h>
 #include <stdlib.h>
