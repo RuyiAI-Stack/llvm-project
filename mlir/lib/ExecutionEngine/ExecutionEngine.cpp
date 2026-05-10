@@ -330,7 +330,7 @@ ExecutionEngine::create(Operation *m, const ExecutionEngineOptions &options,
 
     std::unique_ptr<llvm::orc::ObjectLayer> objectLayer;
 
-    if (useJITLink) {
+    if (!useJITLink) {
       // JITLink path
       objectLayer = std::make_unique<llvm::orc::ObjectLinkingLayer>(session);
 
