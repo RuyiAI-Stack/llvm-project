@@ -260,6 +260,68 @@ if(LLVM_ENABLE_PIC)
     target_link_options(mlir_async_runtime PRIVATE "-Wl,-exclude-libs,ALL")
   endif()
 
+  add_mlir_library(StaticMLIRFloat16Utils
+    STATIC
+    Float16bits.cpp
+
+    EXCLUDE_FROM_LIBMLIR
+    )
+  set_property(TARGET StaticMLIRFloat16Utils PROPERTY CXX_STANDARD 17)
+
+  add_mlir_library(StaticMLIRSparseTensorRuntime
+    STATIC
+    SparseTensor/File.cpp
+    SparseTensor/MapRef.cpp
+    SparseTensor/Storage.cpp
+
+    EXCLUDE_FROM_LIBMLIR
+
+    LINK_LIBS PUBLIC
+    MLIRSparseTensorEnums
+    StaticMLIRFloat16Utils
+    )
+  set_property(TARGET StaticMLIRSparseTensorRuntime PROPERTY CXX_STANDARD 17)
+
+  add_mlir_library(StaticMLIRCRunnerUtils
+    STATIC
+    CRunnerUtils.cpp
+    SparseTensorRuntime.cpp
+
+    EXCLUDE_FROM_LIBMLIR
+
+    LINK_LIBS PUBLIC
+    StaticMLIRFloat16Utils
+    MLIRSparseTensorEnums
+    StaticMLIRSparseTensorRuntime
+    )
+  set_property(TARGET StaticMLIRCRunnerUtils PROPERTY CXX_STANDARD 17)
+  target_compile_definitions(StaticMLIRCRunnerUtils PRIVATE StaticMLIRCRunnerUtils_EXPORTS)
+
+  add_mlir_library(StaticMLIRRunnerUtils
+    STATIC
+    RunnerUtils.cpp
+
+    EXCLUDE_FROM_LIBMLIR
+
+    LINK_LIBS PUBLIC
+    StaticMLIRFloat16Utils
+    )
+  target_compile_definitions(StaticMLIRRunnerUtils PRIVATE StaticMLIRRunnerUtils_EXPORTS)
+
+  add_mlir_library(StaticMLIRAsyncRuntime
+    STATIC
+    AsyncRuntime.cpp
+
+    EXCLUDE_FROM_LIBMLIR
+
+    LINK_LIBS PUBLIC
+    ${LLVM_PTHREAD_LIB}
+
+    DISABLE_PCH_REUSE
+    )
+  set_property(TARGET StaticMLIRAsyncRuntime PROPERTY CXX_VISIBILITY_PRESET hidden)
+  target_compile_definitions(StaticMLIRAsyncRuntime PRIVATE StaticMLIRAsyncRuntime_EXPORTS)
+
   add_mlir_library(mlir_arm_sme_abi_stubs
     SHARED
     ArmSMEStubs.cpp
