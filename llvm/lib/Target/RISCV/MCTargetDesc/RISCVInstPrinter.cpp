@@ -352,6 +352,17 @@ void RISCVInstPrinter::printVMaskReg(const MCInst *MI, unsigned OpNo,
   O << ".t";
 }
 
+void RISCVInstPrinter::printMatrixReg(const MCInst *MI, unsigned OpNo,
+                                      const MCSubtargetInfo &STI,
+                                      raw_ostream &O) {
+  const MCOperand &MO = MI->getOperand(OpNo);
+
+  assert(MO.isReg() && "printMatrixReg can only print register operands");
+  assert(MO.getReg() >= RISCV::AMEM0 && MO.getReg() <= RISCV::AMEM7 &&
+         "unexpected matrix register");
+  O << "m" << (MO.getReg() - RISCV::AMEM0);
+}
+
 void RISCVInstPrinter::printVScaleReg(const MCInst *MI, unsigned OpNo,
                                       const MCSubtargetInfo &STI,
                                       raw_ostream &O) {
