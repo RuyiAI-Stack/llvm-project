@@ -221,6 +221,7 @@ class RISCVAsmParser : public MCTargetAsmParser {
   ParseStatus parseJALOffset(OperandVector &Operands);
   ParseStatus parseVTypeI(OperandVector &Operands);
   ParseStatus parseMaskReg(OperandVector &Operands);
+  ParseStatus parseMatrixReg(OperandVector &Operands);
   ParseStatus parseVScaleReg(OperandVector &Operands);
   ParseStatus parseTileLambda(OperandVector &Operands);
   ParseStatus parseInsnDirectiveOpcode(OperandVector &Operands);
@@ -493,6 +494,10 @@ public:
   bool isExpr() const { return Kind == KindTy::Expression; }
   bool isV0Reg() const {
     return Kind == KindTy::Register && Reg.Reg == RISCV::V0;
+  }
+  bool isMatrixReg() const {
+    return Kind == KindTy::Register && Reg.Reg >= RISCV::AMEM0 &&
+           Reg.Reg <= RISCV::AMEM7;
   }
   bool isAnyReg() const {
     return Kind == KindTy::Register &&
@@ -2665,6 +2670,22 @@ ParseStatus RISCVAsmParser::parseMaskReg(OperandVector &Operands) {
   SMLoc E = getTok().getEndLoc();
   getLexer().Lex();
   Operands.push_back(RISCVOperand::createReg(Reg, S, E));
+  return ParseStatus::Success;
+}
+
+ParseStatus RISCVAsmParser::parseMatrixReg(OperandVector &Operands) {
+  if (getLexer().isNot(AsmToken::Identifier))
+    return ParseStatus::NoMatch;
+
+  StringRef Name = getLexer().getTok().getIdentifier();
+  if (Name.size() != 2 || Name[0] != 'm' || Name[1] < '0' || Name[1] > '7')
+    return ParseStatus::NoMatch;
+
+  SMLoc S = getLoc();
+  SMLoc E = getTok().getEndLoc();
+  getLexer().Lex();
+  Operands.push_back(
+      RISCVOperand::createReg(RISCV::AMEM0 + (Name[1] - '0'), S, E));
   return ParseStatus::Success;
 }
 
