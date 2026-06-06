@@ -1,3 +1,4 @@
+// REQUIRES: aarch64-registered-target
 // RUN: %clang -### -target arm64-apple-macosx11 -c %s 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=DEFAULT
 // RUN: %clang -### -target arm64-apple-macosx11 -fobjc-constant-literals -c %s 2>&1 \
