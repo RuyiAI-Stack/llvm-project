@@ -2428,8 +2428,10 @@ include "RISCVInstrInfoXqccmt.td"
 include "RISCVInstrInfoXMips.td"
 include "RISCVInstrInfoXAndes.td"
 include "RISCVInstrInfoXSpacemiT.td"
+include "RISCVInstrInfoXGemmini.td"
+include "RISCVInstrInfoXSpacemiTIME.td"
 include "RISCVInstrInfoXAIF.td"
-include "RISCVExt.td"
+include "RISCVMatrixExt.td"
 
 //===----------------------------------------------------------------------===//
 // Global ISel
