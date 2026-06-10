@@ -1,4 +1,4 @@
-//===------ RISCVInstrInfoBOSCExt.td --------------------------------------===//
+//===------ RISCVInstrInfoXBOSCAME.td --------------------------------------===//
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,11 +14,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This is the instruction information file of RISC-V buddy BOSC AME extension.
+// This is the instruction information file for the RISC-V BOSC AME extension.
 //
 //===----------------------------------------------------------------------===//
-
-// include "llvm/IR/IntrinsicsRISCVBOSCExt.td"
 
 //===----------------------------------------------------------------------===//
 // BOSC AME (RISC-V Matrix Extension) 32-bit Instructions
@@ -153,7 +151,7 @@ class BOSC_AME_MMA_NO_WIDEN<bit fp_val, bit sa_val, bit sn_val,
   let opcode = 0b1110111;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
   // int 16 32 64 , output no-widen
   def BOSC_AME_MMA_MM    : BOSC_AME_MMA_NO_WIDEN<0b0, 0b0, 0b1, 0b100, "mma.mm">;
   def BOSC_AME_MMA_H_MM  : BOSC_AME_MMA_NO_WIDEN<0b0, 0b0, 0b1, 0b001, "mma.h.mm">;
@@ -201,7 +199,7 @@ class BOSC_AME_MMA_DOUBLE_WIDEN<bit fp_val, bit sa_val, bit sn_val,
   let opcode = 0b1110111;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
   // uint 16→32, 32→64 with double widening
   def BOSC_AME_MWMAU_MM    : BOSC_AME_MMA_DOUBLE_WIDEN<0b0, 0b0, 0b0, 0b100, "mwmau.mm">;
   def BOSC_AME_MWMAU_H_MM  : BOSC_AME_MMA_DOUBLE_WIDEN<0b0, 0b0, 0b0, 0b001, "mwmau.h.mm">;
@@ -245,7 +243,7 @@ class BOSC_AME_MMA_QUAD_WIDEN<bit fp_val, bit sa_val, bit sn_val,
   let opcode = 0b1110111;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
   // uint 8→32 with quad widening
   def BOSC_AME_MQMAU_MM   : BOSC_AME_MMA_QUAD_WIDEN<0b0, 0b0, 0b0, 0b100, "mqmau.mm">;
   def BOSC_AME_MQMAU_B_MM : BOSC_AME_MMA_QUAD_WIDEN<0b0, 0b0, 0b0, 0b000, "mqmau.b.mm">;
@@ -279,7 +277,7 @@ class BOSC_AME_MMA_OCT_WIDEN<bit fp_val, bit sa_val, bit sn_val,
   let opcode = 0b1110111;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
   // uint 4→32 with oct widening
   def BOSC_AME_MOMAU_MM    : BOSC_AME_MMA_OCT_WIDEN<0b0, 0b0, 0b0, 0b100, "momau.mm">;
   def BOSC_AME_MOMAU_HB_MM : BOSC_AME_MMA_OCT_WIDEN<0b0, 0b0, 0b0, 0b111, "momau.hb.mm">;
@@ -312,7 +310,7 @@ class BOSC_AME_MADD_NO_WIDEN<bit fp_val, bit sa_val, bit sn_val,
   let opcode = 0b1110111;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
   // uint 4 8 16 32 64 , output no-widen
   def BOSC_AME_MADDU_MM    : BOSC_AME_MADD_NO_WIDEN<0b0, 0b0, 0b0, 0b100, "maddu.mm">;
   def BOSC_AME_MADDU_HB_MM : BOSC_AME_MADD_NO_WIDEN<0b0, 0b0, 0b0, 0b111, "maddu.hb.mm">;
@@ -363,7 +361,7 @@ class BOSC_AME_MADD_DOUBLE_WIDEN<bit fp_val, bit sa_val, bit sn_val,
   let opcode = 0b1110111;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
   // uint 4 8 16 32 , output double-widen
   def BOSC_AME_MWADDU_MM    : BOSC_AME_MADD_DOUBLE_WIDEN<0b0, 0, 0, 0b100, "mwaddu.mm">;
   def BOSC_AME_MWADDU_HB_MM : BOSC_AME_MADD_DOUBLE_WIDEN<0b0, 0, 0, 0b111, "mwaddu.hb.mm">;
@@ -397,7 +395,7 @@ class BOSC_AME_MSUB_NO_WIDEN<bit fp_val, bit sa_val, bit sn_val,
   let opcode = 0b1110111;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
 
   def BOSC_AME_MSUBU_MM    : BOSC_AME_MSUB_NO_WIDEN<0, 0, 0, 0b100, "msubu.mm">;
   def BOSC_AME_MSUBU_HB_MM : BOSC_AME_MSUB_NO_WIDEN<0, 0, 0, 0b111, "msubu.hb.mm">;
@@ -448,7 +446,7 @@ class BOSC_AME_MSUB_DOUBLE_WIDEN<bit fp_val, bit sa_val, bit sn_val,
   let opcode = 0b1110111;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
 
   def BOSC_AME_MWSUBU_MM    : BOSC_AME_MSUB_DOUBLE_WIDEN<0, 0, 0, 0b100, "mwsubu.mm">;
   def BOSC_AME_MWSUBU_HB_MM : BOSC_AME_MSUB_DOUBLE_WIDEN<0, 0, 0, 0b111, "mwsubu.hb.mm">;
@@ -482,7 +480,7 @@ class BOSC_AME_MMINMAX_NO_WIDEN<bit fp_val, bit sa_val, bit sn_val,
   let opcode = 0b1110111;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
 
   def BOSC_AME_MMINU_MM    : BOSC_AME_MMINMAX_NO_WIDEN<0, 0, 0, 0b100, "mminu.mm">;
   def BOSC_AME_MMINU_HB_MM : BOSC_AME_MMINMAX_NO_WIDEN<0, 0, 0, 0b111, "mminu.hb.mm">;
@@ -539,7 +537,7 @@ class BOSC_AME_MMUL_NO_WIDEN<bit fp_val, bit sa_val, bit sn_val,
   let opcode = 0b1110111;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
 
   def BOSC_AME_MSMULU_MM    : BOSC_AME_MMUL_NO_WIDEN<0, 1, 0, 0b100, "msmulu.mm">;
   def BOSC_AME_MSMULU_HB_MM : BOSC_AME_MMUL_NO_WIDEN<0, 1, 0, 0b111, "msmulu.hb.mm">;
@@ -583,7 +581,7 @@ class BOSC_AME_MMULH_DIV_NO_WIDEN<bit fp_val, bit sa_val, bit sn_val,
   let opcode = 0b1110111;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
 
   def BOSC_AME_MMULHU_MM    : BOSC_AME_MMULH_DIV_NO_WIDEN<0, 0, 0, 0b100, "mmulhu.mm">;
   def BOSC_AME_MMULHU_HB_MM : BOSC_AME_MMULH_DIV_NO_WIDEN<0, 0, 0, 0b111, "mmulhu.hb.mm">;
@@ -634,7 +632,7 @@ class BOSC_AME_MMUL_DOUBLE_WIDEN<bit fp_val, bit sa_val, bit sn_val,
   let opcode = 0b1110111;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
 
   def BOSC_AME_MWMULU_MM    : BOSC_AME_MMUL_DOUBLE_WIDEN<0, 0, 0, 0b100, "mwmulu.mm">;
   def BOSC_AME_MWMULU_HB_MM : BOSC_AME_MMUL_DOUBLE_WIDEN<0, 0, 0, 0b111, "mwmulu.hb.mm">;
@@ -687,7 +685,7 @@ class BOSC_AME_SQRT_NO_WIDEN<bits<3> eew_val, string opcodestr>
   let opcode = 0b1110111;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
 
   def BOSC_AME_MAND_MM : BOSC_AME_LOGIC_NO_WIDEN<0, 0, "mand.mm">;
   def BOSC_AME_MOR_MM  : BOSC_AME_LOGIC_NO_WIDEN<1, 0, "mor.mm">;
@@ -714,7 +712,7 @@ class BOSC_AME_SHIFT_NO_WIDEN<bit sa_val, bit sn_val,
   let opcode = 0b1110111;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
 
   def BOSC_AME_MSLL_MM    : BOSC_AME_SHIFT_NO_WIDEN<0, 0, 0b100, "msll.mm">;
   def BOSC_AME_MSLL_HB_MM : BOSC_AME_SHIFT_NO_WIDEN<0, 0, 0b111, "msll.hb.mm">;
@@ -779,7 +777,7 @@ class RVInstBOSCAMEConfigImm32<bits<6> funct6_val, bits<3> funct3_val, string op
   let Inst{31-26} = funct6_val;  // To be defined in subclasses
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
   // msettype - set the mtype CSR based on the value in a register
   def BOSC_AME_MSETTYPE : RVInstBOSCAMEConfig32<0b000000, 0b100, "msettype">;
   // msettilem - set tile M dimension from register
@@ -790,7 +788,7 @@ let Predicates = [HasBuddyExt], hasSideEffects = 1, mayLoad = 0, mayStore = 0 in
   def BOSC_AME_MSETTILEK : RVInstBOSCAMEConfig32<0b000001, 0b110, "msettilek">;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
   // msettypei - set the mtype CSR based on their arguments
   def BOSC_AME_MSETTYPEI : RVInstBOSCAMEConfigImm32<0b000000, 0b100, "msettypei">;
   // msettypehi
@@ -900,7 +898,7 @@ class RVInstBOSCAMEStoreAcc32<bits<6> funct6_val, bits<3> eew_val, bit tr_val, s
 //   rs1: Base address (GPR)
 //   rs2: Row stride in bytes (GPR)
 //===----------------------------------------------------------------------===//
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 1, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 1, mayStore = 0 in {
   def BOSC_AME_MLAE8_M  : RVInstBOSCAMELoadTile32<0b000001, 0b000, 0b0, "mlae8.m">;
   def BOSC_AME_MLAE16_M : RVInstBOSCAMELoadTile32<0b000001, 0b001, 0b0, "mlae16.m">;
   def BOSC_AME_MLAE32_M : RVInstBOSCAMELoadTile32<0b000001, 0b010, 0b0, "mlae32.m">;
@@ -921,7 +919,7 @@ let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 1, mayStore = 0 in
 // Load matrix B into TileReg - mlbe*.m
 // Syntax: mlbe{8|16|32|64}.m md, (rs1), rs2
 //===----------------------------------------------------------------------===//
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 1, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 1, mayStore = 0 in {
   def BOSC_AME_MLBE8_M  : RVInstBOSCAMELoadTile32<0b000010, 0b000, 0b0, "mlbe8.m">;
   def BOSC_AME_MLBE16_M : RVInstBOSCAMELoadTile32<0b000010, 0b001, 0b0, "mlbe16.m">;
   def BOSC_AME_MLBE32_M : RVInstBOSCAMELoadTile32<0b000010, 0b010, 0b0, "mlbe32.m">;
@@ -939,7 +937,7 @@ let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 1, mayStore = 0 in
 //   md: Destination AccReg (MLEN×AMUL bits)
 // Note: eew here refers to the output element width after widening
 //===----------------------------------------------------------------------===//
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 1, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 1, mayStore = 0 in {
   def BOSC_AME_MLCE8_M  : RVInstBOSCAMELoadAcc32<0b000000, 0b000, 0b0, "mlce8.m">;
   def BOSC_AME_MLCE16_M : RVInstBOSCAMELoadAcc32<0b000000, 0b001, 0b0, "mlce16.m">;
   def BOSC_AME_MLCE32_M : RVInstBOSCAMELoadAcc32<0b000000, 0b010, 0b0, "mlce32.m">;
@@ -960,7 +958,7 @@ let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 1, mayStore = 0 in
 // Store matrix A from TileReg - msae*.m
 // Syntax: msae{8|16|32|64}.m ms3, (rs1), rs2
 //===----------------------------------------------------------------------===//
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 1 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 1 in {
   def BOSC_AME_MSAE8_M  : RVInstBOSCAMEStoreTile32<0b000001, 0b000, 0b0, "msae8.m">;
   def BOSC_AME_MSAE16_M : RVInstBOSCAMEStoreTile32<0b000001, 0b001, 0b0, "msae16.m">;
   def BOSC_AME_MSAE32_M : RVInstBOSCAMEStoreTile32<0b000001, 0b010, 0b0, "msae32.m">;
@@ -981,7 +979,7 @@ let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 1 in
 // Store matrix B from TileReg - msbe*.m
 // Syntax: msbe{8|16|32|64}.m ms3, (rs1), rs2
 //===----------------------------------------------------------------------===//
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 1 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 1 in {
   def BOSC_AME_MSBE8_M  : RVInstBOSCAMEStoreTile32<0b000010, 0b000, 0b0, "msbe8.m">;
   def BOSC_AME_MSBE16_M : RVInstBOSCAMEStoreTile32<0b000010, 0b001, 0b0, "msbe16.m">;
   def BOSC_AME_MSBE32_M : RVInstBOSCAMEStoreTile32<0b000010, 0b010, 0b0, "msbe32.m">;
@@ -999,7 +997,7 @@ let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 1 in
 //   ms3: Source AccReg (MLEN×AMUL bits)
 // This is the primary store for computation results
 //===----------------------------------------------------------------------===//
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 1 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 1 in {
   def BOSC_AME_MSCE8_M  : RVInstBOSCAMEStoreAcc32<0b000000, 0b000, 0b0, "msce8.m">;
   def BOSC_AME_MSCE16_M : RVInstBOSCAMEStoreAcc32<0b000000, 0b001, 0b0, "msce16.m">;
   def BOSC_AME_MSCE32_M : RVInstBOSCAMEStoreAcc32<0b000000, 0b010, 0b0, "msce32.m">;
@@ -1133,7 +1131,7 @@ class RVInstBOSCAMEMoveImm_T_A<bits<3> eew_val, string opcodestr>
   let opcode = 0b1110111;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
 
   def BOSC_AME_MMVE8_T_T  : RVInstBOSCAMEMove_T_T<0b000, "mmve8.t.t">;
   def BOSC_AME_MMVE16_T_T : RVInstBOSCAMEMove_T_T<0b001, "mmve16.t.t">;
@@ -1219,7 +1217,7 @@ class RVInstBOSCAMEMove_A_X<bits<3> eew_val, string opcodestr>
   let rd     = md;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
 
   def BOSC_AME_MMVE8_X_T  : RVInstBOSCAMEMove_X_T<0b000, "mmve8.x.t">;
   def BOSC_AME_MMVE16_X_T : RVInstBOSCAMEMove_X_T<0b001, "mmve16.x.t">;
@@ -1295,7 +1293,7 @@ class RVInstBOSCAMEFMove_A_F<bits<3> eew_val, string opcodestr>
   let rd     = md;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
 
   def BOSC_AME_MFMVE8_F_T  : RVInstBOSCAMEFMove_F_T<0b000, "mfmve8.f.t">;
   def BOSC_AME_MFMVE16_F_T : RVInstBOSCAMEFMove_F_T<0b001, "mfmve16.f.t">;
@@ -1349,7 +1347,7 @@ class RVInstBOSCAMEBroadcastAcc<bits<5> rs2_val, bits<3> eew_val, string opcodes
   let opcode = 0b1110111;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
   // Row broadcast from TileReg/AccReg
   def BOSC_AME_MBCAR_M : RVInstBOSCAMEBroadcastTile<0b10001, 0b000, "mbcar.m">;
   def BOSC_AME_MBCBR_M : RVInstBOSCAMEBroadcastTile<0b10010, 0b000, "mbcbr.m">;
@@ -1417,7 +1415,7 @@ class RVInstBOSCAMETransposeAcc<bits<5> rs2_val, bits<3> eew_val, string opcodes
   let opcode = 0b1110111;
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
   // Transpose square matrix of tile register
   def BOSC_AME_MTAE8_M : RVInstBOSCAMETransposeTile<0b11101, 0b000, "mtae8.m">;
   def BOSC_AME_MTAE16_M : RVInstBOSCAMETransposeTile<0b11101, 0b001, "mtae16.m">;
@@ -1447,7 +1445,7 @@ let Predicates = [HasBuddyExt], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
 //===----------------------------------------------------------------------===//
 
 // Pseudo configuration instruction
-let Predicates = [HasBuddyExt], hasSideEffects = 1, mayLoad = 0, mayStore = 0,
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, mayLoad = 0, mayStore = 0,
     isCodeGenOnly = 1 in {
   // Register configuration instructions
   def BOSC_AME_MSETTYPE_PSEUDO : Pseudo<(outs GPR:$rd), (ins GPR:$rs1), []> {
@@ -1481,7 +1479,7 @@ let Predicates = [HasBuddyExt], hasSideEffects = 1, mayLoad = 0, mayStore = 0,
 }
 
 // Pseudo load instructions
-let Predicates = [HasBuddyExt], hasSideEffects = 1, mayLoad = 1, mayStore = 0,
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, mayLoad = 1, mayStore = 0,
     isCodeGenOnly = 1 in {
   def BOSC_AME_MLAE8_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
     let AsmString = "mlae8.m\ttr$md, ($rs1), $rs2";
@@ -1582,7 +1580,7 @@ let Predicates = [HasBuddyExt], hasSideEffects = 1, mayLoad = 1, mayStore = 0,
 }
 
 // Pseudo store instructions
-let Predicates = [HasBuddyExt], hasSideEffects = 1, mayLoad = 0, mayStore = 1,
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, mayLoad = 0, mayStore = 1,
     isCodeGenOnly = 1 in {
   def BOSC_AME_MSAE8_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
     let AsmString = "msae8.m\ttr$ms3, ($rs1), $rs2";
@@ -1763,7 +1761,7 @@ class RVInstBOSCAMETransposeTile_Pseudo<string opcodestr>
 class RVInstBOSCAMETransposeAcc_Pseudo<string opcodestr>
       : RVInstBOSCAMEMove_A_A_Pseudo<opcodestr>;
 
-let Predicates = [HasBuddyExt], hasSideEffects = 1, isCodeGenOnly = 1 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, isCodeGenOnly = 1 in {
   //----------------------------------------------------------------------
   // Matrix-Matrix Move Pseudos
   //----------------------------------------------------------------------
@@ -1906,7 +1904,7 @@ class RVInstBOSCAMEEleWise2_Pseudo<string opcodestr>
   let AsmString = opcodestr # "\tacc$md, acc$ms1";
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 1, isCodeGenOnly = 1 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, isCodeGenOnly = 1 in {
   //===--------------------------------------------------------------------===//
   // 1. ADD / SUB - No Widen
   //===--------------------------------------------------------------------===//
@@ -2188,7 +2186,7 @@ class RVInstBOSCAMEMMA_Pseudo<string opcodestr>
   let AsmString = opcodestr # "\tacc$md, tr$ms1, tr$ms2";
 }
 
-let Predicates = [HasBuddyExt], hasSideEffects = 1, isCodeGenOnly = 1 in {
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, isCodeGenOnly = 1 in {
   //===--------------------------------------------------------------------===//
   // 1. No-widen matrix multiply-accumulate
   //===--------------------------------------------------------------------===//
@@ -2280,7 +2278,7 @@ let Predicates = [HasBuddyExt], hasSideEffects = 1, isCodeGenOnly = 1 in {
 // Pattern Matching for 32-bit New Instructions
 //===----------------------------------------------------------------------===//
 
-let Predicates = [HasBuddyExt] in {
+let Predicates = [HasVendorXBOSCAME] in {
   // Configuration immediate instructions
   def : Pat<(i64 (int_riscv_bosc_msettypei timm:$imm)),
             (BOSC_AME_MSETTYPEI_PSEUDO timm:$imm)>;
