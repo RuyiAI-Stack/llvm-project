@@ -8,7 +8,6 @@
 ; CHECK-NEXT:   a                                - 'A' (Atomic Instructions).
 ; CHECK-NEXT:   andes45                          - Andes 45-Series processors.
 ; CHECK-NEXT:   b                                - 'B' (the collection of the Zba, Zbb, Zbs extensions).
-; CHECK-NEXT:   buddyext                         - 'BuddyExt' (Buddy RISC-V Extension).
 ; CHECK-NEXT:   c                                - 'C' (Compressed Instructions).
 ; CHECK-NEXT:   conditional-cmv-fusion           - Enable branch+c.mv fusion.
 ; CHECK-NEXT:   d                                - 'D' (Double-Precision Floating-Point).
@@ -216,6 +215,7 @@
 ; CHECK-NEXT:   xandesvpackfph                   - 'XAndesVPackFPH' (Andes Vector Packed FP16 Extension).
 ; CHECK-NEXT:   xandesvsinth                     - 'XAndesVSIntH' (Andes Vector Small INT Handling Extension).
 ; CHECK-NEXT:   xandesvsintload                  - 'XAndesVSIntLoad' (Andes Vector INT4 Load Extension).
+; CHECK-NEXT:   xboscame                         - 'XBOSCAME' (BOSC AME extension).
 ; CHECK-NEXT:   xcheriot                         - 'XCheriot' (CHERIoT extension).
 ; CHECK-NEXT:   xcvalu                           - 'XCValu' (CORE-V ALU Operations).
 ; CHECK-NEXT:   xcvbi                            - 'XCVbi' (CORE-V Immediate Branching).
@@ -224,6 +224,7 @@
 ; CHECK-NEXT:   xcvmac                           - 'XCVmac' (CORE-V Multiply-Accumulate).
 ; CHECK-NEXT:   xcvmem                           - 'XCVmem' (CORE-V Post-incrementing Load & Store).
 ; CHECK-NEXT:   xcvsimd                          - 'XCVsimd' (CORE-V SIMD ALU).
+; CHECK-NEXT:   xgemmini                         - 'XGemmini' (Gemmini extension).
 ; CHECK-NEXT:   xmipscbop                        - 'XMIPSCBOP' (MIPS Software Prefetch).
 ; CHECK-NEXT:   xmipscmov                        - 'XMIPSCMov' (MIPS conditional move instruction (mips.ccmov)).
 ; CHECK-NEXT:   xmipsexectl                      - 'XMIPSEXECTL' (MIPS execution control).
@@ -272,8 +273,10 @@
 ; CHECK-NEXT:   xsfvqmaccqoq                     - 'XSfvqmaccqoq' (SiFive Int8 Matrix Multiplication Instructions (4-by-8 and 8-by-4)).
 ; CHECK-NEXT:   xsifivecdiscarddlone             - 'XSiFivecdiscarddlone' (SiFive sf.cdiscard.d.l1 Instruction).
 ; CHECK-NEXT:   xsifivecflushdlone               - 'XSiFivecflushdlone' (SiFive sf.cflush.d.l1 Instruction).
+; CHECK-NEXT:   xsmtime                          - 'XSMTIME' (SpacemiT IME extension).
 ; CHECK-NEXT:   xsmtvdot                         - 'XSMTVDot' (SpacemiT Vector Dot Product Extension).
 ; CHECK-NEXT:   xsmtvdotii                       - 'XSMTVDotII' (SpacemiT Vector Extension for Matrix 2.0).
+; CHECK-NEXT:   xtheadame                        - Enable all T-Head AME matrix extensions.
 ; CHECK-NEXT:   xtheadba                         - 'XTHeadBa' (T-Head address calculation instructions).
 ; CHECK-NEXT:   xtheadbb                         - 'XTHeadBb' (T-Head basic bit-manipulation instructions).
 ; CHECK-NEXT:   xtheadbs                         - 'XTHeadBs' (T-Head single-bit instructions).
@@ -281,8 +284,40 @@
 ; CHECK-NEXT:   xtheadcondmov                    - 'XTHeadCondMov' (T-Head conditional move instructions).
 ; CHECK-NEXT:   xtheadfmemidx                    - 'XTHeadFMemIdx' (T-Head FP Indexed Memory Operations).
 ; CHECK-NEXT:   xtheadmac                        - 'XTHeadMac' (T-Head Multiply-Accumulate Instructions).
+; CHECK-NEXT:   xtheadmatrix                     - 'XTHeadMatrix' (T-Head AME matrix extension).
+; CHECK-NEXT:   xtheadmatrixmin                  - 'XTHeadMatrixMin' (T-Head AME minimal matrix extension).
+; CHECK-NEXT:   xtheadmdma                       - 'XTHeadMDMA' (T-Head AME matrix DMA extension).
 ; CHECK-NEXT:   xtheadmemidx                     - 'XTHeadMemIdx' (T-Head Indexed Memory Operations).
 ; CHECK-NEXT:   xtheadmempair                    - 'XTHeadMemPair' (T-Head two-GPR Memory Operations).
+; CHECK-NEXT:   xtheadmew16b                     - 'XTHeadMEW16B' (T-Head AME 16-bit element width extension).
+; CHECK-NEXT:   xtheadmew32b                     - 'XTHeadMEW32B' (T-Head AME 32-bit element width extension).
+; CHECK-NEXT:   xtheadmew4b                      - 'XTHeadMEW4B' (T-Head AME 4-bit element width extension).
+; CHECK-NEXT:   xtheadmew64b                     - 'XTHeadMEW64B' (T-Head AME 64-bit element width extension).
+; CHECK-NEXT:   xtheadmew8b                      - 'XTHeadMEW8B' (T-Head AME 8-bit element width extension).
+; CHECK-NEXT:   xtheadmfew                       - 'XTHeadMFEW' (T-Head AME matrix fractional element width extension).
+; CHECK-NEXT:   xtheadmfic                       - 'XTHeadMFIC' (T-Head AME matrix fixed-point conversion extension).
+; CHECK-NEXT:   xtheadmhp                        - 'XTHeadMHP' (T-Head AME matrix half precision extension).
+; CHECK-NEXT:   xtheadmiew                       - 'XTHeadMIEW' (T-Head AME matrix integer element width extension).
+; CHECK-NEXT:   xtheadmmbf16bbf16b               - 'XTHeadMMBF16BBF16B' (T-Head AME BF16-by-BF16 matrix multiply extension).
+; CHECK-NEXT:   xtheadmmbf16bf32b                - 'XTHeadMMBF16BF32B' (T-Head AME BF16-by-F32 matrix multiply extension).
+; CHECK-NEXT:   xtheadmmbf20bf32b                - 'XTHeadMMBF20BF32B' (T-Head AME BF20-by-F32 matrix multiply extension).
+; CHECK-NEXT:   xtheadmmf16bf16b                 - 'XTHeadMMF16BF16B' (T-Head AME F16-by-BF16 matrix multiply extension).
+; CHECK-NEXT:   xtheadmmf16bf32b                 - 'XTHeadMMF16BF32B' (T-Head AME F16-by-F32 matrix multiply extension).
+; CHECK-NEXT:   xtheadmmf32bf32b                 - 'XTHeadMMF32BF32B' (T-Head AME F32-by-F32 matrix multiply extension).
+; CHECK-NEXT:   xtheadmmf32bf64b                 - 'XTHeadMMF32BF64B' (T-Head AME F32-by-F64 matrix multiply extension).
+; CHECK-NEXT:   xtheadmmf4bbf16b                 - 'XTHeadMMF4BBF16B' (T-Head AME F4-by-BF16 matrix multiply extension).
+; CHECK-NEXT:   xtheadmmf4bf16b                  - 'XTHeadMMF4BF16B' (T-Head AME F4-by-F16 matrix multiply extension).
+; CHECK-NEXT:   xtheadmmf4bf32b                  - 'XTHeadMMF4BF32B' (T-Head AME F4-by-F32 matrix multiply extension).
+; CHECK-NEXT:   xtheadmmf64bf64b                 - 'XTHeadMMF64BF64B' (T-Head AME F64-by-F64 matrix multiply extension).
+; CHECK-NEXT:   xtheadmmf8bbf16b                 - 'XTHeadMMF8BBF16B' (T-Head AME F8-by-BF16 matrix multiply extension).
+; CHECK-NEXT:   xtheadmmf8bf16b                  - 'XTHeadMMF8BF16B' (T-Head AME F8-by-F16 matrix multiply extension).
+; CHECK-NEXT:   xtheadmmf8bf32b                  - 'XTHeadMMF8BF32B' (T-Head AME F8-by-F32 matrix multiply extension).
+; CHECK-NEXT:   xtheadmmi4bi32b                  - 'XTHeadMMI4BI32B' (T-Head AME I4-by-I32 matrix multiply extension).
+; CHECK-NEXT:   xtheadmmi8bi32b                  - 'XTHeadMMI8BI32B' (T-Head AME I8-by-I32 matrix multiply extension).
+; CHECK-NEXT:   xtheadmmmxf4b                    - 'XTHeadMMMXF4B' (T-Head AME MXF4 matrix multiply extension).
+; CHECK-NEXT:   xtheadmmmxf8b                    - 'XTHeadMMMXF8B' (T-Head AME MXF8 matrix multiply extension).
+; CHECK-NEXT:   xtheadmmmxf8bmxf4b               - 'XTHeadMMMXF8BMXF4B' (T-Head AME MXF8-by-MXF4 matrix multiply extension).
+; CHECK-NEXT:   xtheadmred                       - 'XTHeadMRED' (T-Head AME matrix reduction extension).
 ; CHECK-NEXT:   xtheadsync                       - 'XTHeadSync' (T-Head multicore synchronization instructions).
 ; CHECK-NEXT:   xtheadvdot                       - 'XTHeadVdot' (T-Head Vector Extensions for Dot).
 ; CHECK-NEXT:   xventanacondops                  - 'XVentanaCondOps' (Ventana Conditional Ops).
