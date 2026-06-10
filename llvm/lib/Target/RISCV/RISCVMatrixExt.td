@@ -1,4 +1,4 @@
-//===------ RISCVExt.td ---------------------------------------------------===//
+//===- RISCVMatrixExt.td --------------------------------------------------===//
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,16 +14,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This is the top file for target definition of RISC-V buddy extension.
+// This file contains shared matrix register definitions and instruction
+// includes for vendor matrix extensions.
 //
 //===----------------------------------------------------------------------===//
-
-def FeatureBuddyExt
-    : SubtargetFeature<"buddyext", "HasBuddyExt", "true",
-                       "'BuddyExt' (Buddy RISC-V Extension)">;
-def HasBuddyExt : Predicate<"Subtarget->hasBuddyExt()">,
-                            AssemblerPredicate<(all_of FeatureBuddyExt),
-                            "'BuddyExt' (Buddy RISC-V Extension)">;
 
 //===----------------------------------------------------------------------===//
 // AME (RISC-V Matrix Extension) Register Definitions
@@ -157,5 +151,5 @@ def MatrixReg : RegisterClass<"RISCV", [untyped], 1024,
   let Size = 1024;  // Placeholder: actual MLEN is hardware-defined
 }
 
-include "RISCVInstrInfoExt.td"
-include "RISCVInstrInfoBOSCExt.td"
+include "RISCVInstrInfoXBOSCAME.td"
+include "RISCVInstrInfoXTHeadAME.td"
