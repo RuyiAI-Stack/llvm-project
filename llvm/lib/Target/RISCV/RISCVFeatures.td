@@ -1378,6 +1378,127 @@ def HasVendorXTHeadVdot : Predicate<"Subtarget->hasVendorXTHeadVdot()">,
                           AssemblerPredicate<(all_of FeatureVendorXTHeadVdot),
                               "'XTHeadVdot' (T-Head Vector Extensions for Dot)">;
 
+def FeatureVendorXGemmini
+    : RISCVExtension<1, 0, "Gemmini extension">;
+def HasVendorXGemmini
+    : Predicate<"Subtarget->hasVendorXGemmini()">,
+      AssemblerPredicate<(all_of FeatureVendorXGemmini),
+          "'XGemmini' (Gemmini extension)">;
+
+def FeatureVendorXBOSCAME
+    : RISCVExtension<1, 0, "BOSC AME extension">;
+def HasVendorXBOSCAME
+    : Predicate<"Subtarget->hasVendorXBOSCAME()">,
+      AssemblerPredicate<(all_of FeatureVendorXBOSCAME),
+          "'XBOSCAME' (BOSC AME extension)">;
+
+class XTHeadAMEExtension<int major, int minor, string desc>
+    : RISCVExtension<major, minor, "T-Head AME " # desc>;
+
+def FeatureVendorXTHeadMatrix
+    : XTHeadAMEExtension<3, 0, "matrix extension">;
+def FeatureVendorXTHeadMatrixMin
+    : XTHeadAMEExtension<0, 5, "minimal matrix extension">;
+def FeatureVendorXTHeadMDMA
+    : XTHeadAMEExtension<0, 5, "matrix DMA extension">;
+def FeatureVendorXTHeadMEW4B
+    : XTHeadAMEExtension<0, 5, "4-bit element width extension">;
+def FeatureVendorXTHeadMEW8B
+    : XTHeadAMEExtension<0, 5, "8-bit element width extension">;
+def FeatureVendorXTHeadMEW16B
+    : XTHeadAMEExtension<0, 5, "16-bit element width extension">;
+def FeatureVendorXTHeadMEW32B
+    : XTHeadAMEExtension<0, 5, "32-bit element width extension">;
+def FeatureVendorXTHeadMEW64B
+    : XTHeadAMEExtension<0, 5, "64-bit element width extension">;
+def FeatureVendorXTHeadMFEW
+    : XTHeadAMEExtension<0, 5, "matrix fractional element width extension">;
+def FeatureVendorXTHeadMFIC
+    : XTHeadAMEExtension<0, 5, "matrix fixed-point conversion extension">;
+def FeatureVendorXTHeadMHP
+    : XTHeadAMEExtension<0, 5, "matrix half precision extension">;
+def FeatureVendorXTHeadMIEW
+    : XTHeadAMEExtension<0, 5, "matrix integer element width extension">;
+def FeatureVendorXTHeadMMBF16BBF16B
+    : XTHeadAMEExtension<0, 5, "BF16-by-BF16 matrix multiply extension">;
+def FeatureVendorXTHeadMMBF16BF32B
+    : XTHeadAMEExtension<0, 5, "BF16-by-F32 matrix multiply extension">;
+def FeatureVendorXTHeadMMBF20BF32B
+    : XTHeadAMEExtension<0, 5, "BF20-by-F32 matrix multiply extension">;
+def FeatureVendorXTHeadMMF4BBF16B
+    : XTHeadAMEExtension<0, 5, "F4-by-BF16 matrix multiply extension">;
+def FeatureVendorXTHeadMMF4BF16B
+    : XTHeadAMEExtension<0, 5, "F4-by-F16 matrix multiply extension">;
+def FeatureVendorXTHeadMMF4BF32B
+    : XTHeadAMEExtension<0, 5, "F4-by-F32 matrix multiply extension">;
+def FeatureVendorXTHeadMMF8BBF16B
+    : XTHeadAMEExtension<0, 5, "F8-by-BF16 matrix multiply extension">;
+def FeatureVendorXTHeadMMF8BF16B
+    : XTHeadAMEExtension<0, 5, "F8-by-F16 matrix multiply extension">;
+def FeatureVendorXTHeadMMF8BF32B
+    : XTHeadAMEExtension<0, 5, "F8-by-F32 matrix multiply extension">;
+def FeatureVendorXTHeadMMF16BF16B
+    : XTHeadAMEExtension<0, 5, "F16-by-BF16 matrix multiply extension">;
+def FeatureVendorXTHeadMMF16BF32B
+    : XTHeadAMEExtension<0, 5, "F16-by-F32 matrix multiply extension">;
+def FeatureVendorXTHeadMMF32BF32B
+    : XTHeadAMEExtension<0, 5, "F32-by-F32 matrix multiply extension">;
+def FeatureVendorXTHeadMMF32BF64B
+    : XTHeadAMEExtension<0, 5, "F32-by-F64 matrix multiply extension">;
+def FeatureVendorXTHeadMMF64BF64B
+    : XTHeadAMEExtension<0, 5, "F64-by-F64 matrix multiply extension">;
+def FeatureVendorXTHeadMMI4BI32B
+    : XTHeadAMEExtension<0, 5, "I4-by-I32 matrix multiply extension">;
+def FeatureVendorXTHeadMMI8BI32B
+    : XTHeadAMEExtension<0, 5, "I8-by-I32 matrix multiply extension">;
+def FeatureVendorXTHeadMMMXF4B
+    : XTHeadAMEExtension<0, 5, "MXF4 matrix multiply extension">;
+def FeatureVendorXTHeadMMMXF8B
+    : XTHeadAMEExtension<0, 5, "MXF8 matrix multiply extension">;
+def FeatureVendorXTHeadMMMXF8BMXF4B
+    : XTHeadAMEExtension<0, 5, "MXF8-by-MXF4 matrix multiply extension">;
+def FeatureVendorXTHeadMRED
+    : XTHeadAMEExtension<0, 5, "matrix reduction extension">;
+
+def FeatureVendorXTHeadAME
+    : SubtargetFeature<"xtheadame", "HasVendorXTHeadAME", "true",
+                       "Enable all T-Head AME matrix extensions",
+                       [FeatureVendorXTHeadMatrix,
+                        FeatureVendorXTHeadMatrixMin,
+                        FeatureVendorXTHeadMDMA,
+                        FeatureVendorXTHeadMEW4B,
+                        FeatureVendorXTHeadMEW8B,
+                        FeatureVendorXTHeadMEW16B,
+                        FeatureVendorXTHeadMEW32B,
+                        FeatureVendorXTHeadMEW64B,
+                        FeatureVendorXTHeadMFEW,
+                        FeatureVendorXTHeadMFIC,
+                        FeatureVendorXTHeadMHP,
+                        FeatureVendorXTHeadMIEW,
+                        FeatureVendorXTHeadMMBF16BBF16B,
+                        FeatureVendorXTHeadMMBF16BF32B,
+                        FeatureVendorXTHeadMMBF20BF32B,
+                        FeatureVendorXTHeadMMF4BBF16B,
+                        FeatureVendorXTHeadMMF4BF16B,
+                        FeatureVendorXTHeadMMF4BF32B,
+                        FeatureVendorXTHeadMMF8BBF16B,
+                        FeatureVendorXTHeadMMF8BF16B,
+                        FeatureVendorXTHeadMMF8BF32B,
+                        FeatureVendorXTHeadMMF16BF16B,
+                        FeatureVendorXTHeadMMF16BF32B,
+                        FeatureVendorXTHeadMMF32BF32B,
+                        FeatureVendorXTHeadMMF32BF64B,
+                        FeatureVendorXTHeadMMF64BF64B,
+                        FeatureVendorXTHeadMMI4BI32B,
+                        FeatureVendorXTHeadMMI8BI32B,
+                        FeatureVendorXTHeadMMMXF4B,
+                        FeatureVendorXTHeadMMMXF8B,
+                        FeatureVendorXTHeadMMMXF8BMXF4B,
+                        FeatureVendorXTHeadMRED]>;
+def HasVendorXTHeadAME : Predicate<"Subtarget->hasVendorXTHeadAME()">,
+                         AssemblerPredicate<(all_of FeatureVendorXTHeadAME),
+                             "'XTHeadAME' (T-Head AME matrix extensions)">;
+
 // SiFive Extensions
 
 def FeatureVendorXSfvcp
@@ -1902,6 +2023,13 @@ def HasVendorXSMTVDotII
     : Predicate<"Subtarget->hasVendorXSMTVDotII()">,
       AssemblerPredicate<(all_of FeatureVendorXSMTVDotII),
                          "'XSMTVDotII' (SpacemiT Vector Extension for Matrix 2.0)">;
+
+def FeatureVendorXSMTIME
+    : RISCVExtension<1, 0, "SpacemiT IME extension">;
+def HasVendorXSMTIME
+    : Predicate<"Subtarget->hasVendorXSMTIME()">,
+      AssemblerPredicate<(all_of FeatureVendorXSMTIME),
+                         "'XSMTIME' (SpacemiT IME extension)">;
 
 def FeatureVendorXAIFET
     : RISCVExtension<1, 0, "AI Foundry ET Extension", [FeatureStdExtF]>;
