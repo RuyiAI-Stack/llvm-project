@@ -23,6 +23,7 @@
 ; RUN: llc -mtriple=riscv64 -mattr=+xtheadmempair %s -o - | FileCheck --check-prefix=RV64XTHEADMEMPAIR %s
 ; RUN: llc -mtriple=riscv64 -mattr=+xtheadsync %s -o - | FileCheck --check-prefix=RV64XTHEADSYNC %s
 ; RUN: llc -mtriple=riscv64 -mattr=+xtheadvdot %s -o - | FileCheck --check-prefixes=CHECK,RV64XTHEADVDOT %s
+; RUN: llc -mtriple=riscv64 -mattr=+m,+a,+f,+d,+c,+xtheadame %s -o - | FileCheck --check-prefixes=CHECK,RV64XTHEADAME %s
 
 ; CHECK: .attribute 4, 16
 
@@ -49,6 +50,7 @@
 ; RV64XTHEADMEMPAIR: .attribute 5, "rv64i2p1_xtheadmempair1p0"
 ; RV64XTHEADSYNC: .attribute 5, "rv64i2p1_xtheadsync1p0"
 ; RV64XTHEADVDOT: .attribute 5, "rv64i2p1_f2p2_d2p2_v1p0_zicsr2p0_zve32f1p0_zve32x1p0_zve64d1p0_zve64f1p0_zve64x1p0_zvl128b1p0_zvl32b1p0_zvl64b1p0_xtheadvdot1p0"
+; RV64XTHEADAME: .attribute 5, "rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_zicsr2p0_zmmul1p0_zaamo1p0_zalrsc1p0_zca1p0_zcd1p0_xtheadmatrix3p0_xtheadmatrixmin0p5_xtheadmdma0p5_xtheadmew16b0p5_xtheadmew32b0p5_xtheadmew4b0p5_xtheadmew64b0p5_xtheadmew8b0p5_xtheadmfew0p5_xtheadmfic0p5_xtheadmhp0p5_xtheadmiew0p5_xtheadmmbf16bbf16b0p5_xtheadmmbf16bf32b0p5_xtheadmmbf20bf32b0p5_xtheadmmf16bf16b0p5_xtheadmmf16bf32b0p5_xtheadmmf32bf32b0p5_xtheadmmf32bf64b0p5_xtheadmmf4bbf16b0p5_xtheadmmf4bf16b0p5_xtheadmmf4bf32b0p5_xtheadmmf64bf64b0p5_xtheadmmf8bbf16b0p5_xtheadmmf8bf16b0p5_xtheadmmf8bf32b0p5_xtheadmmi4bi32b0p5_xtheadmmi8bi32b0p5_xtheadmmmxf4b0p5_xtheadmmmxf8b0p5_xtheadmmmxf8bmxf4b0p5_xtheadmred0p5"
 
 define i32 @addi(i32 %a) {
   %1 = add i32 %a, 1
