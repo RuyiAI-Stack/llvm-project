@@ -2486,210 +2486,210 @@ let Predicates = [HasBuddyExt], hasSideEffects = 1,
 let Predicates = [HasBuddyExt] in {
 
   // Configuration immediate instructions
-  def : Pat<(int_riscv_buddy_th_mcfgmi timm:$imm),
+  def : Pat<(int_riscv_th_mcfgmi timm:$imm),
             (TH_MCFGMI_PSEUDO timm:$imm)>;
-  def : Pat<(int_riscv_buddy_th_mcfgni timm:$imm),
+  def : Pat<(int_riscv_th_mcfgni timm:$imm),
             (TH_MCFGNI_PSEUDO timm:$imm)>;
-  def : Pat<(int_riscv_buddy_th_mcfgki timm:$imm),
+  def : Pat<(int_riscv_th_mcfgki timm:$imm),
             (TH_MCFGKI_PSEUDO timm:$imm)>;
 
   // Configured Register instructions
-  def : Pat<(int_riscv_buddy_th_mcfgm i64:$rs1),
+  def : Pat<(int_riscv_th_mcfgm i64:$rs1),
           (TH_MCFGM_PSEUDO GPR:$rs1)>;
 
-  def : Pat<(int_riscv_buddy_th_mcfgn i64:$rs1),
+  def : Pat<(int_riscv_th_mcfgn i64:$rs1),
           (TH_MCFGN_PSEUDO GPR:$rs1)>;
 
-  def : Pat<(int_riscv_buddy_th_mcfgk i64:$rs1),
+  def : Pat<(int_riscv_th_mcfgk i64:$rs1),
           (TH_MCFGK_PSEUDO GPR:$rs1)>;
 
-  def : Pat<(int_riscv_buddy_th_mcfg i64:$rs1),
+  def : Pat<(int_riscv_th_mcfg i64:$rs1),
           (TH_MCFG_PSEUDO GPR:$rs1)>;
 
   // Zero instruction
-  def : Pat<(int_riscv_buddy_th_mzero timm:$md),
+  def : Pat<(int_riscv_th_mzero timm:$md),
             (TH_MZERO_PSEUDO timm:$md)>;
-  def : Pat<(int_riscv_buddy_th_mzero2r timm:$md),
+  def : Pat<(int_riscv_th_mzero2r timm:$md),
             (TH_MZERO2R_PSEUDO timm:$md)>;
-  def : Pat<(int_riscv_buddy_th_mzero4r timm:$md),
+  def : Pat<(int_riscv_th_mzero4r timm:$md),
             (TH_MZERO4R_PSEUDO timm:$md)>;
-  def : Pat<(int_riscv_buddy_th_mzero8r timm:$md),
+  def : Pat<(int_riscv_th_mzero8r timm:$md),
             (TH_MZERO8R_PSEUDO timm:$md)>;
 
   // MISC instructions
   // 1. Data Move Instructions between Matrix Registers
-  def : Pat<(int_riscv_buddy_th_mmov_mm timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_th_mmov_mm timm:$md, timm:$ms1),
           (TH_MMOV_MM_PSEUDO timm:$md, timm:$ms1)>;
 
   // 2. Data Move Instructions between Integer and Matrix (Duplicate)
-  def : Pat<(int_riscv_buddy_th_mdupb_m_x timm:$md, i64:$rs2),
+  def : Pat<(int_riscv_th_mdupb_m_x timm:$md, i64:$rs2),
           (TH_MDUPB_M_X_PSEUDO timm:$md, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_th_mduph_m_x timm:$md, i64:$rs2),
+  def : Pat<(int_riscv_th_mduph_m_x timm:$md, i64:$rs2),
           (TH_MDUPH_M_X_PSEUDO timm:$md, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_th_mdupw_m_x timm:$md, i64:$rs2),
+  def : Pat<(int_riscv_th_mdupw_m_x timm:$md, i64:$rs2),
           (TH_MDUPW_M_X_PSEUDO timm:$md, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_th_mdupd_m_x timm:$md, i64:$rs2),
+  def : Pat<(int_riscv_th_mdupd_m_x timm:$md, i64:$rs2),
           (TH_MDUPD_M_X_PSEUDO timm:$md, GPR:$rs2)>;
 
   // 3. Data Move Instructions between Integer and Matrix (Scalar to Matrix)
-  def : Pat<(int_riscv_buddy_th_mmovb_m_x timm:$md, i64:$rs2, i64:$rs1),
+  def : Pat<(int_riscv_th_mmovb_m_x timm:$md, i64:$rs2, i64:$rs1),
           (TH_MMOVB_M_X_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mmovh_m_x timm:$md, i64:$rs2, i64:$rs1),
+  def : Pat<(int_riscv_th_mmovh_m_x timm:$md, i64:$rs2, i64:$rs1),
           (TH_MMOVH_M_X_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mmovw_m_x timm:$md, i64:$rs2, i64:$rs1),
+  def : Pat<(int_riscv_th_mmovw_m_x timm:$md, i64:$rs2, i64:$rs1),
           (TH_MMOVW_M_X_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mmovd_m_x timm:$md, i64:$rs2, i64:$rs1),
+  def : Pat<(int_riscv_th_mmovd_m_x timm:$md, i64:$rs2, i64:$rs1),
           (TH_MMOVD_M_X_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
 
   // 4. Data Move Instructions between Integer and Matrix (Matrix to Scalar)
-  def : Pat<(int_riscv_buddy_th_mmovb_x_m timm:$ms2, i64:$rs1),
+  def : Pat<(int_riscv_th_mmovb_x_m timm:$ms2, i64:$rs1),
           (TH_MMOVB_X_M_PSEUDO timm:$ms2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mmovh_x_m timm:$ms2, i64:$rs1),
+  def : Pat<(int_riscv_th_mmovh_x_m timm:$ms2, i64:$rs1),
           (TH_MMOVH_X_M_PSEUDO timm:$ms2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mmovw_x_m timm:$ms2, i64:$rs1),
+  def : Pat<(int_riscv_th_mmovw_x_m timm:$ms2, i64:$rs1),
           (TH_MMOVW_X_M_PSEUDO timm:$ms2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mmovd_x_m timm:$ms2, i64:$rs1),
+  def : Pat<(int_riscv_th_mmovd_x_m timm:$ms2, i64:$rs1),
           (TH_MMOVD_X_M_PSEUDO timm:$ms2, GPR:$rs1)>;
 
   // 5. Data Broadcast Instructions
-  def : Pat<(int_riscv_buddy_th_mmov_mv_i timm:$md, timm:$ms1, imm:$uimm3),
+  def : Pat<(int_riscv_th_mmov_mv_i timm:$md, timm:$ms1, imm:$uimm3),
           (TH_MMOV_MV_I_PSEUDO timm:$md, timm:$ms1, imm:$uimm3)>;
-  def : Pat<(int_riscv_buddy_th_mcmovb_mv_i timm:$md, timm:$ms1, imm:$uimm3),
+  def : Pat<(int_riscv_th_mcmovb_mv_i timm:$md, timm:$ms1, imm:$uimm3),
           (TH_MCMOVB_MV_I_PSEUDO timm:$md, timm:$ms1, imm:$uimm3)>;
-  def : Pat<(int_riscv_buddy_th_mcmovh_mv_i timm:$md, timm:$ms1, imm:$uimm3),
+  def : Pat<(int_riscv_th_mcmovh_mv_i timm:$md, timm:$ms1, imm:$uimm3),
           (TH_MCMOVH_MV_I_PSEUDO timm:$md, timm:$ms1, imm:$uimm3)>;
-  def : Pat<(int_riscv_buddy_th_mcmovw_mv_i timm:$md, timm:$ms1, imm:$uimm3),
+  def : Pat<(int_riscv_th_mcmovw_mv_i timm:$md, timm:$ms1, imm:$uimm3),
           (TH_MCMOVW_MV_I_PSEUDO timm:$md, timm:$ms1, imm:$uimm3)>;
-  def : Pat<(int_riscv_buddy_th_mcmovd_mv_i timm:$md, timm:$ms1, imm:$uimm3),
+  def : Pat<(int_riscv_th_mcmovd_mv_i timm:$md, timm:$ms1, imm:$uimm3),
           (TH_MCMOVD_MV_I_PSEUDO timm:$md, timm:$ms1, imm:$uimm3)>;
 
   // 6. Matrix Pack Instructions
-  def : Pat<(int_riscv_buddy_th_mpack_mm timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mpack_mm timm:$md, timm:$ms2, timm:$ms1),
           (TH_MPACK_MM_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_th_mpackhl_mm timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mpackhl_mm timm:$md, timm:$ms2, timm:$ms1),
           (TH_MPACKHL_MM_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_th_mpackhh_mm timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mpackhh_mm timm:$md, timm:$ms2, timm:$ms1),
           (TH_MPACKHH_MM_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
 
   // Load instructions
-  def : Pat<(int_riscv_buddy_th_mlde8 timm:$md, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mlde8 timm:$md, i64:$rs2, iPTR:$rs1),
             (TH_MLDE8_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mlde16 timm:$md, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mlde16 timm:$md, i64:$rs2, iPTR:$rs1),
             (TH_MLDE16_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mlde32 timm:$md, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mlde32 timm:$md, i64:$rs2, iPTR:$rs1),
             (TH_MLDE32_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mlde64 timm:$md, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mlde64 timm:$md, i64:$rs2, iPTR:$rs1),
             (TH_MLDE64_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mldte8 timm:$md, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mldte8 timm:$md, i64:$rs2, iPTR:$rs1),
             (TH_MLDTE8_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mldte16 timm:$md, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mldte16 timm:$md, i64:$rs2, iPTR:$rs1),
             (TH_MLDTE16_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mldte32 timm:$md, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mldte32 timm:$md, i64:$rs2, iPTR:$rs1),
             (TH_MLDTE32_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mldte64 timm:$md, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mldte64 timm:$md, i64:$rs2, iPTR:$rs1),
             (TH_MLDTE64_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mslde8 timm:$md, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mslde8 timm:$md, i64:$rs2, iPTR:$rs1),
             (TH_MSLDE8_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mslde16 timm:$md, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mslde16 timm:$md, i64:$rs2, iPTR:$rs1),
             (TH_MSLDE16_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mslde32 timm:$md, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mslde32 timm:$md, i64:$rs2, iPTR:$rs1),
             (TH_MSLDE32_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mslde64 timm:$md, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mslde64 timm:$md, i64:$rs2, iPTR:$rs1),
             (TH_MSLDE64_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_msldte8 timm:$md, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_msldte8 timm:$md, i64:$rs2, iPTR:$rs1),
             (TH_MSLDTE8_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_msldte16 timm:$md, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_msldte16 timm:$md, i64:$rs2, iPTR:$rs1),
             (TH_MSLDTE16_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_msldte32 timm:$md, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_msldte32 timm:$md, i64:$rs2, iPTR:$rs1),
             (TH_MSLDTE32_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_msldte64 timm:$md, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_msldte64 timm:$md, i64:$rs2, iPTR:$rs1),
             (TH_MSLDTE64_PSEUDO timm:$md, GPR:$rs2, GPR:$rs1)>;
 
   // Prefetch instructions
-  def : Pat<(int_riscv_buddy_th_mplde8 i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mplde8 i64:$rs2, iPTR:$rs1),
             (TH_MPLDE8_PSEUDO GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mplde16 i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mplde16 i64:$rs2, iPTR:$rs1),
             (TH_MPLDE16_PSEUDO GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mplde32 i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mplde32 i64:$rs2, iPTR:$rs1),
             (TH_MPLDE32_PSEUDO GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mplde64 i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mplde64 i64:$rs2, iPTR:$rs1),
             (TH_MPLDE64_PSEUDO GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mpldte8 i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mpldte8 i64:$rs2, iPTR:$rs1),
             (TH_MPLDTE8_PSEUDO GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mpldte16 i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mpldte16 i64:$rs2, iPTR:$rs1),
             (TH_MPLDTE16_PSEUDO GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mpldte32 i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mpldte32 i64:$rs2, iPTR:$rs1),
             (TH_MPLDTE32_PSEUDO GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mpldte64 i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mpldte64 i64:$rs2, iPTR:$rs1),
             (TH_MPLDTE64_PSEUDO GPR:$rs2, GPR:$rs1)>;
 
   // Store instruction
-  def : Pat<(int_riscv_buddy_th_mste8 timm:$ms3, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mste8 timm:$ms3, i64:$rs2, iPTR:$rs1),
             (TH_MSTE8_PSEUDO timm:$ms3, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mste16 timm:$ms3, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mste16 timm:$ms3, i64:$rs2, iPTR:$rs1),
             (TH_MSTE16_PSEUDO timm:$ms3, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mste32 timm:$ms3, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mste32 timm:$ms3, i64:$rs2, iPTR:$rs1),
             (TH_MSTE32_PSEUDO timm:$ms3, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mste64 timm:$ms3, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mste64 timm:$ms3, i64:$rs2, iPTR:$rs1),
             (TH_MSTE64_PSEUDO timm:$ms3, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mstte8 timm:$ms3, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mstte8 timm:$ms3, i64:$rs2, iPTR:$rs1),
             (TH_MSTTE8_PSEUDO timm:$ms3, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mstte16 timm:$ms3, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mstte16 timm:$ms3, i64:$rs2, iPTR:$rs1),
             (TH_MSTTE16_PSEUDO timm:$ms3, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mstte32 timm:$ms3, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mstte32 timm:$ms3, i64:$rs2, iPTR:$rs1),
             (TH_MSTTE32_PSEUDO timm:$ms3, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_mstte64 timm:$ms3, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_mstte64 timm:$ms3, i64:$rs2, iPTR:$rs1),
             (TH_MSTTE64_PSEUDO timm:$ms3, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_msste8 timm:$ms3, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_msste8 timm:$ms3, i64:$rs2, iPTR:$rs1),
             (TH_MSSTE8_PSEUDO timm:$ms3, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_msste16 timm:$ms3, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_msste16 timm:$ms3, i64:$rs2, iPTR:$rs1),
             (TH_MSSTE16_PSEUDO timm:$ms3, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_msste32 timm:$ms3, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_msste32 timm:$ms3, i64:$rs2, iPTR:$rs1),
             (TH_MSSTE32_PSEUDO timm:$ms3, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_msste64 timm:$ms3, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_msste64 timm:$ms3, i64:$rs2, iPTR:$rs1),
             (TH_MSSTE64_PSEUDO timm:$ms3, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_msstte8 timm:$ms3, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_msstte8 timm:$ms3, i64:$rs2, iPTR:$rs1),
             (TH_MSSTTE8_PSEUDO timm:$ms3, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_msstte16 timm:$ms3, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_msstte16 timm:$ms3, i64:$rs2, iPTR:$rs1),
             (TH_MSSTTE16_PSEUDO timm:$ms3, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_msstte32 timm:$ms3, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_msstte32 timm:$ms3, i64:$rs2, iPTR:$rs1),
             (TH_MSSTTE32_PSEUDO timm:$ms3, GPR:$rs2, GPR:$rs1)>;
-  def : Pat<(int_riscv_buddy_th_msstte64 timm:$ms3, i64:$rs2, iPTR:$rs1),
+  def : Pat<(int_riscv_th_msstte64 timm:$ms3, i64:$rs2, iPTR:$rs1),
             (TH_MSSTTE64_PSEUDO timm:$ms3, GPR:$rs2, GPR:$rs1)>;
 
   // Matrix multiply instruction
-  def : Pat<(int_riscv_buddy_th_mmacc_w_b timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mmacc_w_b timm:$md, timm:$ms2, timm:$ms1),
             (TH_MMACC_W_B_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_th_mmaccu_w_b timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mmaccu_w_b timm:$md, timm:$ms2, timm:$ms1),
             (TH_MMACCU_W_B_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_th_mmaccus_w_b timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mmaccus_w_b timm:$md, timm:$ms2, timm:$ms1),
             (TH_MMACCUS_W_B_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_th_mmaccsu_w_b timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mmaccsu_w_b timm:$md, timm:$ms2, timm:$ms1),
             (TH_MMACCSU_W_B_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_th_mfmacc_h timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mfmacc_h timm:$md, timm:$ms2, timm:$ms1),
             (TH_MFMACC_H_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_th_mfmacc_bf16 timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mfmacc_bf16 timm:$md, timm:$ms2, timm:$ms1),
             (TH_MFMACC_BF16_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_th_mfmacc_s timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mfmacc_s timm:$md, timm:$ms2, timm:$ms1),
             (TH_MFMACC_S_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_th_mfmacc_d timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mfmacc_d timm:$md, timm:$ms2, timm:$ms1),
             (TH_MFMACC_D_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_th_mfmacc_h_e4m3 timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mfmacc_h_e4m3 timm:$md, timm:$ms2, timm:$ms1),
             (TH_MFMACC_H_E4M3_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_th_mfmacc_h_e5m2 timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mfmacc_h_e5m2 timm:$md, timm:$ms2, timm:$ms1),
             (TH_MFMACC_H_E5M2_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_th_mfmacc_bf16_e4m3 timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mfmacc_bf16_e4m3 timm:$md, timm:$ms2, timm:$ms1),
             (TH_MFMACC_BF16_E4M3_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_th_mfmacc_bf16_e5m2 timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mfmacc_bf16_e5m2 timm:$md, timm:$ms2, timm:$ms1),
             (TH_MFMACC_BF16_E5M2_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_th_mfmacc_s_h timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mfmacc_s_h timm:$md, timm:$ms2, timm:$ms1),
             (TH_MFMACC_S_H_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_th_mfmacc_s_bf16 timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mfmacc_s_bf16 timm:$md, timm:$ms2, timm:$ms1),
             (TH_MFMACC_S_BF16_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_th_mfmacc_d_s timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mfmacc_d_s timm:$md, timm:$ms2, timm:$ms1),
             (TH_MFMACC_D_S_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_th_mfmacc_s_e4m3 timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mfmacc_s_e4m3 timm:$md, timm:$ms2, timm:$ms1),
             (TH_MFMACC_S_E4M3_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_th_mfmacc_s_e5m2 timm:$md, timm:$ms2, timm:$ms1),
+  def : Pat<(int_riscv_th_mfmacc_s_e5m2 timm:$md, timm:$ms2, timm:$ms1),
             (TH_MFMACC_S_E5M2_PSEUDO timm:$md, timm:$ms2, timm:$ms1)>;
 }

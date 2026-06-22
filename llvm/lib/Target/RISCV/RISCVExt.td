@@ -157,5 +157,5 @@ def MatrixReg : RegisterClass<"RISCV", [untyped], 1024,
   let Size = 1024;  // Placeholder: actual MLEN is hardware-defined
 }
 
-include "RISCVInstrInfoBuddyExt.td"
-include "RISCVInstrInfoBuddyBOSCExt.td"
+include "RISCVInstrInfoExt.td"
+include "RISCVInstrInfoBOSCExt.td"

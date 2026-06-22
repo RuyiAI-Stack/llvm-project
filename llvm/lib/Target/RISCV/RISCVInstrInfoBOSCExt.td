@@ -2282,882 +2282,882 @@ let Predicates = [HasBuddyExt], hasSideEffects = 1, isCodeGenOnly = 1 in {
 
 let Predicates = [HasBuddyExt] in {
   // Configuration immediate instructions
-  def : Pat<(i64 (int_riscv_buddy_bosc_msettypei timm:$imm)),
+  def : Pat<(i64 (int_riscv_bosc_msettypei timm:$imm)),
             (BOSC_AME_MSETTYPEI_PSEUDO timm:$imm)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_msettypehi timm:$imm)),
+  def : Pat<(i64 (int_riscv_bosc_msettypehi timm:$imm)),
             (BOSC_AME_MSETTYPEHI_PSEUDO timm:$imm)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_msettilemi timm:$imm)),
+  def : Pat<(i64 (int_riscv_bosc_msettilemi timm:$imm)),
             (BOSC_AME_MSETTILEMI_PSEUDO timm:$imm)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_msettileni timm:$imm)),
+  def : Pat<(i64 (int_riscv_bosc_msettileni timm:$imm)),
             (BOSC_AME_MSETTILENI_PSEUDO timm:$imm)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_msettileki timm:$imm)),
+  def : Pat<(i64 (int_riscv_bosc_msettileki timm:$imm)),
             (BOSC_AME_MSETTILEKI_PSEUDO timm:$imm)>;
   // Register versions
-  def : Pat<(i64 (int_riscv_buddy_bosc_msettype  GPR:$rs1)),
+  def : Pat<(i64 (int_riscv_bosc_msettype  GPR:$rs1)),
             (BOSC_AME_MSETTYPE_PSEUDO  GPR:$rs1)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_msettilem GPR:$rs1)),
+  def : Pat<(i64 (int_riscv_bosc_msettilem GPR:$rs1)),
             (BOSC_AME_MSETTILEM_PSEUDO GPR:$rs1)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_msettilen GPR:$rs1)),
+  def : Pat<(i64 (int_riscv_bosc_msettilen GPR:$rs1)),
             (BOSC_AME_MSETTILEN_PSEUDO GPR:$rs1)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_msettilek GPR:$rs1)),
+  def : Pat<(i64 (int_riscv_bosc_msettilek GPR:$rs1)),
             (BOSC_AME_MSETTILEK_PSEUDO GPR:$rs1)>;
 
   // Load instructions
   // Matrix A
-  def : Pat<(int_riscv_buddy_bosc_mlae8_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlae8_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLAE8_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlae16_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlae16_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLAE16_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlae32_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlae32_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLAE32_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlae64_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlae64_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLAE64_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlate8_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlate8_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLATE8_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlate16_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlate16_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLATE16_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlate32_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlate32_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLATE32_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlate64_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlate64_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLATE64_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mltre8_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mltre8_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLTRE8_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mltre16_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mltre16_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLTRE16_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mltre32_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mltre32_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLTRE32_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mltre64_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mltre64_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLTRE64_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
   // Matrix B
-  def : Pat<(int_riscv_buddy_bosc_mlbe8_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlbe8_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLBE8_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlbe16_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlbe16_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLBE16_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlbe32_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlbe32_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLBE32_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlbe64_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlbe64_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLBE64_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlbte8_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlbte8_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLBTE8_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlbte16_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlbte16_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLBTE16_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlbte32_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlbte32_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLBTE32_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlbte64_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlbte64_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLBTE64_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
   // Matrix C (Accumulator)
-  def : Pat<(int_riscv_buddy_bosc_mlce8_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlce8_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLCE8_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlce16_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlce16_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLCE16_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlce32_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlce32_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLCE32_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlce64_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlce64_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLCE64_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlcte8_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlcte8_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLCTE8_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlcte16_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlcte16_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLCTE16_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlcte32_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlcte32_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLCTE32_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlcte64_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlcte64_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLCTE64_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlacce8_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlacce8_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLACCE8_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlacce16_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlacce16_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLACCE16_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlacce32_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlacce32_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLACCE32_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mlacce64_m timm:$md, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mlacce64_m timm:$md, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MLACCE64_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
 
   // Store instruction
   // Matrix A
-  def : Pat<(int_riscv_buddy_bosc_msae8_m timm:$ms1, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msae8_m timm:$ms1, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSAE8_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msae16_m timm:$ms1, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msae16_m timm:$ms1, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSAE16_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msae32_m timm:$ms1, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msae32_m timm:$ms1, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSAE32_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msae64_m timm:$ms1, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msae64_m timm:$ms1, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSAE64_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msate8_m timm:$ms1, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msate8_m timm:$ms1, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSATE8_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msate16_m timm:$ms1, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msate16_m timm:$ms1, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSATE16_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msate32_m timm:$ms1, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msate32_m timm:$ms1, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSATE32_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msate64_m timm:$ms1, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msate64_m timm:$ms1, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSATE64_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mstre8_m timm:$ms1, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mstre8_m timm:$ms1, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSTRE8_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mstre16_m timm:$ms1, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mstre16_m timm:$ms1, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSTRE16_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mstre32_m timm:$ms1, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mstre32_m timm:$ms1, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSTRE32_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mstre64_m timm:$ms1, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mstre64_m timm:$ms1, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSTRE64_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
   // Matrix B
-  def : Pat<(int_riscv_buddy_bosc_msbe8_m timm:$ms2, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msbe8_m timm:$ms2, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSBE8_M_PSEUDO timm:$ms2, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msbe16_m timm:$ms2, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msbe16_m timm:$ms2, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSBE16_M_PSEUDO timm:$ms2, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msbe32_m timm:$ms2, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msbe32_m timm:$ms2, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSBE32_M_PSEUDO timm:$ms2, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msbe64_m timm:$ms2, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msbe64_m timm:$ms2, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSBE64_M_PSEUDO timm:$ms2, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msbte8_m timm:$ms2, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msbte8_m timm:$ms2, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSBTE8_M_PSEUDO timm:$ms2, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msbte16_m timm:$ms2, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msbte16_m timm:$ms2, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSBTE16_M_PSEUDO timm:$ms2, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msbte32_m timm:$ms2, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msbte32_m timm:$ms2, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSBTE32_M_PSEUDO timm:$ms2, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msbte64_m timm:$ms2, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msbte64_m timm:$ms2, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSBTE64_M_PSEUDO timm:$ms2, GPR:$rs1, GPR:$rs2)>;
   // Matrix C (Accumulator)
-  def : Pat<(int_riscv_buddy_bosc_msce8_m timm:$ms3, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msce8_m timm:$ms3, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSCE8_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msce16_m timm:$ms3, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msce16_m timm:$ms3, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSCE16_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msce32_m timm:$ms3, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msce32_m timm:$ms3, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSCE32_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msce64_m timm:$ms3, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msce64_m timm:$ms3, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSCE64_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mscte8_m timm:$ms3, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mscte8_m timm:$ms3, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSCTE8_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mscte16_m timm:$ms3, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mscte16_m timm:$ms3, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSCTE16_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mscte32_m timm:$ms3, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mscte32_m timm:$ms3, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSCTE32_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mscte64_m timm:$ms3, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mscte64_m timm:$ms3, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSCTE64_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msacce8_m timm:$ms3, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msacce8_m timm:$ms3, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSACCE8_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msacce16_m timm:$ms3, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msacce16_m timm:$ms3, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSACCE16_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msacce32_m timm:$ms3, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msacce32_m timm:$ms3, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSACCE32_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_msacce64_m timm:$ms3, iPTR:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_msacce64_m timm:$ms3, iPTR:$rs1, i64:$rs2),
             (BOSC_AME_MSACCE64_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
 
   // Data move instructions
   //----------------------------------------------------------------------
   // 1. Matrix-Matrix Move Pseudos (Pure Matrix)
   //----------------------------------------------------------------------
-  def : Pat<(int_riscv_buddy_bosc_mmve8_t_t  timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mmve8_t_t  timm:$md, timm:$ms1),
             (BOSC_AME_MMVE8_T_T_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mmve16_t_t timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mmve16_t_t timm:$md, timm:$ms1),
             (BOSC_AME_MMVE16_T_T_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mmve32_t_t timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mmve32_t_t timm:$md, timm:$ms1),
             (BOSC_AME_MMVE32_T_T_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mmve64_t_t timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mmve64_t_t timm:$md, timm:$ms1),
             (BOSC_AME_MMVE64_T_T_PSEUDO timm:$md, timm:$ms1)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mmve8_a_a  timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mmve8_a_a  timm:$md, timm:$ms1),
             (BOSC_AME_MMVE8_A_A_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mmve16_a_a timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mmve16_a_a timm:$md, timm:$ms1),
             (BOSC_AME_MMVE16_A_A_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mmve32_a_a timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mmve32_a_a timm:$md, timm:$ms1),
             (BOSC_AME_MMVE32_A_A_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mmve64_a_a timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mmve64_a_a timm:$md, timm:$ms1),
             (BOSC_AME_MMVE64_A_A_PSEUDO timm:$md, timm:$ms1)>;
   //----------------------------------------------------------------------
   // 2. Matrix-Matrix Move (with GPR Index)
   //----------------------------------------------------------------------
-  def : Pat<(int_riscv_buddy_bosc_mmve8_a_t  timm:$md, timm:$ms1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mmve8_a_t  timm:$md, timm:$ms1, i64:$rs2),
             (BOSC_AME_MMVE8_A_T_PSEUDO  timm:$md, timm:$ms1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmve16_a_t timm:$md, timm:$ms1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mmve16_a_t timm:$md, timm:$ms1, i64:$rs2),
             (BOSC_AME_MMVE16_A_T_PSEUDO timm:$md, timm:$ms1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmve32_a_t timm:$md, timm:$ms1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mmve32_a_t timm:$md, timm:$ms1, i64:$rs2),
             (BOSC_AME_MMVE32_A_T_PSEUDO timm:$md, timm:$ms1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmve64_a_t timm:$md, timm:$ms1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mmve64_a_t timm:$md, timm:$ms1, i64:$rs2),
             (BOSC_AME_MMVE64_A_T_PSEUDO timm:$md, timm:$ms1, GPR:$rs2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mmve8_t_a  timm:$md, timm:$ms1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mmve8_t_a  timm:$md, timm:$ms1, i64:$rs2),
             (BOSC_AME_MMVE8_T_A_PSEUDO  timm:$md, timm:$ms1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmve16_t_a timm:$md, timm:$ms1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mmve16_t_a timm:$md, timm:$ms1, i64:$rs2),
             (BOSC_AME_MMVE16_T_A_PSEUDO timm:$md, timm:$ms1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmve32_t_a timm:$md, timm:$ms1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mmve32_t_a timm:$md, timm:$ms1, i64:$rs2),
             (BOSC_AME_MMVE32_T_A_PSEUDO timm:$md, timm:$ms1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmve64_t_a timm:$md, timm:$ms1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mmve64_t_a timm:$md, timm:$ms1, i64:$rs2),
             (BOSC_AME_MMVE64_T_A_PSEUDO timm:$md, timm:$ms1, GPR:$rs2)>;
   //----------------------------------------------------------------------
   // 3. Matrix-Matrix Move (with Immediate Index)
   //----------------------------------------------------------------------
-  def : Pat<(int_riscv_buddy_bosc_mmvie8_a_t  timm:$md, timm:$ms1, imm:$imm),
+  def : Pat<(int_riscv_bosc_mmvie8_a_t  timm:$md, timm:$ms1, imm:$imm),
             (BOSC_AME_MMVIE8_A_T_PSEUDO  timm:$md, timm:$ms1, imm:$imm)>;
-  def : Pat<(int_riscv_buddy_bosc_mmvie16_a_t timm:$md, timm:$ms1, imm:$imm),
+  def : Pat<(int_riscv_bosc_mmvie16_a_t timm:$md, timm:$ms1, imm:$imm),
             (BOSC_AME_MMVIE16_A_T_PSEUDO timm:$md, timm:$ms1, imm:$imm)>;
-  def : Pat<(int_riscv_buddy_bosc_mmvie32_a_t timm:$md, timm:$ms1, imm:$imm),
+  def : Pat<(int_riscv_bosc_mmvie32_a_t timm:$md, timm:$ms1, imm:$imm),
             (BOSC_AME_MMVIE32_A_T_PSEUDO timm:$md, timm:$ms1, imm:$imm)>;
-  def : Pat<(int_riscv_buddy_bosc_mmvie64_a_t timm:$md, timm:$ms1, imm:$imm),
+  def : Pat<(int_riscv_bosc_mmvie64_a_t timm:$md, timm:$ms1, imm:$imm),
             (BOSC_AME_MMVIE64_A_T_PSEUDO timm:$md, timm:$ms1, imm:$imm)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mmvie8_t_a  timm:$md, timm:$ms1, imm:$imm),
+  def : Pat<(int_riscv_bosc_mmvie8_t_a  timm:$md, timm:$ms1, imm:$imm),
             (BOSC_AME_MMVIE8_T_A_PSEUDO  timm:$md, timm:$ms1, imm:$imm)>;
-  def : Pat<(int_riscv_buddy_bosc_mmvie16_t_a timm:$md, timm:$ms1, imm:$imm),
+  def : Pat<(int_riscv_bosc_mmvie16_t_a timm:$md, timm:$ms1, imm:$imm),
             (BOSC_AME_MMVIE16_T_A_PSEUDO timm:$md, timm:$ms1, imm:$imm)>;
-  def : Pat<(int_riscv_buddy_bosc_mmvie32_t_a timm:$md, timm:$ms1, imm:$imm),
+  def : Pat<(int_riscv_bosc_mmvie32_t_a timm:$md, timm:$ms1, imm:$imm),
             (BOSC_AME_MMVIE32_T_A_PSEUDO timm:$md, timm:$ms1, imm:$imm)>;
-  def : Pat<(int_riscv_buddy_bosc_mmvie64_t_a timm:$md, timm:$ms1, imm:$imm),
+  def : Pat<(int_riscv_bosc_mmvie64_t_a timm:$md, timm:$ms1, imm:$imm),
             (BOSC_AME_MMVIE64_T_A_PSEUDO timm:$md, timm:$ms1, imm:$imm)>;
   //----------------------------------------------------------------------
   // 4. Matrix to Scalar Move (Returns GPR, matches i64 in IR)
   //----------------------------------------------------------------------
-  def : Pat<(i64 (int_riscv_buddy_bosc_mmve8_x_t  timm:$ms1, i64:$rs2)),
+  def : Pat<(i64 (int_riscv_bosc_mmve8_x_t  timm:$ms1, i64:$rs2)),
             (BOSC_AME_MMVE8_X_T_PSEUDO  timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_mmve16_x_t timm:$ms1, i64:$rs2)),
+  def : Pat<(i64 (int_riscv_bosc_mmve16_x_t timm:$ms1, i64:$rs2)),
             (BOSC_AME_MMVE16_X_T_PSEUDO timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_mmve32_x_t timm:$ms1, i64:$rs2)),
+  def : Pat<(i64 (int_riscv_bosc_mmve32_x_t timm:$ms1, i64:$rs2)),
             (BOSC_AME_MMVE32_X_T_PSEUDO timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_mmve64_x_t timm:$ms1, i64:$rs2)),
+  def : Pat<(i64 (int_riscv_bosc_mmve64_x_t timm:$ms1, i64:$rs2)),
             (BOSC_AME_MMVE64_X_T_PSEUDO timm:$ms1, GPR:$rs2)>;
 
-  def : Pat<(i64 (int_riscv_buddy_bosc_mmve8_x_a  timm:$ms1, i64:$rs2)),
+  def : Pat<(i64 (int_riscv_bosc_mmve8_x_a  timm:$ms1, i64:$rs2)),
             (BOSC_AME_MMVE8_X_A_PSEUDO  timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_mmve16_x_a timm:$ms1, i64:$rs2)),
+  def : Pat<(i64 (int_riscv_bosc_mmve16_x_a timm:$ms1, i64:$rs2)),
             (BOSC_AME_MMVE16_X_A_PSEUDO timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_mmve32_x_a timm:$ms1, i64:$rs2)),
+  def : Pat<(i64 (int_riscv_bosc_mmve32_x_a timm:$ms1, i64:$rs2)),
             (BOSC_AME_MMVE32_X_A_PSEUDO timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_mmve64_x_a timm:$ms1, i64:$rs2)),
+  def : Pat<(i64 (int_riscv_bosc_mmve64_x_a timm:$ms1, i64:$rs2)),
             (BOSC_AME_MMVE64_X_A_PSEUDO timm:$ms1, GPR:$rs2)>;
 
-  def : Pat<(i64 (int_riscv_buddy_bosc_mfmve8_f_t  timm:$ms1, i64:$rs2)),
+  def : Pat<(i64 (int_riscv_bosc_mfmve8_f_t  timm:$ms1, i64:$rs2)),
             (BOSC_AME_MFMVE8_F_T_PSEUDO  timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_mfmve16_f_t timm:$ms1, i64:$rs2)),
+  def : Pat<(i64 (int_riscv_bosc_mfmve16_f_t timm:$ms1, i64:$rs2)),
             (BOSC_AME_MFMVE16_F_T_PSEUDO timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_mfmve32_f_t timm:$ms1, i64:$rs2)),
+  def : Pat<(i64 (int_riscv_bosc_mfmve32_f_t timm:$ms1, i64:$rs2)),
             (BOSC_AME_MFMVE32_F_T_PSEUDO timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_mfmve64_f_t timm:$ms1, i64:$rs2)),
+  def : Pat<(i64 (int_riscv_bosc_mfmve64_f_t timm:$ms1, i64:$rs2)),
             (BOSC_AME_MFMVE64_F_T_PSEUDO timm:$ms1, GPR:$rs2)>;
 
-  def : Pat<(i64 (int_riscv_buddy_bosc_mfmve8_f_a  timm:$ms1, i64:$rs2)),
+  def : Pat<(i64 (int_riscv_bosc_mfmve8_f_a  timm:$ms1, i64:$rs2)),
             (BOSC_AME_MFMVE8_F_A_PSEUDO  timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_mfmve16_f_a timm:$ms1, i64:$rs2)),
+  def : Pat<(i64 (int_riscv_bosc_mfmve16_f_a timm:$ms1, i64:$rs2)),
             (BOSC_AME_MFMVE16_F_A_PSEUDO timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_mfmve32_f_a timm:$ms1, i64:$rs2)),
+  def : Pat<(i64 (int_riscv_bosc_mfmve32_f_a timm:$ms1, i64:$rs2)),
             (BOSC_AME_MFMVE32_F_A_PSEUDO timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_buddy_bosc_mfmve64_f_a timm:$ms1, i64:$rs2)),
+  def : Pat<(i64 (int_riscv_bosc_mfmve64_f_a timm:$ms1, i64:$rs2)),
             (BOSC_AME_MFMVE64_F_A_PSEUDO timm:$ms1, GPR:$rs2)>;
   //----------------------------------------------------------------------
   // 5. Scalar GPR to Matrix Move
   //----------------------------------------------------------------------
-  def : Pat<(int_riscv_buddy_bosc_mmve8_t_x  timm:$md, i64:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mmve8_t_x  timm:$md, i64:$rs1, i64:$rs2),
             (BOSC_AME_MMVE8_T_X_PSEUDO  timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmve16_t_x timm:$md, i64:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mmve16_t_x timm:$md, i64:$rs1, i64:$rs2),
             (BOSC_AME_MMVE16_T_X_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmve32_t_x timm:$md, i64:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mmve32_t_x timm:$md, i64:$rs1, i64:$rs2),
             (BOSC_AME_MMVE32_T_X_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmve64_t_x timm:$md, i64:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mmve64_t_x timm:$md, i64:$rs1, i64:$rs2),
             (BOSC_AME_MMVE64_T_X_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mmve8_a_x  timm:$md, i64:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mmve8_a_x  timm:$md, i64:$rs1, i64:$rs2),
             (BOSC_AME_MMVE8_A_X_PSEUDO  timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmve16_a_x timm:$md, i64:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mmve16_a_x timm:$md, i64:$rs1, i64:$rs2),
             (BOSC_AME_MMVE16_A_X_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmve32_a_x timm:$md, i64:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mmve32_a_x timm:$md, i64:$rs1, i64:$rs2),
             (BOSC_AME_MMVE32_A_X_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmve64_a_x timm:$md, i64:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mmve64_a_x timm:$md, i64:$rs1, i64:$rs2),
             (BOSC_AME_MMVE64_A_X_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mfmve8_t_f  timm:$md, i64:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mfmve8_t_f  timm:$md, i64:$rs1, i64:$rs2),
             (BOSC_AME_MFMVE8_T_F_PSEUDO  timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfmve16_t_f timm:$md, i64:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mfmve16_t_f timm:$md, i64:$rs1, i64:$rs2),
             (BOSC_AME_MFMVE16_T_F_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfmve32_t_f timm:$md, i64:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mfmve32_t_f timm:$md, i64:$rs1, i64:$rs2),
             (BOSC_AME_MFMVE32_T_F_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfmve64_t_f timm:$md, i64:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mfmve64_t_f timm:$md, i64:$rs1, i64:$rs2),
             (BOSC_AME_MFMVE64_T_F_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mfmve8_a_f  timm:$md, i64:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mfmve8_a_f  timm:$md, i64:$rs1, i64:$rs2),
             (BOSC_AME_MFMVE8_A_F_PSEUDO  timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfmve16_a_f timm:$md, i64:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mfmve16_a_f timm:$md, i64:$rs1, i64:$rs2),
             (BOSC_AME_MFMVE16_A_F_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfmve32_a_f timm:$md, i64:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mfmve32_a_f timm:$md, i64:$rs1, i64:$rs2),
             (BOSC_AME_MFMVE32_A_F_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfmve64_a_f timm:$md, i64:$rs1, i64:$rs2),
+  def : Pat<(int_riscv_bosc_mfmve64_a_f timm:$md, i64:$rs1, i64:$rs2),
             (BOSC_AME_MFMVE64_A_F_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
   //----------------------------------------------------------------------
   // 6. Broadcast Pseudos
   //----------------------------------------------------------------------
-  def : Pat<(int_riscv_buddy_bosc_mbcar_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbcar_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCAR_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbcbr_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbcbr_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCBR_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbccr_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbccr_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCCR_M_PSEUDO timm:$md, timm:$ms1)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mbcace8_m  timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbcace8_m  timm:$md, timm:$ms1),
             (BOSC_AME_MBCACE8_M_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbcace16_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbcace16_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCACE16_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbcace32_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbcace32_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCACE32_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbcace64_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbcace64_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCACE64_M_PSEUDO timm:$md, timm:$ms1)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mbcbce8_m  timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbcbce8_m  timm:$md, timm:$ms1),
             (BOSC_AME_MBCBCE8_M_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbcbce16_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbcbce16_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCBCE16_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbcbce32_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbcbce32_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCBCE32_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbcbce64_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbcbce64_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCBCE64_M_PSEUDO timm:$md, timm:$ms1)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mbccce8_m  timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbccce8_m  timm:$md, timm:$ms1),
             (BOSC_AME_MBCCCE8_M_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbccce16_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbccce16_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCCCE16_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbccce32_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbccce32_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCCCE32_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbccce64_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbccce64_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCCCE64_M_PSEUDO timm:$md, timm:$ms1)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mbcaee8_m  timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbcaee8_m  timm:$md, timm:$ms1),
             (BOSC_AME_MBCAEE8_M_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbcaee16_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbcaee16_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCAEE16_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbcaee32_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbcaee32_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCAEE32_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbcaee64_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbcaee64_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCAEE64_M_PSEUDO timm:$md, timm:$ms1)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mbcbee8_m  timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbcbee8_m  timm:$md, timm:$ms1),
             (BOSC_AME_MBCBEE8_M_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbcbee16_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbcbee16_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCBEE16_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbcbee32_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbcbee32_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCBEE32_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbcbee64_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbcbee64_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCBEE64_M_PSEUDO timm:$md, timm:$ms1)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mbccee8_m  timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbccee8_m  timm:$md, timm:$ms1),
             (BOSC_AME_MBCCEE8_M_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbccee16_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbccee16_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCCEE16_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbccee32_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbccee32_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCCEE32_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mbccee64_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mbccee64_m timm:$md, timm:$ms1),
             (BOSC_AME_MBCCEE64_M_PSEUDO timm:$md, timm:$ms1)>;
   //----------------------------------------------------------------------
   // 7. Transpose Pseudos
   //----------------------------------------------------------------------
-  def : Pat<(int_riscv_buddy_bosc_mtae8_m  timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mtae8_m  timm:$md, timm:$ms1),
             (BOSC_AME_MTAE8_M_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mtae16_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mtae16_m timm:$md, timm:$ms1),
             (BOSC_AME_MTAE16_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mtae32_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mtae32_m timm:$md, timm:$ms1),
             (BOSC_AME_MTAE32_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mtae64_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mtae64_m timm:$md, timm:$ms1),
             (BOSC_AME_MTAE64_M_PSEUDO timm:$md, timm:$ms1)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mtbe8_m  timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mtbe8_m  timm:$md, timm:$ms1),
             (BOSC_AME_MTBE8_M_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mtbe16_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mtbe16_m timm:$md, timm:$ms1),
             (BOSC_AME_MTBE16_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mtbe32_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mtbe32_m timm:$md, timm:$ms1),
             (BOSC_AME_MTBE32_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mtbe64_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mtbe64_m timm:$md, timm:$ms1),
             (BOSC_AME_MTBE64_M_PSEUDO timm:$md, timm:$ms1)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mtce8_m  timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mtce8_m  timm:$md, timm:$ms1),
             (BOSC_AME_MTCE8_M_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mtce16_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mtce16_m timm:$md, timm:$ms1),
             (BOSC_AME_MTCE16_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mtce32_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mtce32_m timm:$md, timm:$ms1),
             (BOSC_AME_MTCE32_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mtce64_m timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mtce64_m timm:$md, timm:$ms1),
             (BOSC_AME_MTCE64_M_PSEUDO timm:$md, timm:$ms1)>;
 
   // Element-wise subtract instruction
   //===--------------------------------------------------------------------===//
   // 1. ADD / SUB - No Widen
   //===--------------------------------------------------------------------===//
-  def : Pat<(int_riscv_buddy_bosc_maddu_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_maddu_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MADDU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_maddu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_maddu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MADDU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_maddu_b_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_maddu_b_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MADDU_B_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_maddu_h_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_maddu_h_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MADDU_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_maddu_w_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_maddu_w_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MADDU_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_maddu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_maddu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MADDU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_msaddu_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msaddu_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSADDU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msaddu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msaddu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSADDU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msaddu_b_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msaddu_b_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSADDU_B_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msaddu_h_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msaddu_h_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSADDU_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msaddu_w_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msaddu_w_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSADDU_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msaddu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msaddu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSADDU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_madd_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_madd_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MADD_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_madd_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_madd_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MADD_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_madd_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_madd_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MADD_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_madd_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_madd_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MADD_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_madd_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_madd_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MADD_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_madd_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_madd_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MADD_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_msadd_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msadd_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSADD_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msadd_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msadd_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSADD_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msadd_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msadd_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSADD_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msadd_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msadd_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSADD_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msadd_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msadd_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSADD_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msadd_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msadd_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSADD_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mfadd_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfadd_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFADD_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfadd_cf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfadd_cf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFADD_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfadd_hf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfadd_hf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFADD_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfadd_f_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfadd_f_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFADD_F_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfadd_d_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfadd_d_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFADD_D_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_msubu_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msubu_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSUBU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msubu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msubu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSUBU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msubu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msubu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSUBU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msubu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msubu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSUBU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msubu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msubu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSUBU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msubu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msubu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSUBU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mssubu_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mssubu_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSSUBU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mssubu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mssubu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSSUBU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mssubu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mssubu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSSUBU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mssubu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mssubu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSSUBU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mssubu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mssubu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSSUBU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mssubu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mssubu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSSUBU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_msub_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msub_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSUB_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msub_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msub_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSUB_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msub_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msub_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSUB_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msub_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msub_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSUB_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msub_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msub_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSUB_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msub_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msub_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSUB_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mssub_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mssub_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSSUB_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mssub_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mssub_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSSUB_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mssub_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mssub_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSSUB_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mssub_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mssub_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSSUB_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mssub_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mssub_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSSUB_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mssub_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mssub_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSSUB_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mfsub_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfsub_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFSUB_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfsub_cf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfsub_cf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFSUB_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfsub_hf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfsub_hf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFSUB_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfsub_f_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfsub_f_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFSUB_F_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfsub_d_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfsub_d_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFSUB_D_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
   //===--------------------------------------------------------------------===//
   // 2. ADD / SUB - Double Widen
   //===--------------------------------------------------------------------===//
-  def : Pat<(int_riscv_buddy_bosc_mwaddu_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwaddu_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWADDU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwaddu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwaddu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWADDU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwaddu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwaddu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWADDU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwaddu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwaddu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWADDU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwaddu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwaddu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWADDU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mwadd_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwadd_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWADD_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwadd_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwadd_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWADD_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwadd_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwadd_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWADD_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwadd_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwadd_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWADD_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwadd_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwadd_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWADD_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mfwadd_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfwadd_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFWADD_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfwadd_cf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfwadd_cf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFWADD_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfwadd_hf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfwadd_hf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFWADD_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfwadd_f_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfwadd_f_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFWADD_F_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mwsubu_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwsubu_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWSUBU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwsubu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwsubu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWSUBU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwsubu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwsubu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWSUBU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwsubu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwsubu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWSUBU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwsubu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwsubu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWSUBU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mwsub_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwsub_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWSUB_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwsub_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwsub_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWSUB_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwsub_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwsub_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWSUB_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwsub_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwsub_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWSUB_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwsub_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwsub_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWSUB_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mfwsub_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfwsub_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFWSUB_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfwsub_cf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfwsub_cf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFWSUB_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfwsub_hf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfwsub_hf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFWSUB_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfwsub_f_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfwsub_f_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFWSUB_F_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
   //===--------------------------------------------------------------------===//
   // 3. MIN / MAX - No Widen
   //===--------------------------------------------------------------------===//
-  def : Pat<(int_riscv_buddy_bosc_mminu_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mminu_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMINU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mminu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mminu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMINU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mminu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mminu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMINU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mminu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mminu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMINU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mminu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mminu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMINU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mminu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mminu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMINU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mmaxu_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmaxu_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMAXU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmaxu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmaxu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMAXU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmaxu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmaxu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMAXU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmaxu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmaxu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMAXU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmaxu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmaxu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMAXU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmaxu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmaxu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMAXU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mmin_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmin_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMIN_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmin_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmin_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMIN_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmin_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmin_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMIN_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmin_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmin_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMIN_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmin_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmin_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMIN_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmin_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmin_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMIN_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mmax_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmax_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMAX_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmax_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmax_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMAX_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmax_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmax_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMAX_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmax_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmax_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMAX_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmax_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmax_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMAX_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmax_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmax_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMAX_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mfmin_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfmin_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMIN_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfmin_cf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfmin_cf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMIN_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfmin_hf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfmin_hf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMIN_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfmin_f_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfmin_f_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMIN_F_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfmin_d_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfmin_d_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMIN_D_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mfmax_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfmax_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMAX_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfmax_cf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfmax_cf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMAX_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfmax_hf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfmax_hf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMAX_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfmax_f_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfmax_f_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMAX_F_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfmax_d_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfmax_d_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMAX_D_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
   //===--------------------------------------------------------------------===//
   // 4. MUL / MULH / DIV - No Widen
   //===--------------------------------------------------------------------===//
-  def : Pat<(int_riscv_buddy_bosc_msmulu_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmulu_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMULU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msmulu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmulu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMULU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msmulu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmulu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMULU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msmulu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmulu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMULU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msmulu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmulu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMULU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msmulu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmulu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMULU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mmul_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmul_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMUL_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmul_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmul_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMUL_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmul_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmul_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMUL_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmul_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmul_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMUL_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmul_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmul_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMUL_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmul_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmul_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMUL_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_msmul_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmul_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMUL_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msmul_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmul_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMUL_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msmul_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmul_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMUL_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msmul_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmul_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMUL_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msmul_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmul_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMUL_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msmul_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmul_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMUL_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mfmul_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfmul_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMUL_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfmul_cf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfmul_cf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMUL_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfmul_hf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfmul_hf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMUL_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfmul_f_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfmul_f_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMUL_F_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfmul_d_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfmul_d_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMUL_D_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mmulhu_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmulhu_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMULHU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmulhu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmulhu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMULHU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmulhu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmulhu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMULHU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmulhu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmulhu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMULHU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmulhu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmulhu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMULHU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmulhu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmulhu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMULHU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mmulh_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmulh_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMULH_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmulh_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmulh_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMULH_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmulh_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmulh_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMULH_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmulh_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmulh_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMULH_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmulh_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmulh_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMULH_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmulh_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmulh_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMULH_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mmulhsu_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmulhsu_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMULHSU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmulhsu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmulhsu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMULHSU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmulhsu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmulhsu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMULHSU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmulhsu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmulhsu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMULHSU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmulhsu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmulhsu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMULHSU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmulhsu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmulhsu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMULHSU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_msmulsu_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmulsu_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMULSU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msmulsu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmulsu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMULSU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msmulsu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmulsu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMULSU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msmulsu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmulsu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMULSU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msmulsu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmulsu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMULSU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msmulsu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmulsu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMULSU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mfdiv_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfdiv_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFDIV_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfdiv_cf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfdiv_cf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFDIV_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfdiv_hf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfdiv_hf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFDIV_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfdiv_f_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfdiv_f_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFDIV_F_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfdiv_d_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfdiv_d_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFDIV_D_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
   //===--------------------------------------------------------------------===//
   // 5. MUL - Double Widen
   //===--------------------------------------------------------------------===//
-  def : Pat<(int_riscv_buddy_bosc_mwmulu_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwmulu_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMULU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwmulu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwmulu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMULU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwmulu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwmulu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMULU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwmulu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwmulu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMULU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwmulu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwmulu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMULU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mwmul_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwmul_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMUL_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwmul_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwmul_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMUL_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwmul_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwmul_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMUL_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwmul_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwmul_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMUL_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwmul_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwmul_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMUL_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mwmulsu_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwmulsu_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMULSU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwmulsu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwmulsu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMULSU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwmulsu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwmulsu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMULSU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwmulsu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwmulsu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMULSU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwmulsu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwmulsu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMULSU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_mfwmul_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfwmul_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFWMUL_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfwmul_cf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfwmul_cf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFWMUL_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfwmul_hf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfwmul_hf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFWMUL_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfwmul_f_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfwmul_f_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFWMUL_F_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
   //===--------------------------------------------------------------------===//
   // 6. LOGIC & SHIFT - No Widen
   //===--------------------------------------------------------------------===//
-  def : Pat<(int_riscv_buddy_bosc_mand_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mand_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MAND_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mor_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mor_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MOR_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mxor_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mxor_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MXOR_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_msll_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msll_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSLL_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msll_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msll_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSLL_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msll_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msll_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSLL_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msll_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msll_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSLL_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msll_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msll_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSLL_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msll_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msll_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSLL_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_msrl_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msrl_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSRL_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msrl_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msrl_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSRL_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msrl_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msrl_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSRL_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msrl_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msrl_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSRL_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msrl_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msrl_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSRL_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msrl_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msrl_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSRL_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 
-  def : Pat<(int_riscv_buddy_bosc_msra_mm    timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msra_mm    timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSRA_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msra_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msra_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSRA_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msra_b_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msra_b_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSRA_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msra_h_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msra_h_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSRA_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msra_w_mm  timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msra_w_mm  timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSRA_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msra_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msra_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSRA_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   //===--------------------------------------------------------------------===//
   // 7. SQRT - No Widen (Unary, 2-Operand)
   //===--------------------------------------------------------------------===//
-  def : Pat<(int_riscv_buddy_bosc_mfsqrt_mm    timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mfsqrt_mm    timm:$md, timm:$ms1),
             (BOSC_AME_MFSQRT_MM_PSEUDO    timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mfsqrt_cf_mm timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mfsqrt_cf_mm timm:$md, timm:$ms1),
             (BOSC_AME_MFSQRT_CF_MM_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mfsqrt_hf_mm timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mfsqrt_hf_mm timm:$md, timm:$ms1),
             (BOSC_AME_MFSQRT_HF_MM_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mfsqrt_f_mm  timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mfsqrt_f_mm  timm:$md, timm:$ms1),
             (BOSC_AME_MFSQRT_F_MM_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_buddy_bosc_mfsqrt_d_mm  timm:$md, timm:$ms1),
+  def : Pat<(int_riscv_bosc_mfsqrt_d_mm  timm:$md, timm:$ms1),
             (BOSC_AME_MFSQRT_D_MM_PSEUDO  timm:$md, timm:$ms1)>;
 
   // Matrix multiply instruction
@@ -3165,139 +3165,139 @@ let Predicates = [HasBuddyExt] in {
   // 1. No-widen matrix multiply-accumulate
   //===--------------------------------------------------------------------===//
   // int
-  def : Pat<(int_riscv_buddy_bosc_mma_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mma_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mma_h_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mma_h_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMA_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mma_w_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mma_w_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMA_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mma_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mma_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMA_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   // int, saturated
-  def : Pat<(int_riscv_buddy_bosc_msma_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msma_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msma_h_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msma_h_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMA_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msma_w_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msma_w_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMA_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msma_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msma_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMA_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   // uint
-  def : Pat<(int_riscv_buddy_bosc_mmau_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmau_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMAU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmau_h_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmau_h_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMAU_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmau_w_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmau_w_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMAU_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mmau_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mmau_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MMAU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   // uint, saturated
-  def : Pat<(int_riscv_buddy_bosc_msmau_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmau_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMAU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msmau_h_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmau_h_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMAU_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msmau_w_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmau_w_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMAU_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msmau_dw_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msmau_dw_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSMAU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   // float point
-  def : Pat<(int_riscv_buddy_bosc_mfma_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfma_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfma_hf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfma_hf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMA_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfma_f_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfma_f_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMA_F_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfma_d_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfma_d_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFMA_D_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   //===--------------------------------------------------------------------===//
   // 2. Double-widen matrix multiply-accumulate
   //===--------------------------------------------------------------------===//
   // uint
-  def : Pat<(int_riscv_buddy_bosc_mwmau_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwmau_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMAU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwmau_h_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwmau_h_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMAU_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwmau_w_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwmau_w_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMAU_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   // uint, saturated
-  def : Pat<(int_riscv_buddy_bosc_mswmau_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mswmau_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSWMAU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mswmau_h_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mswmau_h_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSWMAU_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mswmau_w_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mswmau_w_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSWMAU_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   // int
-  def : Pat<(int_riscv_buddy_bosc_mwma_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwma_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwma_h_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwma_h_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMA_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mwma_w_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mwma_w_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MWMA_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   // int, saturated
-  def : Pat<(int_riscv_buddy_bosc_mswma_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mswma_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSWMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mswma_h_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mswma_h_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSWMA_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mswma_w_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mswma_w_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSWMA_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   // float point
-  def : Pat<(int_riscv_buddy_bosc_mfwma_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfwma_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFWMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfwma_cf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfwma_cf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFWMA_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfwma_hf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfwma_hf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFWMA_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfwma_f_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfwma_f_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFWMA_F_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   //===--------------------------------------------------------------------===//
   // 3. Quad-widen matrix multiply-accumulate
   //===--------------------------------------------------------------------===//
   // uint
-  def : Pat<(int_riscv_buddy_bosc_mqmau_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mqmau_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MQMAU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mqmau_b_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mqmau_b_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MQMAU_B_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   // uint, saturated
-  def : Pat<(int_riscv_buddy_bosc_msqmau_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msqmau_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSQMAU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msqmau_b_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msqmau_b_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSQMAU_B_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   // int
-  def : Pat<(int_riscv_buddy_bosc_mqma_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mqma_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MQMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mqma_b_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mqma_b_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MQMA_B_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   // int, saturated
-  def : Pat<(int_riscv_buddy_bosc_msqma_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msqma_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSQMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msqma_b_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msqma_b_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSQMA_B_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   // float point
-  def : Pat<(int_riscv_buddy_bosc_mfqma_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfqma_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFQMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_mfqma_cf_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_mfqma_cf_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MFQMA_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   //===--------------------------------------------------------------------===//
   // 4. Oct-widen matrix multiply-accumulate
   //===--------------------------------------------------------------------===//
   // uint
-  def : Pat<(int_riscv_buddy_bosc_momau_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_momau_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MOMAU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_momau_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_momau_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MOMAU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   // uint, saturated
-  def : Pat<(int_riscv_buddy_bosc_msomau_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msomau_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSOMAU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msomau_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msomau_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSOMAU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   // int
-  def : Pat<(int_riscv_buddy_bosc_moma_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_moma_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MOMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_moma_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_moma_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MOMA_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
   // int, saturated
-  def : Pat<(int_riscv_buddy_bosc_msoma_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msoma_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSOMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_buddy_bosc_msoma_hb_mm timm:$md, timm:$ms1, timm:$ms2),
+  def : Pat<(int_riscv_bosc_msoma_hb_mm timm:$md, timm:$ms1, timm:$ms2),
             (BOSC_AME_MSOMA_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
 }
