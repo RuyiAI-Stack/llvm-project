@@ -15,6 +15,7 @@ add_orc_rt_unittest(CoreTests
   AllocActionTest.cpp
   BitmaskEnumTest.cpp
   BootstrapInfoTest.cpp
+  CallSPSCITest.cpp
   CallableTraitsHelperTest.cpp
   SimpleSymbolTableTest.cpp
   EndianTest.cpp
@@ -31,7 +32,7 @@ add_orc_rt_unittest(CoreTests
   MemoryFlagsTest.cpp
   NativeDylibManagerTest.cpp
   NativeDylibManagerSPSCITest.cpp
-  QueueingTaskDispatcherTest.cpp
+  QueueingRunnerTest.cpp
   RTTITest.cpp
   ScopeExitTest.cpp
   SessionTest.cpp
@@ -43,7 +44,7 @@ add_orc_rt_unittest(CoreTests
   SPSWrapperFunctionTest.cpp
   SPSWrapperFunctionBufferTest.cpp
   TaskGroupTest.cpp
-  ThreadPoolTaskDispatcherTest.cpp
+  ThreadPoolRunnerTest.cpp
   WrapperFunctionBufferTest.cpp
   bind-test.cpp
   bit-test.cpp
