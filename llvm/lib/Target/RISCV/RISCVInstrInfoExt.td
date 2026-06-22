@@ -1,4 +1,4 @@
-//===- RISCVInstrInfoBuddyExt.td ------------------------------------------===//
+//===------ RISCVInstrInfoExt.td ------------------------------------------===//
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-// include "llvm/IR/IntrinsicsRISCVBuddyExt.td"
+// include "llvm/IR/IntrinsicsRISCVExt.td"
 
 // Gemmini defines different values as func7
 // - https://github.com/ucb-bar/gemmini-rocc-tests/blob/e326e7c43457ff08669fe88edcaa395d846474d8/include/gemmini.h#L25

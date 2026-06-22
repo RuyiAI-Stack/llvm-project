@@ -1,4 +1,4 @@
-//===- RISCVInstrInfoBuddyBOSCExt.td --------------------------------------===//
+//===------ RISCVInstrInfoBOSCExt.td --------------------------------------===//
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-// include "llvm/IR/IntrinsicsRISCVBuddyBOSCExt.td"
+// include "llvm/IR/IntrinsicsRISCVBOSCExt.td"
 
 //===----------------------------------------------------------------------===//
 // BOSC AME (RISC-V Matrix Extension) 32-bit Instructions
