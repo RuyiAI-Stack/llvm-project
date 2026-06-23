@@ -492,10 +492,10 @@ bool RISCVAsmPrinter::lowerBuddyExtPseudo(const MachineInstr *MI,
       return false;
     addImmOperand(Inst, MI->getOperand(1));
     return true;
-  case RISCV::BOSC_AME_MZERO_PSEUDO:
-    Inst.setOpcode(RISCV::BOSC_AME_MZERO_M);
-    AddAccIndex(0);
-    return true;
+  // case RISCV::BOSC_AME_MZERO_PSEUDO:
+  //   Inst.setOpcode(RISCV::BOSC_AME_MZERO_M);
+  //   AddAccIndex(0);
+  //   return true;
   case RISCV::BOSC_AME_MLAE32_M_PSEUDO:
     Inst.setOpcode(RISCV::BOSC_AME_MLAE32_M);
     AddTileIndex(0);
@@ -620,27 +620,27 @@ bool RISCVAsmPrinter::emitBuddyHighLevelAMEPseudo(const MachineInstr *MI) {
   switch (MI->getOpcode()) {
   default:
     return false;
-  case RISCV::AME_MQMA_B_MM_MEM_PSEUDO:
-    LoadAOpc = RISCV::AME_MLAE8_M;
-    LoadBOpc = RISCV::AME_MLBE8_M;
-    LoadCOpc = RISCV::AME_MLCE32_M;
-    ComputeOpc = RISCV::AME_MQMA_B_MM;
-    StoreCOpc = RISCV::AME_MSCE32_M;
-    break;
-  case RISCV::AME_MMA_W_MM_MEM_PSEUDO:
-    LoadAOpc = RISCV::AME_MLAE32_M;
-    LoadBOpc = RISCV::AME_MLBE32_M;
-    LoadCOpc = RISCV::AME_MLCE32_M;
-    ComputeOpc = RISCV::AME_MMA_W_MM;
-    StoreCOpc = RISCV::AME_MSCE32_M;
-    break;
-  case RISCV::AME_MMA_DW_MM_MEM_PSEUDO:
-    LoadAOpc = RISCV::AME_MLAE64_M;
-    LoadBOpc = RISCV::AME_MLBE64_M;
-    LoadCOpc = RISCV::AME_MLCE64_M;
-    ComputeOpc = RISCV::AME_MMA_DW_MM;
-    StoreCOpc = RISCV::AME_MSCE64_M;
-    break;
+  // case RISCV::AME_MQMA_B_MM_MEM_PSEUDO:
+  //   LoadAOpc = RISCV::AME_MLAE8_M;
+  //   LoadBOpc = RISCV::AME_MLBE8_M;
+  //   LoadCOpc = RISCV::AME_MLCE32_M;
+  //   ComputeOpc = RISCV::AME_MQMA_B_MM;
+  //   StoreCOpc = RISCV::AME_MSCE32_M;
+  //   break;
+  // case RISCV::AME_MMA_W_MM_MEM_PSEUDO:
+  //   LoadAOpc = RISCV::AME_MLAE32_M;
+  //   LoadBOpc = RISCV::AME_MLBE32_M;
+  //   LoadCOpc = RISCV::AME_MLCE32_M;
+  //   ComputeOpc = RISCV::AME_MMA_W_MM;
+  //   StoreCOpc = RISCV::AME_MSCE32_M;
+  //   break;
+  // case RISCV::AME_MMA_DW_MM_MEM_PSEUDO:
+  //   LoadAOpc = RISCV::AME_MLAE64_M;
+  //   LoadBOpc = RISCV::AME_MLBE64_M;
+  //   LoadCOpc = RISCV::AME_MLCE64_M;
+  //   ComputeOpc = RISCV::AME_MMA_DW_MM;
+  //   StoreCOpc = RISCV::AME_MSCE64_M;
+  //   break;
   }
 
   auto AddLoweredOperand = [&](MCInst &Inst, unsigned OpNo) -> bool {
