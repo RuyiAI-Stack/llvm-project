@@ -280,6 +280,7 @@
 // CHECK-NEXT:     xtheadsync           1.0       'XTHeadSync' (T-Head multicore synchronization instructions)
 // CHECK-NEXT:     xtheadvdot           1.0       'XTHeadVdot' (T-Head Vector Extensions for Dot)
 // CHECK-NEXT:     xwchc                2.2       'Xwchc' (WCH/QingKe additional compressed opcodes)
+// CHECK-NEXT:     xxiangshaname        1.0       'XXiangShanAME' (OpenXiangShan Advanced Matrix Extension)
 // CHECK-EMPTY:
 // CHECK-NEXT: Experimental extensions
 // CHECK-NEXT:     p                    0.21      'P' ('Base P' (Packed SIMD))
