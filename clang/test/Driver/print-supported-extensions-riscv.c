@@ -277,6 +277,7 @@
 // CHECK-NEXT:     xtheadvdot           1.0       'XTHeadVdot' (T-Head Vector Extensions for Dot)
 // CHECK-NEXT:     xventanacondops      1.0       'XVentanaCondOps' (Ventana Conditional Ops)
 // CHECK-NEXT:     xwchc                2.2       'Xwchc' (WCH/QingKe additional compressed opcodes)
+// CHECK-NEXT:     xxiangshaname        1.0       'XXiangShanAME' (OpenXiangShan Advanced Matrix Extension)
 // CHECK-EMPTY:
 // CHECK-NEXT: Experimental extensions
 // CHECK-NEXT:     p                    0.21      'P' ('Base P' (Packed SIMD))

@@ -1385,9 +1385,15 @@ def HasVendorXGemmini
       AssemblerPredicate<(all_of FeatureVendorXGemmini),
           "'XGemmini' (Gemmini extension)">;
 
+def FeatureVendorXXiangShanAME
+    : RISCVExtension<1, 0, "OpenXiangShan Advanced Matrix Extension">;
+
 def FeatureVendorXBOSCAME
-    : RISCVExtension<1, 0, "BOSC AME extension">;
-def HasVendorXBOSCAME
+    : SubtargetFeature<"xboscame", "HasVendorXBOSCAME", "true",
+                       "BOSC AME Alias (Enable xxiangshaname)",
+                       [FeatureVendorXXiangShanAME]>;
+
+def HasVendorXBOSCAME 
     : Predicate<"Subtarget->hasVendorXBOSCAME()">,
       AssemblerPredicate<(all_of FeatureVendorXBOSCAME),
           "'XBOSCAME' (BOSC AME extension)">;
