@@ -183,6 +183,11 @@ if(LLVM_ENABLE_PIC AND MLIR_ENABLE_EXECUTION_ENGINE)
     mlir_c_runner_utils
     mlir_runner_utils
     mlir_float16_utils
+    StaticMLIRAsyncRuntime
+    StaticMLIRCRunnerUtils
+    StaticMLIRFloat16Utils
+    StaticMLIRRunnerUtils
+    StaticMLIRSparseTensorRuntime
   )
 endif()
 
