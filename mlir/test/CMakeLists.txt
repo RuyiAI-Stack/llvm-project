@@ -174,6 +174,11 @@ if(LLVM_ENABLE_PIC AND TARGET ${LLVM_NATIVE_ARCH})
     mlir_c_runner_utils
     mlir_runner_utils
     mlir_float16_utils
+    StaticMLIRAsyncRuntime
+    StaticMLIRCRunnerUtils
+    StaticMLIRFloat16Utils
+    StaticMLIRRunnerUtils
+    StaticMLIRSparseTensorRuntime
   )
 endif()
 
