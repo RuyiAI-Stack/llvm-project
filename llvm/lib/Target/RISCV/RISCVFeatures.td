@@ -1397,6 +1397,28 @@ def HasVendorXBOSCAME
       AssemblerPredicate<(all_of FeatureVendorXBOSCAME),
           "'XBOSCAME' (BOSC AME extension)">;
 
+def FeatureVendorXBBPebble
+    : RISCVExtension<1, 0, "Buckyball CNN extension">;
+def HasVendorXBBPebble
+    : Predicate<"Subtarget->hasVendorXBBPebble()">,
+      AssemblerPredicate<(all_of FeatureVendorXBBPebble),
+          "'XBBPebble' (Buckyball CNN extension)">;
+
+def FeatureVendorXBBMeteor
+    : RISCVExtension<1, 0, "Buckyball Large Language Model extension">;
+def HasVendorXBBMeteor
+    : Predicate<"Subtarget->hasVendorXBBMeteor()">,
+      AssemblerPredicate<(all_of FeatureVendorXBBMeteor),
+          "'XBBMeteor' (Buckyball Large Language Model extension)">;
+
+def HasVendorXBuckyballBase
+    : Predicate<"Subtarget->hasVendorXBBPebble() || "
+                "Subtarget->hasVendorXBBMeteor()">,
+      AssemblerPredicate<(any_of FeatureVendorXBBPebble,
+                                 FeatureVendorXBBMeteor),
+          "'XBBPebble' (Buckyball CNN extension) or "
+          "'XBBMeteor' (Buckyball Large Language Model extension)">;
+
 class XTHeadAMEExtension<int major, int minor, string desc>
     : RISCVExtension<major, minor, "T-Head AME " # desc>;
 

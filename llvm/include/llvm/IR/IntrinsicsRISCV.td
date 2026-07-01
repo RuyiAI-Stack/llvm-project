@@ -654,7 +654,7 @@ let TargetPrefix = "riscv" in {
   class RISCVClassifyMasked
         : DefaultAttrsIntrinsic<[LLVMVectorOfBitcastsToInt<0>],
                     [LLVMVectorOfBitcastsToInt<0>, llvm_anyvector_ty,
-                     LLVMScalarOrSameVectorWidth<0, llvm_i1_ty>, 
+                     LLVMScalarOrSameVectorWidth<0, llvm_i1_ty>,
                      llvm_anyint_ty, LLVMMatchType<1>],
                     [IntrNoMem, ImmArg<ArgIndex<4>>]>, RISCVVIntrinsic {
     let VLOperand = 3;
@@ -2172,3 +2172,4 @@ include "llvm/IR/IntrinsicsRISCVXAndes.td"
 include "llvm/IR/IntrinsicsRISCVXMIPS.td"
 include "llvm/IR/IntrinsicsRISCVExt.td"
 include "llvm/IR/IntrinsicsRISCVBOSCExt.td"
+include "llvm/IR/IntrinsicsRISCVBuckyballExt.td"

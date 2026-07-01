@@ -221,6 +221,8 @@
 ; CHECK-NEXT:   xandesvpackfph                   - 'XAndesVPackFPH' (Andes Vector Packed FP16 Extension).
 ; CHECK-NEXT:   xandesvsinth                     - 'XAndesVSIntH' (Andes Vector Small INT Handling Extension).
 ; CHECK-NEXT:   xandesvsintload                  - 'XAndesVSIntLoad' (Andes Vector INT4 Load Extension).
+; CHECK-NEXT:   xbbmeteor                        - 'XBBMeteor' (Buckyball Large Language Model extension).
+; CHECK-NEXT:   xbbpebble                        - 'XBBPebble' (Buckyball CNN extension).
 ; CHECK-NEXT:   xboscame                         - BOSC AME Alias (Enable xxiangshaname).
 ; CHECK-NEXT:   xcheriot                         - 'XCheriot' (CHERIoT extension).
 ; CHECK-NEXT:   xcvalu                           - 'XCValu' (CORE-V ALU Operations).
@@ -259,13 +261,13 @@
 ; CHECK-NEXT:   xsfmm128t                        - 'XSfmm128t' (TE=128 configuration).
 ; CHECK-NEXT:   xsfmm16t                         - 'XSfmm16t' (TE=16 configuration).
 ; CHECK-NEXT:   xsfmm32a                         - 'XSfmm32a' (TEW=32-bit accumulation operands - int: 8b; float: fp16, bf16, fp32)
-; CHECK-NEXT:   xsfmm32a16f                      - 'XSfmm32a16f' (TEW=32-bit accumulation, operands - float: 16b, widen=2 (IEEE, BF)). 
-; CHECK-NEXT:   xsfmm32a32f                      - 'XSfmm32a32f' (TEW=32-bit accumulation, operands - float: 32b). 
-; CHECK-NEXT:   xsfmm32a8f                       - 'XSfmm32a8f' (TEW=32-bit accumulation, operands - float: fp8). 
-; CHECK-NEXT:   xsfmm32a8i                       - 'XSfmm32a8i' (TEW=32-bit accumulation, operands - int: 8b). 
-; CHECK-NEXT:   xsfmm32t                         - 'XSfmm32t' (TE=32 configuration). 
-; CHECK-NEXT:   xsfmm64a64f                      - 'XSfmm64a64f' (TEW=64-bit accumulation, operands - float: fp64). 
-; CHECK-NEXT:   xsfmm64t                         - 'XSfmm64t' (TE=64 configuration). 
+; CHECK-NEXT:   xsfmm32a16f                      - 'XSfmm32a16f' (TEW=32-bit accumulation, operands - float: 16b, widen=2 (IEEE, BF)).
+; CHECK-NEXT:   xsfmm32a32f                      - 'XSfmm32a32f' (TEW=32-bit accumulation, operands - float: 32b).
+; CHECK-NEXT:   xsfmm32a8f                       - 'XSfmm32a8f' (TEW=32-bit accumulation, operands - float: fp8).
+; CHECK-NEXT:   xsfmm32a8i                       - 'XSfmm32a8i' (TEW=32-bit accumulation, operands - int: 8b).
+; CHECK-NEXT:   xsfmm32t                         - 'XSfmm32t' (TE=32 configuration).
+; CHECK-NEXT:   xsfmm64a64f                      - 'XSfmm64a64f' (TEW=64-bit accumulation, operands - float: fp64).
+; CHECK-NEXT:   xsfmm64t                         - 'XSfmm64t' (TE=64 configuration).
 ; CHECK-NEXT:   xsfmmbase                        - 'XSfmmbase' (All non arithmetic instructions for all TEWs and sf.vtzero).
 ; CHECK-NEXT:   xsfvcp                           - 'XSfvcp' (SiFive Custom Vector Coprocessor Interface Instructions).
 ; CHECK-NEXT:   xsfvfbfexp16e                    - 'XSfvfbfexp16e' (SiFive Vector Floating-Point Exponential Function Instruction, BFloat16).
