@@ -171,6 +171,8 @@
 // CHECK-NEXT:     xandesvpackfph       5.0       'XAndesVPackFPH' (Andes Vector Packed FP16 Extension)
 // CHECK-NEXT:     xandesvsinth         5.0       'XAndesVSIntH' (Andes Vector Small INT Handling Extension)
 // CHECK-NEXT:     xandesvsintload      5.0       'XAndesVSIntLoad' (Andes Vector INT4 Load Extension)
+// CHECK-NEXT:     xbbmeteor            1.0       'XBBMeteor' (Buckyball Large Language Model extension)
+// CHECK-NEXT:     xbbpebble            1.0       'XBBPebble' (Buckyball CNN extension)
 // CHECK-NEXT:     xcheriot             1.0       'XCheriot' (CHERIoT extension)
 // CHECK-NEXT:     xcvalu               1.0       'XCValu' (CORE-V ALU Operations)
 // CHECK-NEXT:     xcvbi                1.0       'XCVbi' (CORE-V Immediate Branching)
