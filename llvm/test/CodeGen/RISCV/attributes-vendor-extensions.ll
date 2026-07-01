@@ -9,8 +9,8 @@
 
 ; CHECK: .attribute 4, 16
 
-; RV32XBOSCAME: .attribute 5, "rv32i2p1_xboscame1p0"
-; RV64XBOSCAME: .attribute 5, "rv64i2p1_xboscame1p0"
+; RV32XBOSCAME: .attribute 5, "rv32i2p1_xxiangshaname1p0"
+; RV64XBOSCAME: .attribute 5, "rv64i2p1_xxiangshaname1p0"
 ; RV32XGEMMINI: .attribute 5, "rv32i2p1_xgemmini1p0"
 ; RV64XGEMMINI: .attribute 5, "rv64i2p1_xgemmini1p0"
 ; RV32XSMTIME: .attribute 5, "rv32i2p1_f2p2_d2p2_v1p0_zicsr2p0_zve32f1p0_zve32x1p0_zve64d1p0_zve64f1p0_zve64x1p0_zvl128b1p0_zvl32b1p0_zvl64b1p0_xsmtime1p0"
