@@ -33,7 +33,7 @@ namespace llvm {
 class raw_ostream;
 class Triple;
 
-const unsigned MAX_SUBTARGET_WORDS = 7;
+const unsigned MAX_SUBTARGET_WORDS = 8;
 const unsigned MAX_SUBTARGET_FEATURES = MAX_SUBTARGET_WORDS * 64;
 
 /// Container class for subtarget features.
@@ -183,7 +183,7 @@ public:
 
   bool operator!=(const FeatureBitset &RHS) const { return !(*this == RHS); }
 
-  bool operator < (const FeatureBitset &Other) const {
+  bool operator<(const FeatureBitset &Other) const {
     for (unsigned I = 0, E = size(); I != E; ++I) {
       bool LHS = test(I), RHS = Other.test(I);
       if (LHS != RHS)
@@ -213,7 +213,7 @@ public:
 /// that feature should be enabled or disabled contrary to the cpu
 /// specification.
 class SubtargetFeatures {
-  std::vector<std::string> Features;    ///< Subtarget features as a vector
+  std::vector<std::string> Features; ///< Subtarget features as a vector
 
 public:
   LLVM_ABI explicit SubtargetFeatures(StringRef Initial = "");
@@ -244,7 +244,7 @@ public:
     // Get first character
     char Ch = Feature[0];
     // Check if first character is '+' or '-' flag
-    return Ch == '+' || Ch =='-';
+    return Ch == '+' || Ch == '-';
   }
 
   /// Return string stripped of flag.
