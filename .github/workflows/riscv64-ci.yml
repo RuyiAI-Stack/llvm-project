@@ -5,16 +5,15 @@ name: CI (riscv64)
 
 on:
   push:
-    branches: [riscv]
+    branches: [ riscv ]
 
-  pull_request_target:
-    types: [opened, synchronize, reopened]
+  pull_request:
+    branches: [ riscv ]
 
-permissions:
-  contents: read
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
   cancel-in-progress: true
 
 env:
