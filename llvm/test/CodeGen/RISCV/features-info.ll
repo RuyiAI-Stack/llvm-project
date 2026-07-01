@@ -215,7 +215,7 @@
 ; CHECK-NEXT:   xandesvpackfph                   - 'XAndesVPackFPH' (Andes Vector Packed FP16 Extension).
 ; CHECK-NEXT:   xandesvsinth                     - 'XAndesVSIntH' (Andes Vector Small INT Handling Extension).
 ; CHECK-NEXT:   xandesvsintload                  - 'XAndesVSIntLoad' (Andes Vector INT4 Load Extension).
-; CHECK-NEXT:   xboscame                         - 'XBOSCAME' (BOSC AME extension).
+; CHECK-NEXT:   xboscame                         - BOSC AME Alias (Enable xxiangshaname).
 ; CHECK-NEXT:   xcheriot                         - 'XCheriot' (CHERIoT extension).
 ; CHECK-NEXT:   xcvalu                           - 'XCValu' (CORE-V ALU Operations).
 ; CHECK-NEXT:   xcvbi                            - 'XCVbi' (CORE-V Immediate Branching).
@@ -322,6 +322,7 @@
 ; CHECK-NEXT:   xtheadvdot                       - 'XTHeadVdot' (T-Head Vector Extensions for Dot).
 ; CHECK-NEXT:   xventanacondops                  - 'XVentanaCondOps' (Ventana Conditional Ops).
 ; CHECK-NEXT:   xwchc                            - 'Xwchc' (WCH/QingKe additional compressed opcodes).
+; CHECK-NEXT:   xxiangshaname                    - 'XXiangShanAME' (OpenXiangShan Advanced Matrix Extension).
 ; CHECK-NEXT:   za128rs                          - 'Za128rs' (Reservation Set Size of at Most 128 Bytes).
 ; CHECK-NEXT:   za64rs                           - 'Za64rs' (Reservation Set Size of at Most 64 Bytes).
 ; CHECK-NEXT:   zaamo                            - 'Zaamo' (Atomic Memory Operations).
