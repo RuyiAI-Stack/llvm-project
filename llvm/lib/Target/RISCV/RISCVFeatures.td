@@ -1418,7 +1418,6 @@ def FeatureVendorXBOSCAME
     : SubtargetFeature<"xboscame", "HasVendorXBOSCAME", "true",
                        "BOSC AME Alias (Enable xxiangshaname)",
                        [FeatureVendorXXiangShanAME]>;
-
 def HasVendorXBOSCAME 
     : Predicate<"Subtarget->hasVendorXBOSCAME()">,
       AssemblerPredicate<(all_of FeatureVendorXBOSCAME),
