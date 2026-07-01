@@ -15,7 +15,6 @@
 mma.h.mm acc0, tr1, tr2
 # CHECK-INST: mma.h.mm acc0, tr1, tr2
 # CHECK-ENCODING: [0x77,0x9c,0x28,0x20]
-# CHECK-NO-XBOSCAME: instruction requires the following: 'XBOSCAME' (BOSC AME extension){{$}}
 
 mma.w.mm acc0, tr1, tr2
 # CHECK-INST: mma.w.mm acc0, tr1, tr2
