@@ -23,30 +23,30 @@
 //===----------------------------------------------------------------------===//
 // Reference: RISC-V Matrix Extension Specification
 
-def MatrixIndexAsmOperand : AsmOperandClass {
-  let Name = "MatrixIndex";
+def THeadAMEMatrixIndexAsmOperand : AsmOperandClass {
+  let Name = "THeadAMEMatrixIndex";
   let RenderMethod = "addImmOperands";
   let PredicateMethod = "isUImm3";
-  let DiagnosticType = "InvalidMatrixIndex";
+  let DiagnosticType = "InvalidTHeadAMEMatrixIndex";
 }
 
-// Operand type for MatrixReg index (0-7), printed with "m" prefix in AsmString
-def MatrixIndex : RISCVOp<i64> {
-  let ParserMatchClass = MatrixIndexAsmOperand;
+// Operand type for THeadAMEMatrixReg index (0-7), printed with "m" prefix in AsmString
+def THeadAMEMatrixIndex : RISCVOp<i64> {
+  let ParserMatchClass = THeadAMEMatrixIndexAsmOperand;
   let DecoderMethod = "decodeUImmOperand<3>";
   let OperandType = "OPERAND_UIMM3";
 }
 
-def MatrixRegAsmOperand : AsmOperandClass {
-  let Name = "MatrixRegOp";
-  let ParserMethod = "parseMatrixReg";
+def THeadAMEMatrixRegAsmOperand : AsmOperandClass {
+  let Name = "THeadAMEMatrixRegOp";
+  let ParserMethod = "parseTHeadAMEMatrixReg";
   let RenderMethod = "addRegOperands";
-  let PredicateMethod = "isMatrixReg";
+  let PredicateMethod = "isTHeadAMEMatrixReg";
 }
 
-def MatrixRegOp : RegisterOperand<MatrixReg> {
-  let ParserMatchClass = MatrixRegAsmOperand;
-  let PrintMethod = "printMatrixReg";
+def THeadAMEMatrixRegOp : RegisterOperand<THeadAMEMatrixReg> {
+  let ParserMatchClass = THeadAMEMatrixRegAsmOperand;
+  let PrintMethod = "printTHeadAMEMatrixReg";
 }
 
 //===----------------------------------------------------------------------===//
@@ -54,7 +54,7 @@ def MatrixRegOp : RegisterOperand<MatrixReg> {
 //===----------------------------------------------------------------------===//
 
 // Base class for XTAME 32-bit matrix multiplication instructions
-// Uses MatrixReg for inputs (ms1, ms2) and MatrixReg for output (md)
+// Uses THeadAMEMatrixReg for inputs (ms1, ms2) and THeadAMEMatrixReg for output (md)
 class RVInstXTAME32<dag outs, dag ins, string opcodestr, string argstr>
     : RVInst<outs, ins, opcodestr, argstr, [], InstFormatOther> {
   bits<4> func4;
@@ -84,8 +84,8 @@ class RVInstXTAME32<dag outs, dag ins, string opcodestr, string argstr>
 // AME Matrix Multiplication Instructions
 //===----------------------------------------------------------------------===//
 class TH_MMACC<bits<3> type_val, string opcodestr>
-    : RVInstXTAME32<(outs MatrixRegOp:$md),
-                  (ins MatrixRegOp:$md_in, MatrixRegOp:$ms2, MatrixRegOp:$ms1),
+    : RVInstXTAME32<(outs THeadAMEMatrixRegOp:$md),
+                  (ins THeadAMEMatrixRegOp:$md_in, THeadAMEMatrixRegOp:$ms2, THeadAMEMatrixRegOp:$ms1),
                   opcodestr, "$md, $ms2, $ms1"> {
   let Constraints = "$md = $md_in";
   let func4   = 0b0010;
@@ -114,8 +114,8 @@ def TH_MMACCSU_W_B : TH_MMACC<0b011, "th.mmaccsu.w.b">;
 // AME Matrix Multiplication Instructions (float)
 //===----------------------------------------------------------------------===//
 class TH_MFMACC<bit size_val, bits<2> size_w_val, bits<3> type_val, string opcodestr>
-    : RVInstXTAME32<(outs MatrixRegOp:$md),
-                  (ins MatrixRegOp:$md_in, MatrixRegOp:$ms2, MatrixRegOp:$ms1),
+    : RVInstXTAME32<(outs THeadAMEMatrixRegOp:$md),
+                  (ins THeadAMEMatrixRegOp:$md_in, THeadAMEMatrixRegOp:$ms2, THeadAMEMatrixRegOp:$ms1),
                   opcodestr, "$md, $ms2, $ms1"> {
   let Constraints = "$md = $md_in";
   let func4   = 0b0001;
@@ -266,7 +266,7 @@ let Predicates = [HasVendorXTHeadAME], hasSideEffects = 0, mayLoad = 0, mayStore
 
 // Base class for all 32-bit load instructions (uop = 100)
 class RVInstXTAMELoad32<bits<4> func4_val, string opcodestr>
-    : RVInst<(outs MatrixRegOp:$md), (ins GPR:$rs2, GPR:$rs1),
+    : RVInst<(outs THeadAMEMatrixRegOp:$md), (ins GPR:$rs2, GPR:$rs1),
                opcodestr, "$md, $rs2, $rs1", [], InstFormatOther> {
   bits<5> rs2;
   bits<5> rs1;
@@ -302,7 +302,7 @@ class RVInstXTAMEPrefetch32<bits<4> func4_val, string opcodestr>
 
 // Base class for all 32-bit store instructions (uop = 101)
 class RVInstXTAMEStore32<bits<4> func4_val, string opcodestr>
-    : RVInst<(outs), (ins MatrixRegOp:$ms3, GPR:$rs1, GPR:$rs2),
+    : RVInst<(outs), (ins THeadAMEMatrixRegOp:$ms3, GPR:$rs1, GPR:$rs2),
                opcodestr, "$ms3, $rs2, $rs1", [], InstFormatOther> {
   bits<5> rs2;
   bits<5> rs1;
@@ -471,28 +471,28 @@ class RVInstXTAMEMISC<dag outs, dag ins, string opcodestr, string argstr,
 
 let Predicates = [HasVendorXTHeadAME], hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
   // Zero 1 matrix register (uimm3 = 000)
-  def TH_MZERO   : RVInstXTAMEMISC<(outs), (ins MatrixRegOp:$md),
+  def TH_MZERO   : RVInstXTAMEMISC<(outs), (ins THeadAMEMatrixRegOp:$md),
                                  "th.mzero", "$md",
                                  0b1010, 0b000> {
     let uimm3 = 0b000;
   }
 
   // Zero 2 matrix registers (uimm3 = 001)
-  def TH_MZERO2R : RVInstXTAMEMISC<(outs), (ins MatrixRegOp:$md),
+  def TH_MZERO2R : RVInstXTAMEMISC<(outs), (ins THeadAMEMatrixRegOp:$md),
                                  "th.mzero2r", "$md",
                                  0b1010, 0b000> {
     let uimm3 = 0b001;
   }
 
   // Zero 4 matrix registers (uimm3 = 011)
-  def TH_MZERO4R : RVInstXTAMEMISC<(outs), (ins MatrixRegOp:$md),
+  def TH_MZERO4R : RVInstXTAMEMISC<(outs), (ins THeadAMEMatrixRegOp:$md),
                                  "th.mzero4r", "$md",
                                  0b1010, 0b000> {
     let uimm3 = 0b011;
   }
 
   // Zero 8 matrix registers (uimm3 = 111)
-  def TH_MZERO8R : RVInstXTAMEMISC<(outs), (ins MatrixRegOp:$md),
+  def TH_MZERO8R : RVInstXTAMEMISC<(outs), (ins THeadAMEMatrixRegOp:$md),
                                  "th.mzero8r", "$md",
                                  0b1010, 0b000> {
     let uimm3 = 0b111;
@@ -531,7 +531,7 @@ class RVInstXTAMEMMOV<dag outs, dag ins, string opcodestr, string argstr>
 
 // th.mmov.mm - move between matrix registers (uop = 000)
 let Predicates = [HasVendorXTHeadAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-def TH_MMOV_MM : RVInstXTAMEMMOV<(outs MatrixReg:$md), (ins MatrixReg:$ms1),
+def TH_MMOV_MM : RVInstXTAMEMMOV<(outs THeadAMEMatrixReg:$md), (ins THeadAMEMatrixReg:$ms1),
                                 "th.mmov.mm", "$md, $ms1"> {
   let uop  = 0b000;
   let type = 0b001;
@@ -562,7 +562,7 @@ class RVInstXTAMESMMOVE<bits<4> func4_val,
 
 // matrix-scalar mov with duplicate
 class TH_MDUP<bits<2> sz, string opcodestr>
-    : RVInstXTAMESMMOVE<0b0001, (outs MatrixReg:$md), (ins GPR:$rs2),
+    : RVInstXTAMESMMOVE<0b0001, (outs THeadAMEMatrixReg:$md), (ins GPR:$rs2),
                         opcodestr, "$md, $rs2"> {
   let rs1 = 0b00000;
   let size = sz;
@@ -581,7 +581,7 @@ let Predicates = [HasVendorXTHeadAME], hasSideEffects = 0, mayLoad = 0, mayStore
 
 // matrix-scalar move
 class TH_MMOV<bits<2> sz, string opcodestr>
-    : RVInstXTAMESMMOVE<0b0010, (outs MatrixReg:$md), (ins GPR:$rs2, GPR:$rs1),
+    : RVInstXTAMESMMOVE<0b0010, (outs THeadAMEMatrixReg:$md), (ins GPR:$rs2, GPR:$rs1),
                         opcodestr, "$md, $rs2, $rs1"> {
   let size = sz;
 }
@@ -599,7 +599,7 @@ let Predicates = [HasVendorXTHeadAME], hasSideEffects = 0, mayLoad = 0, mayStore
 
 // scalar-matrix move instructions (uop = 110)
 class RVInstXTAMEMSMOVE<bits<2> sz, string opcodestr>
-    : RVInst<(outs GPR:$rd), (ins MatrixReg:$ms2, GPR:$rs1),
+    : RVInst<(outs GPR:$rd), (ins THeadAMEMatrixReg:$ms2, GPR:$rs1),
              opcodestr, "$rd, $ms2, $rs1", [], InstFormatOther> {
   bits<5> rd;
   bits<3> ms2;
@@ -632,7 +632,7 @@ let Predicates = [HasVendorXTHeadAME], hasSideEffects = 0, mayLoad = 0, mayStore
 
 // Data Broadcast Instructions
 class RVInstXTAMEDB<bits<4> func4_val, bits<3> uop_val, bits<2> sz, string opcodestr>
-    : RVInstXTAME32<(outs MatrixReg:$md), (ins MatrixReg:$ms1, uimm3:$uimm3),
+    : RVInstXTAME32<(outs THeadAMEMatrixReg:$md), (ins THeadAMEMatrixReg:$ms1, uimm3:$uimm3),
                     opcodestr, "$md, $ms1[$uimm3]"> {
   bits<3> uimm3;
 
@@ -664,7 +664,7 @@ let Predicates = [HasVendorXTHeadAME], hasSideEffects = 0, mayLoad = 0, mayStore
 
 // Matrix Pack Instructions
 class TH_MPACK<bits<3> type_val, string opcodestr>
-    : RVInstXTAME32<(outs MatrixReg:$md), (ins MatrixReg:$ms2, MatrixReg:$ms1),
+    : RVInstXTAME32<(outs THeadAMEMatrixReg:$md), (ins THeadAMEMatrixReg:$ms2, THeadAMEMatrixReg:$ms1),
                     opcodestr, "$md, $ms2, $ms1"> {
   let func4  = 0b0011;
   let uop    = 0b110;
@@ -722,16 +722,16 @@ let Predicates = [HasVendorXTHeadAME], hasSideEffects = 1, mayLoad = 0, mayStore
 // Zero instruction (single matrix register)
 let Predicates = [HasVendorXTHeadAME], hasSideEffects = 1, mayLoad = 0, mayStore = 0,
     isCodeGenOnly = 1 in {
-  def TH_MZERO_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md), []> {
+  def TH_MZERO_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md), []> {
     let AsmString = "th.mzero\tm$md";
   }
-  def TH_MZERO2R_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md), []> {
+  def TH_MZERO2R_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md), []> {
     let AsmString = "th.mzero2r\tm$md";
   }
-  def TH_MZERO4R_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md), []> {
+  def TH_MZERO4R_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md), []> {
     let AsmString = "th.mzero4r\tm$md";
   }
-  def TH_MZERO8R_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md), []> {
+  def TH_MZERO8R_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md), []> {
     let AsmString = "th.mzero8r\tm$md";
   }
 }
@@ -740,72 +740,72 @@ let Predicates = [HasVendorXTHeadAME], hasSideEffects = 1, mayLoad = 0, mayStore
 let Predicates = [HasVendorXTHeadAME], hasSideEffects = 1, mayLoad = 0, mayStore = 0,
     isCodeGenOnly = 1 in {
   // 1. Data Move Instructions between Matrix Registers
-  def TH_MMOV_MM_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, MatrixIndex:$ms1), []> {
+  def TH_MMOV_MM_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mmov.mm\tm$md, m$ms1";
   }
   // 2. Data Move Instructions between Integer and Matrix (Duplicate)
-  def TH_MDUPB_M_X_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2), []> {
+  def TH_MDUPB_M_X_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2), []> {
     let AsmString = "th.mdupb.m.x\tm$md, $rs2";
   }
-  def TH_MDUPH_M_X_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2), []> {
+  def TH_MDUPH_M_X_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2), []> {
     let AsmString = "th.mduph.m.x\tm$md, $rs2";
   }
-  def TH_MDUPW_M_X_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2), []> {
+  def TH_MDUPW_M_X_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2), []> {
     let AsmString = "th.mdupw.m.x\tm$md, $rs2";
   }
-  def TH_MDUPD_M_X_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2), []> {
+  def TH_MDUPD_M_X_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2), []> {
     let AsmString = "th.mdupd.m.x\tm$md, $rs2";
   }
   // 3. Data Move Instructions between Integer and Matrix (Scalar to Matrix)
-  def TH_MMOVB_M_X_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MMOVB_M_X_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mmovb.m.x\tm$md, $rs2, $rs1";
   }
-  def TH_MMOVH_M_X_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MMOVH_M_X_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mmovh.m.x\tm$md, $rs2, $rs1";
   }
-  def TH_MMOVW_M_X_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MMOVW_M_X_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mmovw.m.x\tm$md, $rs2, $rs1";
   }
-  def TH_MMOVD_M_X_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MMOVD_M_X_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mmovd.m.x\tm$md, $rs2, $rs1";
   }
   // 4. Data Move Instructions between Integer and Matrix (Matrix to Scalar)
-  def TH_MMOVB_X_M_PSEUDO : Pseudo<(outs GPR:$rd), (ins MatrixIndex:$ms2, GPR:$rs1), []> {
+  def TH_MMOVB_X_M_PSEUDO : Pseudo<(outs GPR:$rd), (ins THeadAMEMatrixIndex:$ms2, GPR:$rs1), []> {
     let AsmString = "th.mmovb.x.m\t$rd, m$ms2, $rs1";
   }
-  def TH_MMOVH_X_M_PSEUDO : Pseudo<(outs GPR:$rd), (ins MatrixIndex:$ms2, GPR:$rs1), []> {
+  def TH_MMOVH_X_M_PSEUDO : Pseudo<(outs GPR:$rd), (ins THeadAMEMatrixIndex:$ms2, GPR:$rs1), []> {
     let AsmString = "th.mmovh.x.m\t$rd, m$ms2, $rs1";
   }
-  def TH_MMOVW_X_M_PSEUDO : Pseudo<(outs GPR:$rd), (ins MatrixIndex:$ms2, GPR:$rs1), []> {
+  def TH_MMOVW_X_M_PSEUDO : Pseudo<(outs GPR:$rd), (ins THeadAMEMatrixIndex:$ms2, GPR:$rs1), []> {
     let AsmString = "th.mmovw.x.m\t$rd, m$ms2, $rs1";
   }
-  def TH_MMOVD_X_M_PSEUDO : Pseudo<(outs GPR:$rd), (ins MatrixIndex:$ms2, GPR:$rs1), []> {
+  def TH_MMOVD_X_M_PSEUDO : Pseudo<(outs GPR:$rd), (ins THeadAMEMatrixIndex:$ms2, GPR:$rs1), []> {
     let AsmString = "th.mmovd.x.m\t$rd, m$ms2, $rs1";
   }
   // 5. Data Broadcast Instructions
-  def TH_MMOV_MV_I_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, MatrixIndex:$ms1, uimm3:$uimm3), []> {
+  def TH_MMOV_MV_I_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms1, uimm3:$uimm3), []> {
     let AsmString = "th.mmov.mv.i\tm$md, m$ms1[$uimm3]";
   }
-  def TH_MCMOVB_MV_I_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, MatrixIndex:$ms1, uimm3:$uimm3), []> {
+  def TH_MCMOVB_MV_I_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms1, uimm3:$uimm3), []> {
     let AsmString = "th.mcmovb.mv.i\tm$md, m$ms1[$uimm3]";
   }
-  def TH_MCMOVH_MV_I_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, MatrixIndex:$ms1, uimm3:$uimm3), []> {
+  def TH_MCMOVH_MV_I_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms1, uimm3:$uimm3), []> {
     let AsmString = "th.mcmovh.mv.i\tm$md, m$ms1[$uimm3]";
   }
-  def TH_MCMOVW_MV_I_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, MatrixIndex:$ms1, uimm3:$uimm3), []> {
+  def TH_MCMOVW_MV_I_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms1, uimm3:$uimm3), []> {
     let AsmString = "th.mcmovw.mv.i\tm$md, m$ms1[$uimm3]";
   }
-  def TH_MCMOVD_MV_I_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, MatrixIndex:$ms1, uimm3:$uimm3), []> {
+  def TH_MCMOVD_MV_I_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms1, uimm3:$uimm3), []> {
     let AsmString = "th.mcmovd.mv.i\tm$md, m$ms1[$uimm3]";
   }
   // 6. Matrix Pack Instructions
-  def TH_MPACK_MM_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+  def TH_MPACK_MM_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mpack.mm\tm$md, m$ms2, m$ms1";
   }
-  def TH_MPACKHL_MM_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+  def TH_MPACKHL_MM_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mpackhl.mm\tm$md, m$ms2, m$ms1";
   }
-  def TH_MPACKHH_MM_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+  def TH_MPACKHH_MM_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mpackhh.mm\tm$md, m$ms2, m$ms1";
   }
 }
@@ -813,52 +813,52 @@ let Predicates = [HasVendorXTHeadAME], hasSideEffects = 1, mayLoad = 0, mayStore
 // Load instructions (normal and transposed)
 let Predicates = [HasVendorXTHeadAME], hasSideEffects = 1, mayLoad = 1, mayStore = 0,
     isCodeGenOnly = 1 in {
-  def TH_MLDE8_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MLDE8_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mlde8\tm$md, $rs2, ($rs1)";
   }
-  def TH_MLDE16_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MLDE16_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mlde16\tm$md, $rs2, ($rs1)";
   }
-  def TH_MLDE32_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MLDE32_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mlde32\tm$md, $rs2, ($rs1)";
   }
-  def TH_MLDE64_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MLDE64_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mlde64\tm$md, $rs2, ($rs1)";
   }
-  def TH_MLDTE8_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MLDTE8_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mldte8\tm$md, $rs2, ($rs1)";
   }
-  def TH_MLDTE16_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MLDTE16_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mldte16\tm$md, $rs2, ($rs1)";
   }
-  def TH_MLDTE32_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MLDTE32_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mldte32\tm$md, $rs2, ($rs1)";
   }
-  def TH_MLDTE64_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MLDTE64_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mldte64\tm$md, $rs2, ($rs1)";
   }
-  def TH_MSLDE8_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSLDE8_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mslde8\tm$md, $rs2, ($rs1)";
   }
-  def TH_MSLDE16_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSLDE16_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mslde16\tm$md, $rs2, ($rs1)";
   }
-  def TH_MSLDE32_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSLDE32_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mslde32\tm$md, $rs2, ($rs1)";
   }
-  def TH_MSLDE64_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSLDE64_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mslde64\tm$md, $rs2, ($rs1)";
   }
-  def TH_MSLDTE8_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSLDTE8_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.msldte8\tm$md, $rs2, ($rs1)";
   }
-  def TH_MSLDTE16_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSLDTE16_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.msldte16\tm$md, $rs2, ($rs1)";
   }
-  def TH_MSLDTE32_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSLDTE32_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.msldte32\tm$md, $rs2, ($rs1)";
   }
-  def TH_MSLDTE64_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSLDTE64_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$md, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.msldte64\tm$md, $rs2, ($rs1)";
   }
 }
@@ -895,52 +895,52 @@ let Predicates = [HasVendorXTHeadAME], hasSideEffects = 1, mayLoad = 1, mayStore
 // Store instruction
 let Predicates = [HasVendorXTHeadAME], hasSideEffects = 1, mayLoad = 0, mayStore = 1,
     isCodeGenOnly = 1 in {
-  def TH_MSTE8_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSTE8_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mste8\tm$ms3, $rs2, ($rs1)";
   }
-  def TH_MSTE16_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSTE16_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mste16\tm$ms3, $rs2, ($rs1)";
   }
-  def TH_MSTE32_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSTE32_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mste32\tm$ms3, $rs2, ($rs1)";
   }
-  def TH_MSTE64_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSTE64_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mste64\tm$ms3, $rs2, ($rs1)";
   }
-  def TH_MSTTE8_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSTTE8_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mstte8\tm$ms3, $rs2, ($rs1)";
   }
-  def TH_MSTTE16_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSTTE16_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mstte16\tm$ms3, $rs2, ($rs1)";
   }
-  def TH_MSTTE32_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSTTE32_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mstte32\tm$ms3, $rs2, ($rs1)";
   }
-  def TH_MSTTE64_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSTTE64_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.mstte64\tm$ms3, $rs2, ($rs1)";
   }
-  def TH_MSSTE8_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSSTE8_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.msste8\tm$ms3, $rs2, ($rs1)";
   }
-  def TH_MSSTE16_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSSTE16_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.msste16\tm$ms3, $rs2, ($rs1)";
   }
-  def TH_MSSTE32_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSSTE32_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.msste32\tm$ms3, $rs2, ($rs1)";
   }
-  def TH_MSSTE64_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSSTE64_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.msste64\tm$ms3, $rs2, ($rs1)";
   }
-  def TH_MSSTTE8_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSSTTE8_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.msstte8\tm$ms3, $rs2, ($rs1)";
   }
-  def TH_MSSTTE16_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSSTTE16_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.msstte16\tm$ms3, $rs2, ($rs1)";
   }
-  def TH_MSSTTE32_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSSTTE32_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.msstte32\tm$ms3, $rs2, ($rs1)";
   }
-  def TH_MSSTTE64_PSEUDO : Pseudo<(outs), (ins MatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
+  def TH_MSSTTE64_PSEUDO : Pseudo<(outs), (ins THeadAMEMatrixIndex:$ms3, GPR:$rs2, GPR:$rs1), []> {
     let AsmString = "th.msstte64\tm$ms3, $rs2, ($rs1)";
   }
 }
@@ -949,71 +949,71 @@ let Predicates = [HasVendorXTHeadAME], hasSideEffects = 1, mayLoad = 0, mayStore
 let Predicates = [HasVendorXTHeadAME], hasSideEffects = 1,
     isCodeGenOnly = 1 in {
   def TH_MMACC_W_B_PSEUDO : Pseudo<(outs),
-      (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+      (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mmacc.w.b\tm$md, m$ms2, m$ms1";
   }
   def TH_MMACCU_W_B_PSEUDO : Pseudo<(outs),
-      (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+      (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mmaccu.w.b\tm$md, m$ms2, m$ms1";
   }
   def TH_MMACCUS_W_B_PSEUDO : Pseudo<(outs),
-      (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+      (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mmaccus.w.b\tm$md, m$ms2, m$ms1";
   }
   def TH_MMACCSU_W_B_PSEUDO : Pseudo<(outs),
-      (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+      (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mmaccsu.w.b\tm$md, m$ms2, m$ms1";
   }
   def TH_MFMACC_H_PSEUDO : Pseudo<(outs),
-      (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+      (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mfmacc.h\tm$md, m$ms2, m$ms1";
   }
   def TH_MFMACC_BF16_PSEUDO : Pseudo<(outs),
-      (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+      (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mfmacc.bf16\tm$md, m$ms2, m$ms1";
   }
   def TH_MFMACC_S_PSEUDO : Pseudo<(outs),
-      (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+      (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mfmacc.s\tm$md, m$ms2, m$ms1";
   }
   def TH_MFMACC_D_PSEUDO : Pseudo<(outs),
-      (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+      (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mfmacc.d\tm$md, m$ms2, m$ms1";
   }
   def TH_MFMACC_H_E4M3_PSEUDO : Pseudo<(outs),
-      (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+      (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mfmacc.h.e4m3\tm$md, m$ms2, m$ms1";
   }
   def TH_MFMACC_H_E5M2_PSEUDO : Pseudo<(outs),
-      (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+      (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mfmacc.h.e5m2\tm$md, m$ms2, m$ms1";
   }
   def TH_MFMACC_BF16_E4M3_PSEUDO : Pseudo<(outs),
-      (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+      (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mfmacc.bf16.e4m3\tm$md, m$ms2, m$ms1";
   }
   def TH_MFMACC_BF16_E5M2_PSEUDO : Pseudo<(outs),
-      (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+      (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mfmacc.bf16.e5m2\tm$md, m$ms2, m$ms1";
   }
   def TH_MFMACC_S_H_PSEUDO : Pseudo<(outs),
-      (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+      (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mfmacc.s.h\tm$md, m$ms2, m$ms1";
   }
   def TH_MFMACC_S_BF16_PSEUDO : Pseudo<(outs),
-      (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+      (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mfmacc.s.bf16\tm$md, m$ms2, m$ms1";
   }
   def TH_MFMACC_D_S_PSEUDO : Pseudo<(outs),
-      (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+      (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mfmacc.d.s\tm$md, m$ms2, m$ms1";
   }
   def TH_MFMACC_S_E4M3_PSEUDO : Pseudo<(outs),
-      (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+      (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mfmacc.s.e4m3\tm$md, m$ms2, m$ms1";
   }
   def TH_MFMACC_S_E5M2_PSEUDO : Pseudo<(outs),
-      (ins MatrixIndex:$md, MatrixIndex:$ms2, MatrixIndex:$ms1), []> {
+      (ins THeadAMEMatrixIndex:$md, THeadAMEMatrixIndex:$ms2, THeadAMEMatrixIndex:$ms1), []> {
     let AsmString = "th.mfmacc.s.e5m2\tm$md, m$ms2, m$ms1";
   }
 }

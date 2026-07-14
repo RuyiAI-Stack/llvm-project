@@ -25,11 +25,11 @@
 // 32-bit encoding format with prefix 1110111 at bits [6:0]
 //
 // Register Model:
-//   - TileReg (tr0-tr7): Input matrices A and B, MLEN bits each
-//   - AccReg (acc0-acc7): Accumulator matrix C, MLEN×AMUL bits each
+//   - BOSCAMETileReg (tr0-tr7): Input matrices A and B, MLEN bits each
+//   - BOSCAMEAccReg (acc0-acc7): Accumulator matrix C, MLEN×AMUL bits each
 //
 // Data Flow:
-//   Memory --[mlae/mlbe]--> TileReg --[mma]--> AccReg --[msce]--> Memory
+//   Memory --[mlae/mlbe]--> BOSCAMETileReg --[mma]--> BOSCAMEAccReg --[msce]--> Memory
 //
 // Matrix Multiplication Instruction Format (32-bit):
 // | 31:26  | 25 | 24 | 23:20 | 19 | 18:15 | 14:12 | 11 | 10:7 | 6:0    |
@@ -67,14 +67,14 @@ def BOSCAMEAccIndexAsmOperand : AsmOperandClass {
   let DiagnosticType = "InvalidBOSCAMEAccIndex";
 }
 
-// Operand type for TileReg index (0-7), printed with "tr" prefix in AsmString
+// Operand type for BOSCAMETileReg index (0-7), printed with "tr" prefix in AsmString
 def BOSCAMETileIndex : RISCVOp<i64> {
   let ParserMatchClass = BOSCAMETileIndexAsmOperand;
   let DecoderMethod = "decodeUImmOperand<3>";
   let OperandType = "OPERAND_UIMM3";
 }
 
-// Operand type for AccReg index (0-7), printed with "acc" prefix in AsmString
+// Operand type for BOSCAMEAccReg index (0-7), printed with "acc" prefix in AsmString
 def BOSCAMEAccIndex : RISCVOp<i64> {
   let ParserMatchClass = BOSCAMEAccIndexAsmOperand;
   let DecoderMethod = "decodeUImmOperand<3>";
@@ -118,10 +118,10 @@ class RVInstBOSCAME32<dag outs, dag ins, string opcodestr, string argstr>
 // Format: mma.{h|w|dw}.mm acc, tr, tr
 // Semantics: acc = acc + tr1 * tr2
 //
-// Data Flow: TileReg × TileReg → AccReg (accumulate)
-//   - ms1: TileReg for matrix A
-//   - ms2: TileReg for matrix B
-//   - md:  AccReg for accumulation result C
+// Data Flow: BOSCAMETileReg × BOSCAMETileReg → BOSCAMEAccReg (accumulate)
+//   - ms1: BOSCAMETileReg for matrix A
+//   - ms2: BOSCAMETileReg for matrix B
+//   - md:  BOSCAMEAccReg for accumulation result C
 //
 // eew encoding:
 //   000 = int8 (b), 001 = int16 (h), 010 = int32 (w), 011 = int64 (dw)
@@ -138,8 +138,8 @@ class RVInstBOSCAME32<dag outs, dag ins, string opcodestr, string argstr>
 // Input and output have the same element width
 class BOSC_AME_MMA_NO_WIDEN<bit fp_val, bit sa_val, bit sn_val,
                    bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAME32<(outs AccReg:$md),
-                  (ins AccReg:$md_in, TileReg:$ms1, TileReg:$ms2),
+    : RVInstBOSCAME32<(outs BOSCAMEAccReg:$md),
+                  (ins BOSCAMEAccReg:$md_in, BOSCAMETileReg:$ms1, BOSCAMETileReg:$ms2),
                   opcodestr, "$md, $ms1, $ms2"> {
   let Constraints = "$md = $md_in";  // Accumulator constraint
   let funct6 = 0b001000;     // No widening
@@ -186,8 +186,8 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 // double-widen matrix multiply-accumulate: acc = acc + tr1 * tr2
 class BOSC_AME_MMA_DOUBLE_WIDEN<bit fp_val, bit sa_val, bit sn_val,
                                 bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAME32<(outs AccReg:$md),
-                      (ins AccReg:$md_in, TileReg:$ms1, TileReg:$ms2),
+    : RVInstBOSCAME32<(outs BOSCAMEAccReg:$md),
+                      (ins BOSCAMEAccReg:$md_in, BOSCAMETileReg:$ms1, BOSCAMETileReg:$ms2),
                       opcodestr, "$md, $ms1, $ms2"> {
   let Constraints = "$md = $md_in";
   let funct6 = 0b001001;
@@ -230,8 +230,8 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 // quad-widen matrix multiply-accumulate: acc = acc + tr1 * tr2
 class BOSC_AME_MMA_QUAD_WIDEN<bit fp_val, bit sa_val, bit sn_val,
                                bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAME32<(outs AccReg:$md),
-                      (ins AccReg:$md_in, TileReg:$ms1, TileReg:$ms2),
+    : RVInstBOSCAME32<(outs BOSCAMEAccReg:$md),
+                      (ins BOSCAMEAccReg:$md_in, BOSCAMETileReg:$ms1, BOSCAMETileReg:$ms2),
                       opcodestr, "$md, $ms1, $ms2"> {
   let Constraints = "$md = $md_in";
   let funct6 = 0b001010;
@@ -264,8 +264,8 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 // oct-widen matrix multiply-accumulate: acc = acc + tr1 * tr2
 class BOSC_AME_MMA_OCT_WIDEN<bit fp_val, bit sa_val, bit sn_val,
                               bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAME32<(outs AccReg:$md),
-                      (ins AccReg:$md_in, TileReg:$ms1, TileReg:$ms2),
+    : RVInstBOSCAME32<(outs BOSCAMEAccReg:$md),
+                      (ins BOSCAMEAccReg:$md_in, BOSCAMETileReg:$ms1, BOSCAMETileReg:$ms2),
                       opcodestr, "$md, $ms1, $ms2"> {
   let Constraints = "$md = $md_in";
   let funct6 = 0b001011;
@@ -298,8 +298,8 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 // Matrix element-wise add/sub/multiply instructions.
 class BOSC_AME_MADD_NO_WIDEN<bit fp_val, bit sa_val, bit sn_val,
                               bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAME32<(outs AccReg:$md),
-                      (ins AccReg:$ms1, AccReg:$ms2),
+    : RVInstBOSCAME32<(outs BOSCAMEAccReg:$md),
+                      (ins BOSCAMEAccReg:$ms1, BOSCAMEAccReg:$ms2),
                       opcodestr, "$md, $ms1, $ms2"> {
   let funct6 = 0b001000;
   let fp     = fp_val;
@@ -349,8 +349,8 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 
 class BOSC_AME_MADD_DOUBLE_WIDEN<bit fp_val, bit sa_val, bit sn_val,
                                   bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAME32<(outs AccReg:$md),
-                      (ins AccReg:$ms1, AccReg:$ms2),
+    : RVInstBOSCAME32<(outs BOSCAMEAccReg:$md),
+                      (ins BOSCAMEAccReg:$ms1, BOSCAMEAccReg:$ms2),
                       opcodestr, "$md, $ms1, $ms2"> {
   let funct6 = 0b001001;
   let fp     = fp_val;
@@ -383,8 +383,8 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 
 class BOSC_AME_MSUB_NO_WIDEN<bit fp_val, bit sa_val, bit sn_val,
                                   bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAME32<(outs AccReg:$md),
-                      (ins AccReg:$ms1, AccReg:$ms2),
+    : RVInstBOSCAME32<(outs BOSCAMEAccReg:$md),
+                      (ins BOSCAMEAccReg:$ms1, BOSCAMEAccReg:$ms2),
                       opcodestr, "$md, $ms1, $ms2"> {
   let funct6 = 0b001010;
   let fp     = fp_val;
@@ -434,8 +434,8 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 
 class BOSC_AME_MSUB_DOUBLE_WIDEN<bit fp_val, bit sa_val, bit sn_val,
                                 bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAME32<(outs AccReg:$md),
-                      (ins AccReg:$ms1, AccReg:$ms2),
+    : RVInstBOSCAME32<(outs BOSCAMEAccReg:$md),
+                      (ins BOSCAMEAccReg:$ms1, BOSCAMEAccReg:$ms2),
                       opcodestr, "$md, $ms1, $ms2"> {
   let funct6 = 0b001011;
   let fp     = fp_val;
@@ -468,8 +468,8 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 
 class BOSC_AME_MMINMAX_NO_WIDEN<bit fp_val, bit sa_val, bit sn_val,
                                 bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAME32<(outs AccReg:$md),
-                      (ins AccReg:$ms1, AccReg:$ms2),
+    : RVInstBOSCAME32<(outs BOSCAMEAccReg:$md),
+                      (ins BOSCAMEAccReg:$ms1, BOSCAMEAccReg:$ms2),
                       opcodestr, "$md, $ms1, $ms2"> {
   let funct6 = 0b001100;
   let fp     = fp_val;
@@ -525,8 +525,8 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 
 class BOSC_AME_MMUL_NO_WIDEN<bit fp_val, bit sa_val, bit sn_val,
                                   bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAME32<(outs AccReg:$md),
-                      (ins AccReg:$ms1, AccReg:$ms2),
+    : RVInstBOSCAME32<(outs BOSCAMEAccReg:$md),
+                      (ins BOSCAMEAccReg:$ms1, BOSCAMEAccReg:$ms2),
                       opcodestr, "$md, $ms1, $ms2"> {
   let funct6 = 0b001101;
   let fp     = fp_val;
@@ -569,8 +569,8 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 
 class BOSC_AME_MMULH_DIV_NO_WIDEN<bit fp_val, bit sa_val, bit sn_val,
                                   bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAME32<(outs AccReg:$md),
-                      (ins AccReg:$ms1, AccReg:$ms2),
+    : RVInstBOSCAME32<(outs BOSCAMEAccReg:$md),
+                      (ins BOSCAMEAccReg:$ms1, BOSCAMEAccReg:$ms2),
                       opcodestr, "$md, $ms1, $ms2"> {
   let funct6 = 0b001110;
   let fp     = fp_val;
@@ -620,8 +620,8 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 
 class BOSC_AME_MMUL_DOUBLE_WIDEN<bit fp_val, bit sa_val, bit sn_val,
                                   bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAME32<(outs AccReg:$md),
-                      (ins AccReg:$ms1, AccReg:$ms2),
+    : RVInstBOSCAME32<(outs BOSCAMEAccReg:$md),
+                      (ins BOSCAMEAccReg:$ms1, BOSCAMEAccReg:$ms2),
                       opcodestr, "$md, $ms1, $ms2"> {
   let funct6 = 0b001111;
   let fp     = fp_val;
@@ -659,8 +659,8 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 }
 
 class BOSC_AME_LOGIC_NO_WIDEN<bit sa_val, bit sn_val, string opcodestr>
-    : RVInstBOSCAME32<(outs AccReg:$md),
-                      (ins AccReg:$ms1, AccReg:$ms2),
+    : RVInstBOSCAME32<(outs BOSCAMEAccReg:$md),
+                      (ins BOSCAMEAccReg:$ms1, BOSCAMEAccReg:$ms2),
                       opcodestr, "$md, $ms1, $ms2"> {
   let funct6 = 0b010000;
   let fp     = 0b0;
@@ -672,8 +672,8 @@ class BOSC_AME_LOGIC_NO_WIDEN<bit sa_val, bit sn_val, string opcodestr>
 }
 
 class BOSC_AME_SQRT_NO_WIDEN<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAME32<(outs AccReg:$md),
-                      (ins AccReg:$ms1),
+    : RVInstBOSCAME32<(outs BOSCAMEAccReg:$md),
+                      (ins BOSCAMEAccReg:$ms1),
                       opcodestr, "$md, $ms1"> {
   let funct6 = 0b010000;
   let fp     = 0b1;
@@ -700,8 +700,8 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 
 class BOSC_AME_SHIFT_NO_WIDEN<bit sa_val, bit sn_val,
                               bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAME32<(outs AccReg:$md),
-                      (ins AccReg:$ms1, AccReg:$ms2),
+    : RVInstBOSCAME32<(outs BOSCAMEAccReg:$md),
+                      (ins BOSCAMEAccReg:$ms1, BOSCAMEAccReg:$ms2),
                       opcodestr, "$md, $ms1, $ms2"> {
   let funct6 = 0b010001;
   let fp     = 0b0;
@@ -813,19 +813,19 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, mayLoad = 0, mayStore 
 // eew: 000=int8, 001=int16, 010=int32, 011=int64, 111=int4
 //
 // Data Flow Examples:
-//   mlae32.m tr0, (a0), a1    # Load matrix A into TileReg
-//   mlbe32.m tr1, (a0), a1    # Load matrix B into TileReg
-//   mqma.b.mm acc0, tr0, tr1  # Compute: AccReg = AccReg + TileReg × TileReg
-//   msce32.m acc0, (a0), a1   # Store AccReg to memory
+//   mlae32.m tr0, (a0), a1    # Load matrix A into BOSCAMETileReg
+//   mlbe32.m tr1, (a0), a1    # Load matrix B into BOSCAMETileReg
+//   mqma.b.mm acc0, tr0, tr1  # Compute: BOSCAMEAccReg = BOSCAMEAccReg + BOSCAMETileReg × BOSCAMETileReg
+//   msce32.m acc0, (a0), a1   # Store BOSCAMEAccReg to memory
 //===----------------------------------------------------------------------===//
 
-// Load into TileReg (for matrix A and B)
+// Load into BOSCAMETileReg (for matrix A and B)
 class RVInstBOSCAMELoadTile32<bits<6> funct6_val, bits<3> eew_val, bit tr_val, string opcodestr>
-    : RVInst<(outs TileReg:$md), (ins GPR:$rs1, GPR:$rs2),
+    : RVInst<(outs BOSCAMETileReg:$md), (ins GPR:$rs1, GPR:$rs2),
                opcodestr, "$md, (${rs1}), $rs2", [], InstFormatOther> {
   bits<5> rs2;
   bits<5> rs1;
-  bits<4> md;  // TileReg index for load
+  bits<4> md;  // BOSCAMETileReg index for load
 
   let Inst{6-0}   = 0b1110111;   // AME prefix
   let Inst{10-7}  = md;
@@ -837,13 +837,13 @@ class RVInstBOSCAMELoadTile32<bits<6> funct6_val, bits<3> eew_val, bit tr_val, s
   let Inst{31-26} = funct6_val;  // funct6
 }
 
-// Load into AccReg (for accumulator C)
+// Load into BOSCAMEAccReg (for accumulator C)
 class RVInstBOSCAMELoadAcc32<bits<6> funct6_val, bits<3> eew_val, bit tr_val, string opcodestr>
-    : RVInst<(outs AccReg:$md), (ins GPR:$rs1, GPR:$rs2),
+    : RVInst<(outs BOSCAMEAccReg:$md), (ins GPR:$rs1, GPR:$rs2),
                opcodestr, "$md, (${rs1}), $rs2", [], InstFormatOther> {
   bits<5> rs2;
   bits<5> rs1;
-  bits<4> md;  // AccReg index for load
+  bits<4> md;  // BOSCAMEAccReg index for load
 
   let Inst{6-0}   = 0b1110111;   // AME prefix
   let Inst{10-7}  = md;
@@ -855,13 +855,13 @@ class RVInstBOSCAMELoadAcc32<bits<6> funct6_val, bits<3> eew_val, bit tr_val, st
   let Inst{31-26} = funct6_val;  // funct6
 }
 
-// Store from TileReg (for matrix A and B)
+// Store from BOSCAMETileReg (for matrix A and B)
 class RVInstBOSCAMEStoreTile32<bits<6> funct6_val, bits<3> eew_val, bit tr_val, string opcodestr>
-    : RVInst<(outs), (ins TileReg:$ms3, GPR:$rs1, GPR:$rs2),
+    : RVInst<(outs), (ins BOSCAMETileReg:$ms3, GPR:$rs1, GPR:$rs2),
                opcodestr, "$ms3, (${rs1}), $rs2", [], InstFormatOther> {
   bits<5> rs2;
   bits<5> rs1;
-  bits<4> ms3;  // TileReg index for store
+  bits<4> ms3;  // BOSCAMETileReg index for store
 
   let Inst{6-0}   = 0b1110111;   // AME prefix
   let Inst{10-7}  = ms3;
@@ -873,13 +873,13 @@ class RVInstBOSCAMEStoreTile32<bits<6> funct6_val, bits<3> eew_val, bit tr_val, 
   let Inst{31-26} = funct6_val;  // funct6
 }
 
-// Store from AccReg (for accumulator C)
+// Store from BOSCAMEAccReg (for accumulator C)
 class RVInstBOSCAMEStoreAcc32<bits<6> funct6_val, bits<3> eew_val, bit tr_val, string opcodestr>
-    : RVInst<(outs), (ins AccReg:$ms3, GPR:$rs1, GPR:$rs2),
+    : RVInst<(outs), (ins BOSCAMEAccReg:$ms3, GPR:$rs1, GPR:$rs2),
                opcodestr, "$ms3, (${rs1}), $rs2", [], InstFormatOther> {
   bits<5> rs2;
   bits<5> rs1;
-  bits<4> ms3;  // AccReg index for store
+  bits<4> ms3;  // BOSCAMEAccReg index for store
 
   let Inst{6-0}   = 0b1110111;   // AME prefix
   let Inst{10-7}  = ms3;
@@ -892,9 +892,9 @@ class RVInstBOSCAMEStoreAcc32<bits<6> funct6_val, bits<3> eew_val, bit tr_val, s
 }
 
 //===----------------------------------------------------------------------===//
-// Load matrix A into TileReg - mlae*.m
+// Load matrix A into BOSCAMETileReg - mlae*.m
 // Syntax: mlae{8|16|32|64}.m md, (rs1), rs2
-//   md:  Destination TileReg
+//   md:  Destination BOSCAMETileReg
 //   rs1: Base address (GPR)
 //   rs2: Row stride in bytes (GPR)
 //===----------------------------------------------------------------------===//
@@ -916,7 +916,7 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 1, mayStore 
 }
 
 //===----------------------------------------------------------------------===//
-// Load matrix B into TileReg - mlbe*.m
+// Load matrix B into BOSCAMETileReg - mlbe*.m
 // Syntax: mlbe{8|16|32|64}.m md, (rs1), rs2
 //===----------------------------------------------------------------------===//
 let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 1, mayStore = 0 in {
@@ -932,9 +932,9 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 1, mayStore 
 }
 
 //===----------------------------------------------------------------------===//
-// Load matrix C (accumulator) into AccReg - mlce*.m
+// Load matrix C (accumulator) into BOSCAMEAccReg - mlce*.m
 // Syntax: mlce{8|16|32|64}.m md, (rs1), rs2
-//   md: Destination AccReg (MLEN×AMUL bits)
+//   md: Destination BOSCAMEAccReg (MLEN×AMUL bits)
 // Note: eew here refers to the output element width after widening
 //===----------------------------------------------------------------------===//
 let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 1, mayStore = 0 in {
@@ -955,7 +955,7 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 1, mayStore 
 }
 
 //===----------------------------------------------------------------------===//
-// Store matrix A from TileReg - msae*.m
+// Store matrix A from BOSCAMETileReg - msae*.m
 // Syntax: msae{8|16|32|64}.m ms3, (rs1), rs2
 //===----------------------------------------------------------------------===//
 let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 1 in {
@@ -976,7 +976,7 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 }
 
 //===----------------------------------------------------------------------===//
-// Store matrix B from TileReg - msbe*.m
+// Store matrix B from BOSCAMETileReg - msbe*.m
 // Syntax: msbe{8|16|32|64}.m ms3, (rs1), rs2
 //===----------------------------------------------------------------------===//
 let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 1 in {
@@ -992,9 +992,9 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 }
 
 //===----------------------------------------------------------------------===//
-// Store matrix C (accumulator) from AccReg - msce*.m
+// Store matrix C (accumulator) from BOSCAMEAccReg - msce*.m
 // Syntax: msce{8|16|32|64}.m ms3, (rs1), rs2
-//   ms3: Source AccReg (MLEN×AMUL bits)
+//   ms3: Source BOSCAMEAccReg (MLEN×AMUL bits)
 // This is the primary store for computation results
 //===----------------------------------------------------------------------===//
 let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 1 in {
@@ -1042,10 +1042,10 @@ class RVInstBOSCAMEMove<dag outs, dag ins, string opcodestr, string argstr>
 
 // Data Move Instructions between Matrix Registers
 class RVInstBOSCAMEMove_T_T<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs TileReg:$md), (ins TileReg:$ms1),
+    : RVInstBOSCAMEMove<(outs BOSCAMETileReg:$md), (ins BOSCAMETileReg:$ms1),
                         opcodestr, "$md, $ms1"> {
-  bits<5> md;   // TileReg index for store
-  bits<5> ms1;  // TileReg index for load
+  bits<5> md;   // BOSCAMETileReg index for store
+  bits<5> ms1;  // BOSCAMETileReg index for load
 
   let funct6 = 0b000111;
   let di     = 0b0;
@@ -1057,10 +1057,10 @@ class RVInstBOSCAMEMove_T_T<bits<3> eew_val, string opcodestr>
 }
 
 class RVInstBOSCAMEMove_A_A<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs AccReg:$md), (ins AccReg:$ms1),
+    : RVInstBOSCAMEMove<(outs BOSCAMEAccReg:$md), (ins BOSCAMEAccReg:$ms1),
                         opcodestr, "$md, $ms1"> {
-  bits<5> md;   // AccReg index for store
-  bits<5> ms1;  // AccReg index for load
+  bits<5> md;   // BOSCAMEAccReg index for store
+  bits<5> ms1;  // BOSCAMEAccReg index for load
 
   let funct6 = 0b000111;
   let di     = 0b0;
@@ -1072,10 +1072,10 @@ class RVInstBOSCAMEMove_A_A<bits<3> eew_val, string opcodestr>
 }
 
 class RVInstBOSCAMEMove_A_T<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs AccReg:$md), (ins TileReg:$ms1, GPR:$rs2),
+    : RVInstBOSCAMEMove<(outs BOSCAMEAccReg:$md), (ins BOSCAMETileReg:$ms1, GPR:$rs2),
                         opcodestr, "$md, $ms1, $rs2"> {
-  bits<5> md;   // AccReg index for store
-  bits<5> ms1;  // TileReg index for load
+  bits<5> md;   // BOSCAMEAccReg index for store
+  bits<5> ms1;  // BOSCAMETileReg index for load
 
   let funct6 = 0b000100;
   let di     = 0b0;
@@ -1086,10 +1086,10 @@ class RVInstBOSCAMEMove_A_T<bits<3> eew_val, string opcodestr>
 }
 
 class RVInstBOSCAMEMove_T_A<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs TileReg:$md), (ins AccReg:$ms1, GPR:$rs2),
+    : RVInstBOSCAMEMove<(outs BOSCAMETileReg:$md), (ins BOSCAMEAccReg:$ms1, GPR:$rs2),
                         opcodestr, "$md, $ms1, $rs2"> {
-  bits<5> md;   // TileReg index for load
-  bits<5> ms1;  // AccReg index for store
+  bits<5> md;   // BOSCAMETileReg index for load
+  bits<5> ms1;  // BOSCAMEAccReg index for store
 
   let funct6 = 0b000100;
   let di     = 0b1;
@@ -1100,7 +1100,7 @@ class RVInstBOSCAMEMove_T_A<bits<3> eew_val, string opcodestr>
 }
 
 class RVInstBOSCAMEMoveImm_A_T<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs AccReg:$md), (ins TileReg:$ms1, uimm5:$imm),
+    : RVInstBOSCAMEMove<(outs BOSCAMEAccReg:$md), (ins BOSCAMETileReg:$ms1, uimm5:$imm),
                          opcodestr, "$md, $ms1, $imm"> {
   bits<5> imm;
   bits<5> ms1;
@@ -1116,7 +1116,7 @@ class RVInstBOSCAMEMoveImm_A_T<bits<3> eew_val, string opcodestr>
 }
 
 class RVInstBOSCAMEMoveImm_T_A<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs TileReg:$md), (ins AccReg:$ms1, uimm5:$imm),
+    : RVInstBOSCAMEMove<(outs BOSCAMETileReg:$md), (ins BOSCAMEAccReg:$ms1, uimm5:$imm),
                          opcodestr, "$md, $ms1, $imm"> {
   bits<5> imm;
   bits<5> ms1;
@@ -1166,7 +1166,7 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 
 // Data Move Instructions between Matrix and Integer
 class RVInstBOSCAMEMove_X_T<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs GPR:$rd), (ins TileReg:$ms1, GPR:$rs2),
+    : RVInstBOSCAMEMove<(outs GPR:$rd), (ins BOSCAMETileReg:$ms1, GPR:$rs2),
                         opcodestr, "$rd, $ms1, $rs2"> {
   bits<5> rs2;
   bits<5> ms1;
@@ -1179,7 +1179,7 @@ class RVInstBOSCAMEMove_X_T<bits<3> eew_val, string opcodestr>
 }
 
 class RVInstBOSCAMEMove_T_X<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs TileReg:$md), (ins GPR:$rs1, GPR:$rs2),
+    : RVInstBOSCAMEMove<(outs BOSCAMETileReg:$md), (ins GPR:$rs1, GPR:$rs2),
                         opcodestr, "$md, $rs1, $rs2"> {
   bits<5> rs2;
   bits<5> rs1;
@@ -1192,7 +1192,7 @@ class RVInstBOSCAMEMove_T_X<bits<3> eew_val, string opcodestr>
 }
 
 class RVInstBOSCAMEMove_X_A<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs GPR:$rd), (ins AccReg:$ms1, GPR:$rs2),
+    : RVInstBOSCAMEMove<(outs GPR:$rd), (ins BOSCAMEAccReg:$ms1, GPR:$rs2),
                         opcodestr, "$rd, $ms1, $rs2"> {
   bits<5> rs2;
   bits<5> ms1;
@@ -1205,7 +1205,7 @@ class RVInstBOSCAMEMove_X_A<bits<3> eew_val, string opcodestr>
 }
 
 class RVInstBOSCAMEMove_A_X<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs AccReg:$md), (ins GPR:$rs1, GPR:$rs2),
+    : RVInstBOSCAMEMove<(outs BOSCAMEAccReg:$md), (ins GPR:$rs1, GPR:$rs2),
                         opcodestr, "$md, $rs1, $rs2"> {
   bits<5> rs2;
   bits<5> rs1;
@@ -1242,7 +1242,7 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 
 // Data Move Instructions between Matrix and Float-point
 class RVInstBOSCAMEFMove_F_T<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs GPR:$rd), (ins TileReg:$ms1, GPR:$rs2),
+    : RVInstBOSCAMEMove<(outs GPR:$rd), (ins BOSCAMETileReg:$ms1, GPR:$rs2),
                         opcodestr, "$rd, $ms1, $rs2"> {
   bits<5> rs2;
   bits<5> ms1;
@@ -1255,7 +1255,7 @@ class RVInstBOSCAMEFMove_F_T<bits<3> eew_val, string opcodestr>
 }
 
 class RVInstBOSCAMEFMove_T_F<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs TileReg:$md), (ins GPR:$rs1, GPR:$rs2),
+    : RVInstBOSCAMEMove<(outs BOSCAMETileReg:$md), (ins GPR:$rs1, GPR:$rs2),
                         opcodestr, "$md, $rs1, $rs2"> {
   bits<5> rs2;
   bits<5> rs1;
@@ -1268,7 +1268,7 @@ class RVInstBOSCAMEFMove_T_F<bits<3> eew_val, string opcodestr>
 }
 
 class RVInstBOSCAMEFMove_F_A<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs GPR:$rd), (ins AccReg:$ms1, GPR:$rs2),
+    : RVInstBOSCAMEMove<(outs GPR:$rd), (ins BOSCAMEAccReg:$ms1, GPR:$rs2),
                         opcodestr, "$rd, $ms1, $rs2"> {
   bits<5> rs2;
   bits<5> ms1;
@@ -1281,7 +1281,7 @@ class RVInstBOSCAMEFMove_F_A<bits<3> eew_val, string opcodestr>
 }
 
 class RVInstBOSCAMEFMove_A_F<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs AccReg:$md), (ins GPR:$rs1, GPR:$rs2),
+    : RVInstBOSCAMEMove<(outs BOSCAMEAccReg:$md), (ins GPR:$rs1, GPR:$rs2),
                         opcodestr, "$md, $rs1, $rs2"> {
   bits<5> rs2;
   bits<5> rs1;
@@ -1318,7 +1318,7 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 
 // Data Broadcast Instructions
 class RVInstBOSCAMEBroadcastTile<bits<5> rs2_val, bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs TileReg:$md), (ins TileReg:$ms1),
+    : RVInstBOSCAMEMove<(outs BOSCAMETileReg:$md), (ins BOSCAMETileReg:$ms1),
                         opcodestr, "$md, $ms1"> {
   bits<5> md;
   bits<5> ms1;
@@ -1333,7 +1333,7 @@ class RVInstBOSCAMEBroadcastTile<bits<5> rs2_val, bits<3> eew_val, string opcode
 }
 
 class RVInstBOSCAMEBroadcastAcc<bits<5> rs2_val, bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs AccReg:$md), (ins AccReg:$ms1),
+    : RVInstBOSCAMEMove<(outs BOSCAMEAccReg:$md), (ins BOSCAMEAccReg:$ms1),
                         opcodestr, "$md, $ms1"> {
   bits<5> md;
   bits<5> ms1;
@@ -1348,36 +1348,36 @@ class RVInstBOSCAMEBroadcastAcc<bits<5> rs2_val, bits<3> eew_val, string opcodes
 }
 
 let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
-  // Row broadcast from TileReg/AccReg
+  // Row broadcast from BOSCAMETileReg/BOSCAMEAccReg
   def BOSC_AME_MBCAR_M : RVInstBOSCAMEBroadcastTile<0b10001, 0b000, "mbcar.m">;
   def BOSC_AME_MBCBR_M : RVInstBOSCAMEBroadcastTile<0b10010, 0b000, "mbcbr.m">;
   def BOSC_AME_MBCCR_M : RVInstBOSCAMEBroadcastAcc<0b10000, 0b000, "mbccr.m">;
-  // Column broadcast from TileReg
+  // Column broadcast from BOSCAMETileReg
   def BOSC_AME_MBCACE8_M  : RVInstBOSCAMEBroadcastTile<0b10101, 0b000, "mbcace8.m">;
   def BOSC_AME_MBCACE16_M : RVInstBOSCAMEBroadcastTile<0b10101, 0b001, "mbcace16.m">;
   def BOSC_AME_MBCACE32_M : RVInstBOSCAMEBroadcastTile<0b10101, 0b010, "mbcace32.m">;
   def BOSC_AME_MBCACE64_M : RVInstBOSCAMEBroadcastTile<0b10101, 0b011, "mbcace64.m">;
-  // Column broadcast from TileReg
+  // Column broadcast from BOSCAMETileReg
   def BOSC_AME_MBCBCE8_M  : RVInstBOSCAMEBroadcastTile<0b10110, 0b000, "mbcbce8.m">;
   def BOSC_AME_MBCBCE16_M : RVInstBOSCAMEBroadcastTile<0b10110, 0b001, "mbcbce16.m">;
   def BOSC_AME_MBCBCE32_M : RVInstBOSCAMEBroadcastTile<0b10110, 0b010, "mbcbce32.m">;
   def BOSC_AME_MBCBCE64_M : RVInstBOSCAMEBroadcastTile<0b10110, 0b011, "mbcbce64.m">;
-  // Column broadcast from AccReg
+  // Column broadcast from BOSCAMEAccReg
   def BOSC_AME_MBCCCE8_M  : RVInstBOSCAMEBroadcastAcc<0b10100, 0b000, "mbccce8.m">;
   def BOSC_AME_MBCCCE16_M : RVInstBOSCAMEBroadcastAcc<0b10100, 0b001, "mbccce16.m">;
   def BOSC_AME_MBCCCE32_M : RVInstBOSCAMEBroadcastAcc<0b10100, 0b010, "mbccce32.m">;
   def BOSC_AME_MBCCCE64_M : RVInstBOSCAMEBroadcastAcc<0b10100, 0b011, "mbccce64.m">;
-  // Element broadcast from TileReg
+  // Element broadcast from BOSCAMETileReg
   def BOSC_AME_MBCAEE8_M  : RVInstBOSCAMEBroadcastTile<0b11001, 0b000, "mbcaee8.m">;
   def BOSC_AME_MBCAEE16_M : RVInstBOSCAMEBroadcastTile<0b11001, 0b001, "mbcaee16.m">;
   def BOSC_AME_MBCAEE32_M : RVInstBOSCAMEBroadcastTile<0b11001, 0b010, "mbcaee32.m">;
   def BOSC_AME_MBCAEE64_M : RVInstBOSCAMEBroadcastTile<0b11001, 0b011, "mbcaee64.m">;
-  // Element broadcast from TileReg
+  // Element broadcast from BOSCAMETileReg
   def BOSC_AME_MBCBEE8_M  : RVInstBOSCAMEBroadcastTile<0b11010, 0b000, "mbcbee8.m">;
   def BOSC_AME_MBCBEE16_M : RVInstBOSCAMEBroadcastTile<0b11010, 0b001, "mbcbee16.m">;
   def BOSC_AME_MBCBEE32_M : RVInstBOSCAMEBroadcastTile<0b11010, 0b010, "mbcbee32.m">;
   def BOSC_AME_MBCBEE64_M : RVInstBOSCAMEBroadcastTile<0b11010, 0b011, "mbcbee64.m">;
-  // Element broadcast from AccReg
+  // Element broadcast from BOSCAMEAccReg
   def BOSC_AME_MBCCEE8_M  : RVInstBOSCAMEBroadcastAcc<0b11000, 0b000, "mbccee8.m">;
   def BOSC_AME_MBCCEE16_M : RVInstBOSCAMEBroadcastAcc<0b11000, 0b001, "mbccee16.m">;
   def BOSC_AME_MBCCEE32_M : RVInstBOSCAMEBroadcastAcc<0b11000, 0b010, "mbccee32.m">;
@@ -1386,7 +1386,7 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 
 // Matrix Transpose Instructions
 class RVInstBOSCAMETransposeTile<bits<5> rs2_val, bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs TileReg:$md), (ins TileReg:$ms1),
+    : RVInstBOSCAMEMove<(outs BOSCAMETileReg:$md), (ins BOSCAMETileReg:$ms1),
                         opcodestr, "$md, $ms1"> {
   bits<5> md;
   bits<5> ms1;
@@ -1401,7 +1401,7 @@ class RVInstBOSCAMETransposeTile<bits<5> rs2_val, bits<3> eew_val, string opcode
 }
 
 class RVInstBOSCAMETransposeAcc<bits<5> rs2_val, bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs AccReg:$md), (ins AccReg:$ms1),
+    : RVInstBOSCAMEMove<(outs BOSCAMEAccReg:$md), (ins BOSCAMEAccReg:$ms1),
                         opcodestr, "$md, $ms1"> {
   bits<5> md;
   bits<5> ms1;
@@ -2179,7 +2179,7 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, isCodeGenOnly = 1 in {
 }
 
 // Pseudo matrix multiply instruction
-// md: AccReg index (0-7), ms1/ms2: TileReg indices (0-7)
+// md: BOSCAMEAccReg index (0-7), ms1/ms2: BOSCAMETileReg indices (0-7)
 // Base Pseudo class for all MMA instructions
 class RVInstBOSCAMEMMA_Pseudo<string opcodestr>
     : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, BOSCAMETileIndex:$ms1, BOSCAMETileIndex:$ms2), []> {
