@@ -221,7 +221,7 @@ class RISCVAsmParser : public MCTargetAsmParser {
   ParseStatus parseJALOffset(OperandVector &Operands);
   ParseStatus parseVTypeI(OperandVector &Operands);
   ParseStatus parseMaskReg(OperandVector &Operands);
-  ParseStatus parseMatrixReg(OperandVector &Operands);
+  ParseStatus parseTHeadAMEMatrixReg(OperandVector &Operands);
   ParseStatus parseVScaleReg(OperandVector &Operands);
   ParseStatus parseTileLambda(OperandVector &Operands);
   ParseStatus parseInsnDirectiveOpcode(OperandVector &Operands);
@@ -494,9 +494,9 @@ public:
   bool isV0Reg() const {
     return Kind == KindTy::Register && Reg.Reg == RISCV::V0;
   }
-  bool isMatrixReg() const {
-    return Kind == KindTy::Register && Reg.Reg >= RISCV::AMEM0 &&
-           Reg.Reg <= RISCV::AMEM7;
+  bool isTHeadAMEMatrixReg() const {
+    return Kind == KindTy::Register && Reg.Reg >= RISCV::THeadAMEM0 &&
+           Reg.Reg <= RISCV::THeadAMEM7;
   }
   bool isAnyReg() const {
     return Kind == KindTy::Register &&
@@ -1277,7 +1277,7 @@ public:
   }
 
   static std::unique_ptr<RISCVOperand> createRegList(unsigned RlistEncode,
-                                                   SMLoc S) {
+                                                     SMLoc S) {
     auto Op = std::make_unique<RISCVOperand>(KindTy::RegList);
     Op->RegList.Encoding = RlistEncode;
     Op->StartLoc = S;
@@ -1294,7 +1294,8 @@ public:
     return Op;
   }
 
-  static std::unique_ptr<RISCVOperand> createStackAdj(unsigned StackAdj, SMLoc S) {
+  static std::unique_ptr<RISCVOperand> createStackAdj(unsigned StackAdj,
+                                                      SMLoc S) {
     auto Op = std::make_unique<RISCVOperand>(KindTy::StackAdj);
     Op->StackAdj.Val = StackAdj;
     Op->StartLoc = S;
@@ -2271,8 +2272,8 @@ ParseStatus RISCVAsmParser::parseFPImm(OperandVector &Operands) {
   if (IsNegative)
     RealVal.changeSign();
 
-  Operands.push_back(RISCVOperand::createFPImm(
-      RealVal.bitcastToAPInt().getZExtValue(), S));
+  Operands.push_back(
+      RISCVOperand::createFPImm(RealVal.bitcastToAPInt().getZExtValue(), S));
 
   Lex(); // Eat the token.
 
@@ -2654,7 +2655,7 @@ ParseStatus RISCVAsmParser::parseMaskReg(OperandVector &Operands) {
   return ParseStatus::Success;
 }
 
-ParseStatus RISCVAsmParser::parseMatrixReg(OperandVector &Operands) {
+ParseStatus RISCVAsmParser::parseTHeadAMEMatrixReg(OperandVector &Operands) {
   if (getLexer().isNot(AsmToken::Identifier))
     return ParseStatus::NoMatch;
 
@@ -2666,7 +2667,7 @@ ParseStatus RISCVAsmParser::parseMatrixReg(OperandVector &Operands) {
   SMLoc E = getTok().getEndLoc();
   getLexer().Lex();
   Operands.push_back(
-      RISCVOperand::createReg(RISCV::AMEM0 + (Name[1] - '0'), S, E));
+      RISCVOperand::createReg(RISCV::THeadAMEM0 + (Name[1] - '0'), S, E));
   return ParseStatus::Success;
 }
 
@@ -3399,9 +3400,10 @@ bool RISCVAsmParser::parseDirectiveOption() {
 
           std::string Buffer;
           raw_string_ostream OutputErrMsg(Buffer);
-          handleAllErrors(ParseResult.takeError(), [&](llvm::StringError &ErrMsg) {
-            OutputErrMsg << ErrMsg.getMessage();
-          });
+          handleAllErrors(ParseResult.takeError(),
+                          [&](llvm::StringError &ErrMsg) {
+                            OutputErrMsg << ErrMsg.getMessage();
+                          });
 
           return Error(Loc, OutputErrMsg.str());
         }

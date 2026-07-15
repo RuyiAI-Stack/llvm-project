@@ -957,6 +957,13 @@ def HasStdExtZvvmttls : Predicate<"Subtarget->hasStdExtZvvmttls()">,
                         AssemblerPredicate<(all_of FeatureStdExtZvvmttls),
                             "'Zvvmttls' (Transposing Matrix Tile Load/Store)">;
 
+// Attached Matrix Extension 
+def FeatureStdExtZtt
+    : RISCVExtension<0, 1, "Attached Matrix Extension">;
+def HasStdExtZtt : Predicate<"Subtarget->hasStdExtZtt()">,
+                   AssemblerPredicate<(all_of FeatureStdExtZtt),
+                      "'Ztt' (Attached Matrix Extension)">;
+
 // Zvbdota family of batched dot-product extensions
 def FeatureStdExtZvqwbdota8i
     : RISCVExperimentalExtension<0, 2,

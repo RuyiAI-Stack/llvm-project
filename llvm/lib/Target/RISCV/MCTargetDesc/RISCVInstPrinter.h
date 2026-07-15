@@ -54,8 +54,8 @@ public:
                        const MCSubtargetInfo &STI, raw_ostream &O);
   void printVMaskReg(const MCInst *MI, unsigned OpNo,
                      const MCSubtargetInfo &STI, raw_ostream &O);
-  void printMatrixReg(const MCInst *MI, unsigned OpNo,
-                      const MCSubtargetInfo &STI, raw_ostream &O);
+  void printTHeadAMEMatrixReg(const MCInst *MI, unsigned OpNo,
+                              const MCSubtargetInfo &STI, raw_ostream &O);
   void printVScaleReg(const MCInst *MI, unsigned OpNo,
                       const MCSubtargetInfo &STI, raw_ostream &O);
   void printTileLambda(const MCInst *MI, unsigned OpNo,

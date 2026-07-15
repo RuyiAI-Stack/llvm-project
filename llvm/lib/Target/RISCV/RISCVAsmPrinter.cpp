@@ -15,6 +15,7 @@
 #include "MCTargetDesc/RISCVELFStreamer.h"
 #include "MCTargetDesc/RISCVInstPrinter.h"
 #include "MCTargetDesc/RISCVMCAsmInfo.h"
+#include "MCTargetDesc/RISCVMCTargetDesc.h"
 #include "MCTargetDesc/RISCVMatInt.h"
 #include "MCTargetDesc/RISCVTargetStreamer.h"
 #include "RISCV.h"
@@ -379,26 +380,29 @@ void RISCVAsmPrinter::emitNTLHint(const MachineInstr *MI) {
   EmitToStreamer(*OutStreamer, Hint);
 }
 
-static unsigned getAMETileReg(unsigned Index) {
-  static const unsigned Regs[] = {RISCV::TR0, RISCV::TR1, RISCV::TR2,
-                                  RISCV::TR3, RISCV::TR4, RISCV::TR5,
-                                  RISCV::TR6, RISCV::TR7};
+static unsigned getBOSCAMETileReg(unsigned Index) {
+  static const unsigned Regs[] = {RISCV::BOSCAMETR0, RISCV::BOSCAMETR1,
+                                  RISCV::BOSCAMETR2, RISCV::BOSCAMETR3,
+                                  RISCV::BOSCAMETR4, RISCV::BOSCAMETR5,
+                                  RISCV::BOSCAMETR4, RISCV::BOSCAMETR7};
   assert(Index < 8 && "invalid AME tile register index");
   return Regs[Index];
 }
 
-static unsigned getAMEAccReg(unsigned Index) {
-  static const unsigned Regs[] = {RISCV::ACC0, RISCV::ACC1, RISCV::ACC2,
-                                  RISCV::ACC3, RISCV::ACC4, RISCV::ACC5,
-                                  RISCV::ACC6, RISCV::ACC7};
+static unsigned getBOSCAMEAccReg(unsigned Index) {
+  static const unsigned Regs[] = {RISCV::BOSCAMEACC0, RISCV::BOSCAMEACC1,
+                                  RISCV::BOSCAMEACC2, RISCV::BOSCAMEACC3,
+                                  RISCV::BOSCAMEACC4, RISCV::BOSCAMEACC5,
+                                  RISCV::BOSCAMEACC6, RISCV::BOSCAMEACC7};
   assert(Index < 8 && "invalid AME accumulator register index");
   return Regs[Index];
 }
 
-static unsigned getAMEMatrixReg(unsigned Index) {
-  static const unsigned Regs[] = {RISCV::AMEM0, RISCV::AMEM1, RISCV::AMEM2,
-                                  RISCV::AMEM3, RISCV::AMEM4, RISCV::AMEM5,
-                                  RISCV::AMEM6, RISCV::AMEM7};
+static unsigned getTHeadAMEMatrixReg(unsigned Index) {
+  static const unsigned Regs[] = {RISCV::THeadAMEM0, RISCV::THeadAMEM1,
+                                  RISCV::THeadAMEM2, RISCV::THeadAMEM3,
+                                  RISCV::THeadAMEM4, RISCV::THeadAMEM5,
+                                  RISCV::THeadAMEM6, RISCV::THeadAMEM7};
   assert(Index < 8 && "invalid AME matrix register index");
   return Regs[Index];
 }
@@ -419,15 +423,15 @@ bool RISCVAsmPrinter::lowerMatrixExtPseudo(const MachineInstr *MI,
 
   auto AddTileIndex = [&](unsigned OpNo) {
     Inst.addOperand(
-        MCOperand::createReg(getAMETileReg(MI->getOperand(OpNo).getImm())));
+        MCOperand::createReg(getBOSCAMETileReg(MI->getOperand(OpNo).getImm())));
   };
   auto AddAccIndex = [&](unsigned OpNo) {
     Inst.addOperand(
-        MCOperand::createReg(getAMEAccReg(MI->getOperand(OpNo).getImm())));
+        MCOperand::createReg(getBOSCAMEAccReg(MI->getOperand(OpNo).getImm())));
   };
   auto AddMatrixIndex = [&](unsigned OpNo) {
     Inst.addOperand(MCOperand::createReg(
-        getAMEMatrixReg(MI->getOperand(OpNo).getImm())));
+        getTHeadAMEMatrixReg(MI->getOperand(OpNo).getImm())));
   };
 
   switch (MI->getOpcode()) {

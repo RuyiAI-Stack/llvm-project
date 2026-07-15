@@ -20,6 +20,35 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
+// Standard AME (RISC-V Matrix Extension, Ztt) Register Definitions
+//===----------------------------------------------------------------------===//
+// Reference: RISC-V Attached Matrix Extension (Ztt) draft specification
+//===----------------------------------------------------------------------===//
+
+let Namespace = "RISCV" in {
+  // Base class for AME Matrix Registers (m0-m31)
+  // AME_NUM_M_REGS is an implementation parameter that defines the number of
+  // general-purpose matrix registers (one of [16, 32]).
+  class AMEMatrixReg<bits<5> Enc, string n> : Register<n> {
+    let HWEncoding{4 - 0} = Enc;
+  }
+
+  // Define 32 AME Matrix Registers
+  foreach i = 0 - 31 in { def AMEM #i : AMEMatrixReg<i, "m" #i>; }
+
+  // Base class for AME Accumulator Registers (acc0-acc3)
+  // AME_NUM_ACC_REGS is an implementation parameter that defines the number of
+  // accumulator registers (one of [1, 2, 4]).
+  class AMEAccReg<bits<2> Enc, string n> : Register<n> {
+    let HWEncoding{1 - 0} = Enc;
+  }
+
+  // Define 4 AME Accumulator Registers
+  foreach i = 0 - 3 in{def AMEAcc #i: AMEAccReg<i, "acc" #i>;
+}
+}
+
+//===----------------------------------------------------------------------===//
 // Vendor-Specific AME (RISC-V Matrix Extension) Register Definitions
 //===----------------------------------------------------------------------===//
 // Reference: Vendor-Specific RISC-V Matrix Extension Specifications
@@ -29,7 +58,6 @@
 //===----------------------------------------------------------------------===//
 
 let Namespace = "RISCV" in {
-
   // Base class for BOSCAME Tile Registers (tr0-7)
   // Used for input matrices A and B
   // Size: MLEN bits per register (hardware-defined)
@@ -39,14 +67,7 @@ let Namespace = "RISCV" in {
   }
 
   // Define 8 BOSCAME Tile Registers: tr0-tr7
-  def BOSCAMETR0 : BOSCAMETileReg<0, "tr0">;
-  def BOSCAMETR1 : BOSCAMETileReg<1, "tr1">;
-  def BOSCAMETR2 : BOSCAMETileReg<2, "tr2">;
-  def BOSCAMETR3 : BOSCAMETileReg<3, "tr3">;
-  def BOSCAMETR4 : BOSCAMETileReg<4, "tr4">;
-  def BOSCAMETR5 : BOSCAMETileReg<5, "tr5">;
-  def BOSCAMETR6 : BOSCAMETileReg<6, "tr6">;
-  def BOSCAMETR7 : BOSCAMETileReg<7, "tr7">;
+  foreach i = 0 - 7 in { def BOSCAMETR #i : BOSCAMETileReg<i, "tr" #i>; }
 
   // Base class for BOSCAME Accumulation Registers (acc0-acc7)
   // Used for output/accumulation matrix C
@@ -63,14 +84,7 @@ let Namespace = "RISCV" in {
   }
 
   // Define 8 BOSCAME Accumulation Registers: acc0-acc7
-  def BOSCAMEACC0 : BOSCAMEAccReg<0, "acc0">;
-  def BOSCAMEACC1 : BOSCAMEAccReg<1, "acc1">;
-  def BOSCAMEACC2 : BOSCAMEAccReg<2, "acc2">;
-  def BOSCAMEACC3 : BOSCAMEAccReg<3, "acc3">;
-  def BOSCAMEACC4 : BOSCAMEAccReg<4, "acc4">;
-  def BOSCAMEACC5 : BOSCAMEAccReg<5, "acc5">;
-  def BOSCAMEACC6 : BOSCAMEAccReg<6, "acc6">;
-  def BOSCAMEACC7 : BOSCAMEAccReg<7, "acc7">;
+  foreach i = 0 - 7 in { def BOSCAMEACC #i : BOSCAMEAccReg<i, "acc" #i>; }
 
   // Base class for XuanTie AME Matrix Registers (m0-m7)
   class THeadAMEMatrixReg<bits<3> Enc, string n> : Register<n> {
@@ -81,15 +95,8 @@ let Namespace = "RISCV" in {
   // Define 8 XuanTie AME Matrix Registers: m0-m7
   // Upstream RISCVRegisterInfo.td already defines M0-M7 as mask registers. Keep
   // the TableGen def names distinct while preserving the XTAME assembly names.
-  def THeadAMEM0 : THeadAMEMatrixReg<0, "amem0">;
-  def THeadAMEM1 : THeadAMEMatrixReg<1, "amem1">;
-  def THeadAMEM2 : THeadAMEMatrixReg<2, "amem2">;
-  def THeadAMEM3 : THeadAMEMatrixReg<3, "amem3">;
-  def THeadAMEM4 : THeadAMEMatrixReg<4, "amem4">;
-  def THeadAMEM5 : THeadAMEMatrixReg<5, "amem5">;
-  def THeadAMEM6 : THeadAMEMatrixReg<6, "amem6">;
-  def THeadAMEM7 : THeadAMEMatrixReg<7, "amem7">;
-
+  foreach i = 0 - 7 in{def THeadAMEM #i: THeadAMEMatrixReg<i, "amem" #i>;
+}
 } // End Namespace = "RISCV"
 
 //===----------------------------------------------------------------------===//
@@ -100,33 +107,42 @@ let Namespace = "RISCV" in {
 
 // Tile Register class (tr0-tr7)
 // Used for input operands in matrix multiplication and load/store of input
-// matrices Note: Size is set to 256 as a placeholder; actual size depends on
+// matrices
+// Note: Size is set to 256 as a placeholder; actual size depends on
 // MLEN
-def BOSCAMETileReg
-    : RegisterClass<"RISCV", [untyped], 256,
-                    (add BOSCAMETR0, BOSCAMETR1, BOSCAMETR2, BOSCAMETR3,
-                     BOSCAMETR4, BOSCAMETR5, BOSCAMETR6, BOSCAMETR7)> {
+def BOSCAMETileReg : RegisterClass<"RISCV", [untyped], 256,
+                                   (add(sequence "BOSCAMETR%u", 0, 7))> {
   let Size = 256; // Placeholder: actual MLEN is hardware-defined
 }
 
 // Accumulation Register class (acc0-acc7)
 // Used for output/accumulator in matrix multiplication and load/store of
-// output/accumulator Note: Size can be 256×AMUL where AMUL ∈ {1/8, 1/4, 1/2, 1,
+// output/accumulator
+// Note: Size can be 256×AMUL where AMUL ∈ {1/8, 1/4, 1/2, 1,
 // 2, 4, 8} We use 1024 as a reasonable upper bound (256 × 4 for int8→int32)
-def BOSCAMEAccReg
-    : RegisterClass<"RISCV", [untyped], 1024,
-                    (add BOSCAMEACC0, BOSCAMEACC1, BOSCAMEACC2, BOSCAMEACC3,
-                     BOSCAMEACC4, BOSCAMEACC5, BOSCAMEACC6, BOSCAMEACC7)> {
+def BOSCAMEAccReg : RegisterClass<"RISCV", [untyped], 1024,
+                                  (add(sequence "BOSCAMEACC%u", 0, 7))> {
   let Size = 1024; // Placeholder: actual MLEN×AMUL is hardware-defined
 }
 
-// XuanTie AME matrix register class.
-def THeadAMEMatrixReg
-    : RegisterClass<"RISCV", [untyped], 1024,
-                    (add THeadAMEM0, THeadAMEM1, THeadAMEM2, THeadAMEM3,
-                     THeadAMEM4, THeadAMEM5, THeadAMEM6, THeadAMEM7)> {
+// XuanTie AME Matrix Register class.
+def THeadAMEMatrixReg : RegisterClass<"RISCV", [untyped], 1024,
+                                      (add(sequence "THeadAMEM%u", 0, 7))> {
   let Size = 1024; // Placeholder: actual MLEN is hardware-defined
+}
+
+// Standard AME (Ztt) Matrix Register class
+def AMEMatrixReg
+    : RegisterClass<"RISCV", [untyped], 1024, (add(sequence "AMEM%u", 0, 31))> {
+  let Size = 1024; // Placeholder: actual size is hardware-defined
+}
+
+// Standard AME (Ztt) Accumulator Register class
+def AMEAccReg : RegisterClass<"RISCV", [untyped], 4096,
+                              (add(sequence "AMEAcc%u", 0, 3))> {
+  let Size = 4096; // Placeholder: actual size is hardware-defined
 }
 
 include "RISCVInstrInfoXBOSCAME.td"
 include "RISCVInstrInfoXTHeadAME.td"
+include "RISCVInstrInfoZtt.td"
