@@ -101,9 +101,9 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
 class AME_BINARYELEMENTWISE<bits<7> funct7, bits<3> funct3, string opcodestr>
     : RVInstAME32<funct7,
                   (outs),
-                  (ins AMEMatrixRegIndex: $md, AMEMatrixRegIndex
-                   : $ms1, AMEMatrixRegIndex
-                   : $ms2),
+                  (ins AMEMatrixRegIndex: $md, 
+                       AMEMatrixRegIndex: $ms1, 
+                       AMEMatrixRegIndex: $ms2),
                   opcodestr, "$md, $ms1, $ms2"> {
   bits<5> ms1;
   bits<5> ms2;
@@ -160,11 +160,10 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
 // (op md, xs1, ms2). Scalar type is inferred from Md[ms2].
 class AME_BINARYELEMENTWISE_X<bits<7> funct7, bits<3> funct3, string opcodestr>
     : RVInstAME32<funct7,
-                  (outs ),
-                  (ins AMEMatrixRegIndex
-                   : $md, GPR
-                   : $xs1, AMEMatrixRegIndex
-                   : $ms2),
+                  (outs),
+                  (ins AMEMatrixRegIndex: $md, 
+                       GPR: $xs1, 
+                       AMEMatrixRegIndex: $ms2),
                   opcodestr, "$md, $xs1, $ms2"> {
   bits<5> xs1;
   bits<5> ms2;
@@ -209,10 +208,9 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
 class AME_MATMUL2D<bits<7> funct7, string opcodestr>
     : RVInstAME32<funct7,
                   (outs ),
-                  (ins AMEAccRegIndex
-                   : $acc, AMEMatrixRegIndex
-                   : $ms1, AMEMatrixRegIndex
-                   : $ms2),
+                  (ins AMEAccRegIndex: $acc, 
+                       AMEMatrixRegIndex: $ms1, 
+                       AMEMatrixRegIndex: $ms2),
                   opcodestr, "$acc, $ms1, $ms2"> {
   bits<5> ms1;
   bits<5> ms2;
@@ -241,9 +239,8 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
 // mls.rm).
 class AME_LOAD<bits<7> funct7, string opcodestr>
     : RVInstAME32<funct7, (outs ),
-                  (ins AMEMatrixRegIndex
-                            : $md, GPR
-                   : $xs1),
+                  (ins AMEMatrixRegIndex: $md, 
+                       GPR: $xs1),
                   opcodestr, "$md, $xs1"> {
   bits<5> xs1;
   bits<5> md;
@@ -265,9 +262,8 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 1,
 // mss.rm). 
 class AME_STORE<bits<7> funct7, string opcodestr>
     : RVInstAME32<funct7, (outs),
-                  (ins AMEMatrixRegIndex
-                   : $ms1, GPR
-                   : $xs1),
+                  (ins AMEMatrixRegIndex: $ms1, 
+                       GPR: $xs1),
                   opcodestr, "$ms1, $xs1"> {
   bits<5> xs1;
   bits<5> ms1;
@@ -288,9 +284,8 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
 let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
     mayStore = 0 in {
   // mzero.2d - clears an accumulator.
-  def AME_MZERO_2D : RVInstAME32<0b0001000, (outs ),
-                                 (ins AMEAccRegIndex
-                                              : $acc), "mzero.2d", "$acc"> {
+  def AME_MZERO_2D : RVInstAME32<0b0001000, (outs),
+                                 (ins AMEAccRegIndex: $acc), "mzero.2d", "$acc"> {
     bits<2> acc;
 
     let Inst{24 - 10} = 0b000000000010001;
@@ -300,9 +295,8 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
 
   // mmov.a.m - copy an Acc register into an M register.
   def AME_MMOV_A_M : RVInstAME32<0b0000011, (outs ),
-                                 (ins AMEMatrixRegIndex
-                                              : $md, AMEAccRegIndex
-                                  : $acc),
+                                 (ins AMEMatrixRegIndex: $md, 
+                                      AMEAccRegIndex: $acc),
                                  "mmov.a.m", "$md, $acc"> {
     bits<2> acc;
     bits<5> md;
@@ -315,9 +309,8 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
 
   // mmov.m.m - copy one M register into another.
   def AME_MMOV_M_M : RVInstAME32<0b0000010, (outs ),
-                                 (ins AMEMatrixRegIndex
-                                              : $md, AMEMatrixRegIndex
-                                  : $ms),
+                                 (ins AMEMatrixRegIndex: $md, 
+                                      AMEMatrixRegIndex: $ms),
                                  "mmov.m.m", "$md, $ms"> {
     bits<5> ms;
     bits<5> md;
@@ -328,10 +321,8 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
   }
 
   // mgettyp - read an M register's dtype tag into a GPR.
-  def AME_MGETTYP : RVInstAME32<0b0000010, (outs GPR
-                                             : $xd),
-                                (ins AMEMatrixRegIndex
-                                 : $ms1),
+  def AME_MGETTYP : RVInstAME32<0b0000010, (outs GPR: $xd),
+                                (ins AMEMatrixRegIndex: $ms1),
                                 "mgettyp", "$xd, $ms1"> {
     bits<5> ms1;
     bits<5> xd;
@@ -343,10 +334,8 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
   }
 
   // agettyp - read an Acc register's dtype tag into a GPR.
-  def AME_AGETTYP : RVInstAME32<0b0000100, (outs GPR
-                                             : $xd),
-                                (ins AMEAccRegIndex
-                                 : $ad),
+  def AME_AGETTYP : RVInstAME32<0b0000100, (outs GPR: $xd),
+                                (ins AMEAccRegIndex: $ad),
                                 "agettyp", "$xd, $ad"> {
     bits<2> ad;
     bits<5> xd;
@@ -359,9 +348,8 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
 
   // msettyp - write a GPR value as an M register's dtype tag.
   def AME_MSETTYP : RVInstAME32<0b0000001, (outs ),
-                                (ins AMEMatrixRegIndex
-                                             : $md, GPR
-                                 : $xs1),
+                                (ins AMEMatrixRegIndex: $md, 
+                                     GPR: $xs1),
                                 "msettyp", "$md, $xs1"> {
     bits<5> xs1;
     bits<5> md;
@@ -374,9 +362,8 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
 
   // asettyp - write a GPR value as an Acc register's dtype tag.
   def AME_ASETTYP : RVInstAME32<0b0000011, (outs ),
-                                (ins AMEAccRegIndex
-                                             : $ad, GPR
-                                 : $xs1),
+                                (ins AMEAccRegIndex: $ad, 
+                                     GPR: $xs1),
                                 "asettyp", "$ad, $xs1"> {
     bits<5> xs1;
     bits<2> ad;
@@ -389,9 +376,8 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
 
   // mbcast.x - broadcast a GPR scalar to every element of an M register.
   def AME_MBCAST_X : RVInstAME32<0b0000000, (outs ),
-                                 (ins AMEMatrixRegIndex
-                                              : $md, GPR
-                                  : $xs1),
+                                 (ins AMEMatrixRegIndex: $md, 
+                                      GPR: $xs1),
                                  "mbcast.x", "$md, $xs1"> {
     bits<5> xs1;
     bits<5> md;
@@ -419,8 +405,156 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
   }
 }
 
+//===-----------------------------------------------------------------------------------===//
+// Pattern Matching: LLVM IR Intrinsics -> AME (Ztt) 32-bit real/concrete instructions
+//===-----------------------------------------------------------------------------------===//
+
+// Base pattern helper for AME unary operations
+class AMEUnaryPat<Intrinsic intr, Instruction inst>
+    : Pat<(intr timm:$md, timm:$ms1),
+          (inst timm:$md, timm:$ms1)>;
+
+let Predicates = [HasStdExtZtt] in {
+  def : AMEUnaryPat<int_riscv_ame_mabs_ew,       AME_MABS_EW>;
+  def : AMEUnaryPat<int_riscv_ame_mcolunzip_ew,  AME_MCOLUNZIP_EW>;
+  def : AMEUnaryPat<int_riscv_ame_mcolzip_ew,    AME_MCOLZIP_EW>;
+  def : AMEUnaryPat<int_riscv_ame_mconv_ew,      AME_MCONV_EW>;
+  def : AMEUnaryPat<int_riscv_ame_mexp2_ew,      AME_MEXP2_EW>;
+  def : AMEUnaryPat<int_riscv_ame_mlog2_ew,      AME_MLOG2_EW>;
+  def : AMEUnaryPat<int_riscv_ame_mprefixadd_col, AME_MPREFIXADD_COL>;
+  def : AMEUnaryPat<int_riscv_ame_mprefixadd_row, AME_MPREFIXADD_ROW>;
+  def : AMEUnaryPat<int_riscv_ame_mprefixmax_col, AME_MPREFIXMAX_COL>;
+  def : AMEUnaryPat<int_riscv_ame_mprefixmax_row, AME_MPREFIXMAX_ROW>;
+  def : AMEUnaryPat<int_riscv_ame_mreduceadd_col, AME_MREDUCEADD_COL>;
+  def : AMEUnaryPat<int_riscv_ame_mreduceadd_row, AME_MREDUCEADD_ROW>;
+  def : AMEUnaryPat<int_riscv_ame_mreducemax_col, AME_MREDUCEMAX_COL>;
+  def : AMEUnaryPat<int_riscv_ame_mreducemax_row, AME_MREDUCEMAX_ROW>;
+  def : AMEUnaryPat<int_riscv_ame_mrowunzip_ew,  AME_MROWUNZIP_EW>;
+}
+
+// Base pattern helper for matrix-matrix binary operations
+class AMEBinMatPat<Intrinsic intr, Instruction inst>
+    : Pat<(intr timm:$md, timm:$ms1, timm:$ms2),
+          (inst timm:$md, timm:$ms1, timm:$ms2)>;
+
+let Predicates = [HasStdExtZtt] in {
+  def : AMEBinMatPat<int_riscv_ame_mabsdiff_ew,   AME_MABSDIFF_EW>;
+  def : AMEBinMatPat<int_riscv_ame_madd_ew,       AME_MADD_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mand_ew,       AME_MAND_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mandnot_ew,    AME_MANDNOT_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mcmovge_ew,    AME_MCMOVGE_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mcmovlt_ew,    AME_MCMOVLT_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mcmpge_ew,     AME_MCMPGE_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mcmplt_ew,     AME_MCMPLT_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mgather_ew,    AME_MGATHER_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mhdiff_ew,     AME_MHDIFF_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mldexp_ew,     AME_MLDEXP_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mldexpacc_ew,  AME_MLDEXPACC_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mlog2sub_ew,   AME_MLOG2SUB_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mmax_ew,       AME_MMAX_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mmean_ew,       AME_MMEAN_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mmin_ew,       AME_MMIN_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mmul_ew,       AME_MMUL_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mmulacc_ew,    AME_MMULACC_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mmulaccneg_ew, AME_MMULACCNEG_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mmuladd_ew,    AME_MMULADD_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mmulneg_ew,    AME_MMULNEG_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mmulsub_ew,    AME_MMULSUB_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mor_ew,        AME_MOR_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mornot_ew,     AME_MORNOT_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mrdexp_ew,     AME_MRDEXP_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mrdexpacc_ew,  AME_MRDEXPACC_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mrowzip_ew,    AME_MROWZIP_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mscatadd_col,  AME_MSCATADD_COL>;
+  def : AMEBinMatPat<int_riscv_ame_mscatadd_row,  AME_MSCATADD_ROW>;
+  def : AMEBinMatPat<int_riscv_ame_mscatmax_col,  AME_MSCATMAX_COL>;
+  def : AMEBinMatPat<int_riscv_ame_mscatmax_row,  AME_MSCATMAX_ROW>;
+  def : AMEBinMatPat<int_riscv_ame_mselge_ew,     AME_MSELGE_EW>;
+  def : AMEBinMatPat<int_riscv_ame_msellt_ew,     AME_MSELLT_EW>;
+  def : AMEBinMatPat<int_riscv_ame_msub_ew,       AME_MSUB_EW>;
+  def : AMEBinMatPat<int_riscv_ame_msublog2_ew,   AME_MSUBLOG2_EW>;
+  def : AMEBinMatPat<int_riscv_ame_mxor_ew,       AME_MXOR_EW>;
+}
+
+// Base pattern helper for matrix-scalar operations.
+// The second argument in the intrinsic is the scalar.
+class AMEBinScalarPat<Intrinsic intr, Instruction inst>
+    : Pat<(intr timm:$md, i64:$xs1, timm:$ms2),
+          (inst timm:$md, GPR:$xs1, timm:$ms2)>;
+
+let Predicates = [HasStdExtZtt] in {
+  def : AMEBinScalarPat<int_riscv_ame_mabsdiff_ew_x,   AME_MABSDIFF_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_madd_ew_x,       AME_MADD_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mand_ew_x,       AME_MAND_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mandnot_ew_x,    AME_MANDNOT_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mcmpge_ew_x,     AME_MCMPGE_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mcmplt_ew_x,     AME_MCMPLT_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mhdiff_ew_x,      AME_MHDIFF_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mldexp_ew_x,     AME_MLDEXP_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mldexpacc_ew_x,  AME_MLDEXPACC_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mlog2sub_ew_x,   AME_MLOG2SUB_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mmax_ew_x,       AME_MMAX_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mmean_ew_x,       AME_MMEAN_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mmin_ew_x,       AME_MMIN_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mmul_ew_x,       AME_MMUL_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mmulacc_ew_x,    AME_MMULACC_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mmulaccneg_ew_x, AME_MMULACCNEG_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mmuladd_ew_x,    AME_MMULADD_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mmulneg_ew_X,    AME_MMULNEG_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mmulsub_ew_x,    AME_MMULSUB_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mor_ew_x,        AME_MOR_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mornot_ew_x,     AME_MORNOT_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_msub_ew_x,       AME_MSUB_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_msublog2_ew_x,   AME_MSUBLOG2_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ame_mxor_ew_x,       AME_MXOR_EW_X>;
+}
+
+// Base class helper for matrix multiplication operations.
+// These instructions write to accumulator registers.
+class AMEMatMulPat<Intrinsic intr, Instruction inst>
+    : Pat<(intr timm:$acc, timm:$ms1, timm:$ms2),
+          (inst timm:$acc, timm:$ms1, timm:$ms2)>;
+
+let Predicates = [HasStdExtZtt] in {
+  def : AMEMatMulPat<int_riscv_ame_mmul_2d,        AME_MMUL_2D>;
+  def : AMEMatMulPat<int_riscv_ame_mmulacc_2d,     AME_MMULACC_2D>;
+  def : AMEMatMulPat<int_riscv_ame_mmulaccneg_2d,  AME_MMULACCNEG_2D>;
+  def : AMEMatMulPat<int_riscv_ame_mmulat_2d,      AME_MMULAT_2D>;
+  def : AMEMatMulPat<int_riscv_ame_mmulatacc_2d,   AME_MMULATACC_2D>;
+  def : AMEMatMulPat<int_riscv_ame_mmulbt_2d,      AME_MMULBT_2D>;
+  def : AMEMatMulPat<int_riscv_ame_mmulbtacc_2d,   AME_MMULBTACC_2D>;
+  def : AMEMatMulPat<int_riscv_ame_mmulneg_2d,     AME_MMULNEG_2D>;
+}
+
+// Miscellaneous instructions
+let Predicates = [HasStdExtZtt] in {
+  // Load/Store Patterns (Memory addresses are handled as ptr_ty -> GPR)
+  def : Pat<(int_riscv_ame_mls timm:$md, iPTR:$xs1), (AME_MLS timm:$md, GPR:$xs1)>;
+  def : Pat<(int_riscv_ame_mls_cm timm:$md, iPTR:$xs1), (AME_MLS_CM timm:$md, GPR:$xs1)>;
+  def : Pat<(int_riscv_ame_mls_rm timm:$md, iPTR:$xs1), (AME_MLS_RM timm:$md, GPR:$xs1)>;
+  def : Pat<(int_riscv_ame_mss timm:$ms1, iPTR:$xs1), (AME_MSS timm:$ms1, GPR:$xs1)>;
+  def : Pat<(int_riscv_ame_mss_cm timm:$ms1, iPTR:$xs1), (AME_MSS_CM timm:$ms1, GPR:$xs1)>;
+  def : Pat<(int_riscv_ame_mss_rm timm:$ms1, iPTR:$xs1), (AME_MSS_RM timm:$ms1, GPR:$xs1)>;
+
+  // Broadcast & Zero
+  def : Pat<(int_riscv_ame_mbcast_x timm:$md, i64:$xs1), (AME_MBCAST_X timm:$md, GPR:$xs1)>;
+  def : Pat<(int_riscv_ame_mzero_2d timm:$acc), (AME_MZERO_2D timm:$acc)>;
+
+  // Type operations
+  def : Pat<(int_riscv_ame_mgettype timm:$ms1), (AME_MGETTYP timm:$ms1)>;
+  def : Pat<(int_riscv_ame_agettyp timm:$ad), (AME_AGETTYP timm:$ad)>;
+  def : Pat<(int_riscv_ame_msettype timm:$md, i64:$xs1), (AME_MSETTYP timm:$md, GPR:$xs1)>;
+  def : Pat<(int_riscv_ame_asettyp timm:$ad, i64:$xs1), (AME_ASETTYP timm:$ad, GPR:$xs1)>;
+
+  // Moves
+  def : Pat<(int_riscv_ame_mmov_a_m timm:$md, timm:$acc), (AME_MMOV_A_M timm:$md, timm:$acc)>;
+  def : Pat<(int_riscv_ame_mmov_m_m timm:$md, timm:$ms), (AME_MMOV_M_M timm:$md, timm:$ms)>;
+  def : Pat<(int_riscv_ame_mshift_ew timm:$md, timm:$ms1, timm:$imm), 
+            (AME_MSHIFT_EW timm:$md, timm:$ms1, timm:$imm)>;
+}
+
 // TODO:
-// Define mpack.ew.x / munpack.ew.x real and pseudo instructions, and intrinsics -> pseudo instructions isel patterns.
+// Define mpack.ew.x / munpack.ew.x (instruction defintiion/encoding and LLVM IR intrinsics -> MachineInstruction/MCInst isel patterns).
 //
 // As currently drafted in the spec, both encode to funct7=0000001, funct3=101, identical field
 // positions. The spec gives no way to distinguish them. 

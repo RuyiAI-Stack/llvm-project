@@ -27,14 +27,14 @@
 // Signature: i32 (dtype_reg_index: i32)
 class AME_DataType_Get_Intr
     : Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
-                [IntrNoMem, IntrHasSideEffects, ImmArg<ArgIndex<0>>]>;
+                [IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>]>;
 
 // Base class for "set datatype" instrinsics: writes a GPR value into the dtype
 // of an M/Acc register and zeroes that M/Acc register's contents.
 // Signature: void (dtype_reg_index: i32, dtype_value: i32)
 class AME_DataType_Set_Intr
     : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty],
-                [IntrNoMem, IntrHasSideEffects, ImmArg<ArgIndex<0>>]>;
+                [IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>]>;
 
 let TargetPrefix = "riscv" in {
   // agettype - get the dtype of an Acc register
@@ -57,7 +57,7 @@ let TargetPrefix = "riscv" in {
 // Signature: void (md_reg_index: i32, ms1_reg_index: i32, ms2_reg_index: i32)
 class AME_Elementwise_Arithmetic_Intr
     : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i64_ty], [
-      IntrHasSideEffects, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>,
+      IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>,
       ImmArg<ArgIndex<2>>
     ]>;
 
@@ -65,13 +65,13 @@ class AME_Elementwise_Arithmetic_Intr
 // Signature: void (md_reg_index: i32, scalar: i32, ms2_reg_index: i32)
 class AME_Elementwise_Arithmetic_Scalar_Intr
     : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i64_ty],
-                [IntrHasSideEffects, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<2>>]>;
+                [IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<2>>]>;
 
 let TargetPrefix = "riscv" in {
   // mabs.ew - md[i] = |ms1[i]|
   // Signature: void (md_reg_index: i32, ms1_reg_index: i32)
   def int_riscv_ame_mabs_ew : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty], [
-    IntrHasSideEffects, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>
+    IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>
   ]>;
 
   // mabsdiff.ew - md[i] = |ms1[i] - ms2[i]|
@@ -160,7 +160,7 @@ let TargetPrefix = "riscv" in {
 // Signature: void (md_reg_index: i32, ms1_reg_index: i32, ms2_reg_index: i32)
 class AME_Bitwise_Intr
     : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i64_ty], [
-      IntrHasSideEffects, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>,
+      IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>,
       ImmArg<ArgIndex<2>>
     ]>;
 
@@ -168,7 +168,7 @@ class AME_Bitwise_Intr
 // Signature: void (md_reg_index: i32, scalar: i32, ms2_reg_index: i32)
 class AME_Bitwise_Scalar_Intr
     : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i64_ty],
-                [IntrHasSideEffects, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<2>>]>;
+                [IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<2>>]>;
 
 let TargetPrefix = "riscv" in {
   // mand.ew - md[i] = ms1[i] & ms2[i]
@@ -210,7 +210,7 @@ let TargetPrefix = "riscv" in {
   // (md). Signature: void (md_reg_index: i32, scalar: i32)
   def int_riscv_ame_mbcast_x
       : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty],
-                  [IntrHasSideEffects, ImmArg<ArgIndex<0>>]>;
+                  [IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -221,7 +221,7 @@ let TargetPrefix = "riscv" in {
 // src1_reg_index: i32)
 class AME_Comp_Pred_Intr
     : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i64_ty], [
-      IntrHasSideEffects, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>,
+      IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>,
       ImmArg<ArgIndex<2>>
     ]>;
 
@@ -229,7 +229,7 @@ class AME_Comp_Pred_Intr
 // Signature: void (md_reg_index: i32, scalar: i32, src1_reg_index: i32)
 class AME_Comp_Pred_Scalar_Intr
     : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i64_ty],
-                [IntrHasSideEffects, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<2>>]>;
+                [IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<2>>]>;
 
 let TargetPrefix = "riscv" in {
   // mcmovge.ew - md[i] = src1[i] if pred[i] >= 0, else md[i] unchanged.
@@ -264,6 +264,7 @@ let TargetPrefix = "riscv" in {
 // Signature: void (md_reg_index: i32, ms1_reg_index: i32)
 class AME_Perm2_Intr : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty], [
   IntrHasSideEffects,
+  IntrNoMem,
   ImmArg<ArgIndex<0>>,
   ImmArg<ArgIndex<1>>,
 ]>;
@@ -271,7 +272,7 @@ class AME_Perm2_Intr : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty], [
 // Base class for 3-operand permutation intrinsics.
 // Signature: void (md_reg_index: i32, ms1_reg_index: i32, ms2_reg_index: i32)
 class AME_Perm3_Intr : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i64_ty], [
-  IntrHasSideEffects, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>,
+  IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>,
   ImmArg<ArgIndex<2>>
 ]>;
 
@@ -348,6 +349,7 @@ let TargetPrefix = "riscv" in {
 class AME_PackUnpack_Intr
     : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i64_ty], [
       IntrHasSideEffects,
+      IntrNoMem,
       ImmArg<ArgIndex<0>>,
       ImmArg<ArgIndex<1>>,
     ]>;
@@ -359,7 +361,7 @@ let TargetPrefix = "riscv" in {
   // reg/square); unclear if "wide" non-packed dtypes (>1 reg/square) are valid
   // operands here.
   def int_riscv_ame_mconv_ew : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty], [
-    IntrHasSideEffects, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>
+    IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>
   ]>;
 
   // mpack.ew.x - pack the square from the ms1 register (unpacked,
@@ -385,6 +387,7 @@ let TargetPrefix = "riscv" in {
 // Signature: void (md_reg_index: i32, ms1_reg_index: i32)
 class AME_Log2Exp2_2_Intr : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty], [
   IntrHasSideEffects,
+  IntrNoMem,
   ImmArg<ArgIndex<0>>,
   ImmArg<ArgIndex<1>>,
 ]>;
@@ -393,7 +396,7 @@ class AME_Log2Exp2_2_Intr : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty], [
 // Signature: void (md_reg_index: i32, ms1_reg_index: i32, ms2_reg_index: i32)
 class AME_Log2Exp2_3_Intr
     : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i64_ty], [
-      IntrHasSideEffects, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>,
+      IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>,
       ImmArg<ArgIndex<2>>
     ]>;
 
@@ -401,7 +404,7 @@ class AME_Log2Exp2_3_Intr
 // Signature: void (md_reg_index: i32, scalar: i32, ms2_reg_index: i32)
 class AME_Log2Exp2_Scalar_Intr
     : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i64_ty],
-                [IntrHasSideEffects, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<2>>]>;
+                [IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<2>>]>;
 
 let TargetPrefix = "riscv" in {
   // mexp2.ew - md[i] = 2^ms1[i]
@@ -482,7 +485,7 @@ let TargetPrefix = "riscv" in {
 // registers Signature: void (dest_reg_index: i32, src_reg_index: i32)
 class AME_Move_Intr
     : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty],
-                [IntrHasSideEffects, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>]>;
+                [IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>]>;
 
 let TargetPrefix = "riscv" in {
   // mmov.a.m - copy an Acc register to an M register group; dtypes must
@@ -496,7 +499,7 @@ let TargetPrefix = "riscv" in {
   // mzero.2d - zero every element of an Acc register.
   // Signature: void (acc_reg_index: i32)
   def int_riscv_ame_mzero_2d
-      : Intrinsic<[], [llvm_i64_ty], [IntrHasSideEffects, ImmArg<ArgIndex<0>>]>;
+      : Intrinsic<[], [llvm_i64_ty], [IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -505,7 +508,7 @@ let TargetPrefix = "riscv" in {
 // Base class for matrix multiply intrinsics
 // Signature: void (acc_reg_index: i32, ms1_reg_index: i32, ms2_reg_index: i32)
 class AME_MatMul_Intr : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i64_ty], [
-  IntrHasSideEffects, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>,
+  IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>,
   ImmArg<ArgIndex<2>>
 ]>;
 
@@ -542,7 +545,7 @@ let TargetPrefix = "riscv" in {
 // Signature: void (md_reg_index: i32, ms1_reg_index: i32)
 class AME_Reduction_Intr
     : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty],
-                [IntrHasSideEffects, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>]>;
+                [IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>]>;
 
 let TargetPrefix = "riscv" in {
   // mprefixadd.col - md[i, j] = sum over k <= i of ms1[k, j]

@@ -90,7 +90,8 @@ def BOSCAMETileReg : RegisterClass<"RISCV", [untyped], 256,
 // Used for output/accumulator in matrix multiplication and load/store of
 // output/accumulator
 // Note: Size can be 256×AMUL where AMUL ∈ {1/8, 1/4, 1/2, 1,
-// 2, 4, 8} We use 1024 as a reasonable upper bound (256 × 4 for int8→int32)
+// 2, 4, 8}.
+// We use 1024 as a reasonable upper bound (256 × 4 for int8→int32)
 def BOSCAMEAccReg : RegisterClass<"RISCV", [untyped], 1024,
                                   (add(sequence "BOSCAMEACC%u", 0, 7))> {
   let Size = 1024; // Placeholder: actual MLEN×AMUL is hardware-defined
