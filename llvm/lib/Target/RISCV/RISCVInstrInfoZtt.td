@@ -22,7 +22,7 @@
 def AMEMatrixRegIndexAsmOperand : AsmOperandClass {
   let Name = "AMEMatrixRegIndex";
   let RenderMethod = "addImmOperands";
-  let PredicateMethod = "isAMETileIndex";
+  let PredicateMethod = "isUImm5";
   let DiagnosticType = "InvalidAMETileIndex";
 }
 
@@ -30,7 +30,7 @@ def AMEMatrixRegIndexAsmOperand : AsmOperandClass {
 def AMEAccRegIndexAsmOperand : AsmOperandClass {
   let Name = "AMEAccRegIndex";
   let RenderMethod = "addImmOperands";
-  let PredicateMethod = "isAMEAccIndex";
+  let PredicateMethod = "isUImm2";
   let DiagnosticType = "InvalidAMEAccIndex";
 }
 
@@ -38,14 +38,14 @@ def AMEAccRegIndexAsmOperand : AsmOperandClass {
 def AMEMatrixRegIndex : RISCVOp<i64> {
   let ParserMatchClass = AMEMatrixRegIndexAsmOperand;
   let DecoderMethod = "decodeUImmOperand<5>";
-  let OperandType = "OPERAND_UIMM5";
+  let OperandType = "OPERAND_AME_MATRIX_REG";
 }
 
 // Operand type for AMEAccRegIndex (0, 0-1 or 0-3)
 def AMEAccRegIndex : RISCVOp<i64> {
   let ParserMatchClass = AMEAccRegIndexAsmOperand;
   let DecoderMethod = "decodeUImmOperand<2>";
-  let OperandType = "OPERAND_UIMM2";
+  let OperandType = "OPERAND_AME_ACC_REG";
 }
 
 //===----------------------------------------------------------------------===//

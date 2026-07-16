@@ -3247,7 +3247,36 @@ bool RISCVInstrInfo::verifyInstruction(const MachineInstr &MI,
         return false;
       }
       break;
+    case RISCVOp::OPERAND_AME_MATRIX_REG: {
+      if (!MO.isImm()) {
+        ErrInfo = "Expected an immediate operand.";
+        return false;
+      }
+      int64_t Val = MO.getImm();
+      const auto &Features = STI.getFeatureBits();
+      if ((Features[RISCV::FeatureAMEMatrixRegs32] && (Val < 0 || Val >= 32)) ||
+          (Features[RISCV::FeatureAMEMatrixRegs16] && (Val < 0 || Val >= 16))) {
+        ErrInfo = "matrix register index out of range for current subtarget";
+        return false;
+      }
+      break;
     }
+
+    case RISCVOp::OPERAND_AME_ACC_REG: {
+      if (!MO.isImm()) {
+        ErrInfo = "Expected an immediate operand.";
+        return false;
+      }
+      int64_t Val = MO.getImm();
+      const auto &Features = STI.getFeatureBits();
+      if ((Features[RISCV::FeatureAMEAccRegs4] && (Val < 0 || Val >= 4)) ||
+          (Features[RISCV::FeatureAMEAccRegs2] && (Val < 0 || Val >= 2)) ||
+          (Features[RISCV::FeatureAMEAccRegs1] && Val != 0)) {
+        ErrInfo = "accumulator index out of range for current subtarget";
+        return false;
+      }
+      break;
+    }}
   }
 
   const uint64_t TSFlags = Desc.TSFlags;
