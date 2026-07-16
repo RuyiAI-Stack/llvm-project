@@ -20,35 +20,6 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-// Standard AME (RISC-V Matrix Extension, Ztt) Register Definitions
-//===----------------------------------------------------------------------===//
-// Reference: RISC-V Attached Matrix Extension (Ztt) draft specification
-//===----------------------------------------------------------------------===//
-
-let Namespace = "RISCV" in {
-  // Base class for AME Matrix Registers (m0-m31)
-  // AME_NUM_M_REGS is an implementation parameter that defines the number of
-  // general-purpose matrix registers (one of [16, 32]).
-  class AMEMatrixReg<bits<5> Enc, string n> : Register<n> {
-    let HWEncoding{4 - 0} = Enc;
-  }
-
-  // Define 32 AME Matrix Registers
-  foreach i = 0 - 31 in { def AMEM #i : AMEMatrixReg<i, "m" #i>; }
-
-  // Base class for AME Accumulator Registers (acc0-acc3)
-  // AME_NUM_ACC_REGS is an implementation parameter that defines the number of
-  // accumulator registers (one of [1, 2, 4]).
-  class AMEAccReg<bits<2> Enc, string n> : Register<n> {
-    let HWEncoding{1 - 0} = Enc;
-  }
-
-  // Define 4 AME Accumulator Registers
-  foreach i = 0 - 3 in{def AMEAcc #i: AMEAccReg<i, "acc" #i>;
-}
-}
-
-//===----------------------------------------------------------------------===//
 // Vendor-Specific AME (RISC-V Matrix Extension) Register Definitions
 //===----------------------------------------------------------------------===//
 // Reference: Vendor-Specific RISC-V Matrix Extension Specifications
@@ -129,18 +100,6 @@ def BOSCAMEAccReg : RegisterClass<"RISCV", [untyped], 1024,
 def THeadAMEMatrixReg : RegisterClass<"RISCV", [untyped], 1024,
                                       (add(sequence "THeadAMEM%u", 0, 7))> {
   let Size = 1024; // Placeholder: actual MLEN is hardware-defined
-}
-
-// Standard AME (Ztt) Matrix Register class
-def AMEMatrixReg
-    : RegisterClass<"RISCV", [untyped], 1024, (add(sequence "AMEM%u", 0, 31))> {
-  let Size = 1024; // Placeholder: actual size is hardware-defined
-}
-
-// Standard AME (Ztt) Accumulator Register class
-def AMEAccReg : RegisterClass<"RISCV", [untyped], 4096,
-                              (add(sequence "AMEAcc%u", 0, 3))> {
-  let Size = 4096; // Placeholder: actual size is hardware-defined
 }
 
 include "RISCVInstrInfoXBOSCAME.td"

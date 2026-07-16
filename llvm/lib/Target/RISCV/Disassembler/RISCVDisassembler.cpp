@@ -123,20 +123,6 @@ DecodeTHeadAMEMatrixRegRegisterClass(MCInst &Inst, uint32_t RegNo,
                                                          Decoder);
 }
 
-static DecodeStatus
-DecodeAMEAccRegRegisterClass(MCInst &Inst, uint32_t RegNo, uint64_t Address,
-                             const MCDisassembler *Decoder) {
-  return DecodeSimpleRegisterClass<RISCV::AMEAcc0, 4>(Inst, RegNo, Address,
-                                                      Decoder);
-}
-
-static DecodeStatus
-DecodeAMEMatrixRegRegisterClass(MCInst &Inst, uint32_t RegNo, uint64_t Address,
-                                const MCDisassembler *Decoder) {
-  return DecodeSimpleRegisterClass<RISCV::AMEM0, 32>(Inst, RegNo, Address,
-                                                     Decoder);
-}
-
 static DecodeStatus DecodeGPRX1X5RegisterClass(MCInst &Inst, uint32_t RegNo,
                                                uint64_t Address,
                                                const MCDisassembler *Decoder) {
