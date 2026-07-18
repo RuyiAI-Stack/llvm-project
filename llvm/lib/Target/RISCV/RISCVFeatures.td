@@ -958,30 +958,30 @@ def HasStdExtZvvmttls : Predicate<"Subtarget->hasStdExtZvvmttls()">,
                             "'Zvvmttls' (Transposing Matrix Tile Load/Store)">;
 
 // Attached Matrix Extension 
-def FeatureAMEMatrixRegs16
+def FeatureStdExtZttMatrixRegs16
     : SubtargetFeature<"ame-mregs-16", "HasAMEMatrixRegs16", "true",
                        "Target supports 16 AME matrix registers">;
 
-def FeatureAMEMatrixRegs32
+def FeatureStdExtZttMatrixRegs32
     : SubtargetFeature<"ame-mregs-32", "HasAMEMatrixRegs32", "true",
                        "Target supports 32 AME matrix registers">;
 
-def FeatureAMEAccRegs1
+def FeatureStdExtZttAccRegs1
     : SubtargetFeature<"ame-accregs-1", "HasAMEAccRegs1", "true",
                        "Target supports 1 AME accumulator register">;
 
-def FeatureAMEAccRegs2
+def FeatureStdExtZttAccRegs2
     : SubtargetFeature<"ame-accregs-2", "HasAMEAccRegs2", "true",
                        "Target supports 2 AME accumulator registers">;
 
-def FeatureAMEAccRegs4
+def FeatureStdExtZttAccRegs4
     : SubtargetFeature<"ame-accregs-4", "HasAMEAccRegs4", "true",
                        "Target supports 4 AME accumulator registers">;
 
-def FeatureStdExtZtt // By default, enabling "+ztt" implies 16 Matrix Regs and 4 Accumulators.
-  : RISCVExtension<0, 1, "Attached Matrix Extension",
-                     [FeatureAMEMatrixRegs32,
-                      FeatureAMEAccRegs4]>;
+let Implies = [FeatureStdExtZttMatrixRegs32, FeatureStdExtZttAccRegs4] in {
+  def FeatureStdExtZtt // By default, enabling "+ztt" implies 32 Matrix Regs and 4 Accumulators.
+    : RISCVExperimentalExtension<0, 1, "Attached Matrix Extension">;
+}
 
 def HasStdExtZtt : Predicate<"Subtarget->hasStdExtZtt()">,
                    AssemblerPredicate<(all_of FeatureStdExtZtt),

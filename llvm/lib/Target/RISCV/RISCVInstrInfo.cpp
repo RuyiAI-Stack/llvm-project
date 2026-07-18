@@ -12,6 +12,7 @@
 
 #include "RISCVInstrInfo.h"
 #include "MCTargetDesc/RISCVBaseInfo.h"
+#include "MCTargetDesc/RISCVMCTargetDesc.h"
 #include "MCTargetDesc/RISCVMatInt.h"
 #include "RISCV.h"
 #include "RISCVMachineFunctionInfo.h"
@@ -238,8 +239,7 @@ Register RISCVInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
   return 0;
 }
 
-bool RISCVInstrInfo::isReMaterializableImpl(
-    const MachineInstr &MI) const {
+bool RISCVInstrInfo::isReMaterializableImpl(const MachineInstr &MI) const {
   switch (RISCV::getRVVMCOpcode(MI.getOpcode())) {
   case RISCV::VMV_V_X:
   case RISCV::VFMV_V_F:
@@ -486,11 +486,11 @@ void RISCVInstrInfo::copyPhysRegVector(
       MIB = MIB.addReg(ActualSrcReg, getKillRegState(KillSrc));
     if (UseVMV) {
       const MCInstrDesc &Desc = DefMBBI->getDesc();
-      MIB.add(DefMBBI->getOperand(RISCVII::getVLOpNum(Desc)));  // AVL
+      MIB.add(DefMBBI->getOperand(RISCVII::getVLOpNum(Desc))); // AVL
       unsigned Log2SEW =
           DefMBBI->getOperand(RISCVII::getSEWOpNum(Desc)).getImm();
-      MIB.addImm(Log2SEW ? Log2SEW : 3);                        // SEW
-      MIB.addImm(0);                                            // tu, mu
+      MIB.addImm(Log2SEW ? Log2SEW : 3); // SEW
+      MIB.addImm(0);                     // tu, mu
       MIB.addReg(RISCV::VL, RegState::Implicit);
       MIB.addReg(RISCV::VTYPE, RegState::Implicit);
     }
@@ -3120,7 +3120,8 @@ bool RISCVInstrInfo::verifyInstruction(const MachineInstr &MI,
           Ok = Ok && Imm != 0;
           break;
         case RISCVOp::OPERAND_CLUI_IMM:
-          Ok = (isUInt<5>(Imm) && Imm != 0) || (Imm >= 0xfffe0 && Imm <= 0xfffff);
+          Ok = (isUInt<5>(Imm) && Imm != 0) ||
+               (Imm >= 0xfffe0 && Imm <= 0xfffff);
           break;
         case RISCVOp::OPERAND_RVKRNUM:
           Ok = Imm >= 0 && Imm <= 10;
@@ -3162,8 +3163,8 @@ bool RISCVInstrInfo::verifyInstruction(const MachineInstr &MI,
           Ok = isValidAtomicOrdering(Imm);
           break;
         case RISCVOp::OPERAND_VEC_POLICY:
-          Ok = (Imm & (RISCVVType::TAIL_AGNOSTIC | RISCVVType::MASK_AGNOSTIC)) ==
-               Imm;
+          Ok = (Imm &
+                (RISCVVType::TAIL_AGNOSTIC | RISCVVType::MASK_AGNOSTIC)) == Imm;
           break;
         case RISCVOp::OPERAND_SEW:
           Ok = (isUInt<5>(Imm) && RISCVVType::isValidSEW(1 << Imm));
@@ -3254,8 +3255,10 @@ bool RISCVInstrInfo::verifyInstruction(const MachineInstr &MI,
       }
       int64_t Val = MO.getImm();
       const auto &Features = STI.getFeatureBits();
-      if ((Features[RISCV::FeatureAMEMatrixRegs32] && (Val < 0 || Val >= 32)) ||
-          (Features[RISCV::FeatureAMEMatrixRegs16] && (Val < 0 || Val >= 16))) {
+      if ((Features[RISCV::FeatureStdExtZttMatrixRegs32] &&
+           (Val < 0 || Val >= 32)) ||
+          (Features[RISCV::FeatureStdExtZttMatrixRegs16] &&
+           (Val < 0 || Val >= 16))) {
         ErrInfo = "matrix register index out of range for current subtarget";
         return false;
       }
@@ -3269,25 +3272,29 @@ bool RISCVInstrInfo::verifyInstruction(const MachineInstr &MI,
       }
       int64_t Val = MO.getImm();
       const auto &Features = STI.getFeatureBits();
-      if ((Features[RISCV::FeatureAMEAccRegs4] && (Val < 0 || Val >= 4)) ||
-          (Features[RISCV::FeatureAMEAccRegs2] && (Val < 0 || Val >= 2)) ||
-          (Features[RISCV::FeatureAMEAccRegs1] && Val != 0)) {
+      if ((Features[RISCV::FeatureStdExtZttAccRegs4] &&
+           (Val < 0 || Val >= 4)) ||
+          (Features[RISCV::FeatureStdExtZttAccRegs2] &&
+           (Val < 0 || Val >= 2)) ||
+          (Features[RISCV::FeatureStdExtZttAccRegs1] && Val != 0)) {
         ErrInfo = "accumulator index out of range for current subtarget";
         return false;
       }
       break;
-    }}
+    }
+    }
   }
 
   const uint64_t TSFlags = Desc.TSFlags;
   if (RISCVII::hasVLOp(TSFlags)) {
     const MachineOperand &Op = MI.getOperand(RISCVII::getVLOpNum(Desc));
-    if (!Op.isImm() && !Op.isReg())  {
+    if (!Op.isImm() && !Op.isReg()) {
       ErrInfo = "Invalid operand type for VL operand";
       return false;
     }
     if (Op.isReg() && Op.getReg().isValid()) {
-      const MachineRegisterInfo &MRI = MI.getParent()->getParent()->getRegInfo();
+      const MachineRegisterInfo &MRI =
+          MI.getParent()->getParent()->getRegInfo();
       auto *RC = MRI.getRegClass(Op.getReg());
       if (!RISCV::GPRNoX0RegClass.hasSubClassEq(RC)) {
         ErrInfo = "Invalid register class for VL operand";
@@ -3940,9 +3947,9 @@ void RISCVInstrInfo::buildOutlinedFrame(
 
   // Add in a return instruction to the end of the outlined frame.
   MBB.insert(MBB.end(), BuildMI(MF, DebugLoc(), get(RISCV::JALR))
-      .addReg(RISCV::X0, RegState::Define)
-      .addReg(RISCV::X5)
-      .addImm(0));
+                            .addReg(RISCV::X0, RegState::Define)
+                            .addReg(RISCV::X5)
+                            .addImm(0));
 }
 
 MachineBasicBlock::iterator RISCVInstrInfo::insertOutlinedCall(
@@ -4514,8 +4521,8 @@ MachineInstr *RISCVInstrInfo::commuteInstructionImpl(MachineInstr &MI,
     assert((OpIdx1 == 3 || OpIdx2 == 3) && "Unexpected opcode index");
     unsigned Opc;
     switch (MI.getOpcode()) {
-      default:
-        llvm_unreachable("Unexpected opcode");
+    default:
+      llvm_unreachable("Unexpected opcode");
       CASE_VFMA_CHANGE_OPCODE_SPLATS(FMACC, FMADD)
       CASE_VFMA_CHANGE_OPCODE_SPLATS(FMADD, FMACC)
       CASE_VFMA_CHANGE_OPCODE_SPLATS(FMSAC, FMSUB)
@@ -4553,8 +4560,8 @@ MachineInstr *RISCVInstrInfo::commuteInstructionImpl(MachineInstr &MI,
     if (OpIdx1 == 3 || OpIdx2 == 3) {
       unsigned Opc;
       switch (MI.getOpcode()) {
-        default:
-          llvm_unreachable("Unexpected opcode");
+      default:
+        llvm_unreachable("Unexpected opcode");
         CASE_VFMA_CHANGE_OPCODE_VV(FMADD, FMACC)
         CASE_VFMA_CHANGE_OPCODE_VV(FMSUB, FMSAC)
         CASE_VFMA_CHANGE_OPCODE_VV(FNMADD, FNMACC)
