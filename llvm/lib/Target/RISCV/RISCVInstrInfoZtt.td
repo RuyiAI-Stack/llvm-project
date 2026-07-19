@@ -70,7 +70,7 @@ class RVInstAME32<bits<7> funct7, dag outs, dag ins, string opcodestr,
 
 // Base class for single matrix input, matrix output instructions (op md, ms1).
 // Input and output are matrix registers
-class AME_UNARYELEMENTWISE<bits<7> funct7, bits<3> funct3, string opcodestr>
+class ZTT_UNARYELEMENTWISE<bits<7> funct7, bits<3> funct3, string opcodestr>
     : RVInstAME32<funct7,
                   (outs),
                   (ins ZttMatrixRegIndex:$md, ZttMatrixRegIndex:$ms1),
@@ -87,26 +87,26 @@ class AME_UNARYELEMENTWISE<bits<7> funct7, bits<3> funct3, string opcodestr>
 
 let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
     mayStore = 0 in {
-  def AME_MABS_EW : AME_UNARYELEMENTWISE<0b0000000, 0b001, "mabs.ew">;
-  def AME_MCOLUNZIP_EW : AME_UNARYELEMENTWISE<0b0000100, 0b001, "mcolunzip.ew">;
-  def AME_MCOLZIP_EW : AME_UNARYELEMENTWISE<0b0000011, 0b001, "mcolzip.ew">;
-  def AME_MCONV_EW : AME_UNARYELEMENTWISE<0b0000000, 0b101, "mconv.ew">;
-  def AME_MEXP2_EW : AME_UNARYELEMENTWISE<0b0000001, 0b001, "mexp2.ew">;
-  def AME_MLOG2_EW : AME_UNARYELEMENTWISE<0b0000010, 0b001, "mlog2.ew">;
-  def AME_MPREFIXADD_COL : AME_UNARYELEMENTWISE<0b0001100, 0b001, "mprefixadd.col">;
-  def AME_MPREFIXADD_ROW : AME_UNARYELEMENTWISE<0b0001000, 0b001, "mprefixadd.row">;
-  def AME_MPREFIXMAX_COL : AME_UNARYELEMENTWISE<0b0001101, 0b001, "mprefixmax.col">;
-  def AME_MPREFIXMAX_ROW : AME_UNARYELEMENTWISE<0b0001001, 0b001, "mprefixmax.row">;
-  def AME_MREDUCEADD_COL : AME_UNARYELEMENTWISE<0b0001010, 0b001, "mreduceadd.col">;
-  def AME_MREDUCEADD_ROW : AME_UNARYELEMENTWISE<0b0000110, 0b001, "mreduceadd.row">;
-  def AME_MREDUCEMAX_COL : AME_UNARYELEMENTWISE<0b0001011, 0b001, "mreducemax.col">;
-  def AME_MREDUCEMAX_ROW : AME_UNARYELEMENTWISE<0b0000111, 0b001, "mreducemax.row">;
-  def AME_MROWUNZIP_EW : AME_UNARYELEMENTWISE<0b0000101, 0b001, "mrowunzip.ew">;
+  def ZTT_MABS_EW : ZTT_UNARYELEMENTWISE<0b0000000, 0b001, "mabs.ew">;
+  def ZTT_MCOLUNZIP_EW : ZTT_UNARYELEMENTWISE<0b0000100, 0b001, "mcolunzip.ew">;
+  def ZTT_MCOLZIP_EW : ZTT_UNARYELEMENTWISE<0b0000011, 0b001, "mcolzip.ew">;
+  def ZTT_MCONV_EW : ZTT_UNARYELEMENTWISE<0b0000000, 0b101, "mconv.ew">;
+  def ZTT_MEXP2_EW : ZTT_UNARYELEMENTWISE<0b0000001, 0b001, "mexp2.ew">;
+  def ZTT_MLOG2_EW : ZTT_UNARYELEMENTWISE<0b0000010, 0b001, "mlog2.ew">;
+  def ZTT_MPREFIXADD_COL : ZTT_UNARYELEMENTWISE<0b0001100, 0b001, "mprefixadd.col">;
+  def ZTT_MPREFIXADD_ROW : ZTT_UNARYELEMENTWISE<0b0001000, 0b001, "mprefixadd.row">;
+  def ZTT_MPREFIXMAX_COL : ZTT_UNARYELEMENTWISE<0b0001101, 0b001, "mprefixmax.col">;
+  def ZTT_MPREFIXMAX_ROW : ZTT_UNARYELEMENTWISE<0b0001001, 0b001, "mprefixmax.row">;
+  def ZTT_MREDUCEADD_COL : ZTT_UNARYELEMENTWISE<0b0001010, 0b001, "mreduceadd.col">;
+  def ZTT_MREDUCEADD_ROW : ZTT_UNARYELEMENTWISE<0b0000110, 0b001, "mreduceadd.row">;
+  def ZTT_MREDUCEMAX_COL : ZTT_UNARYELEMENTWISE<0b0001011, 0b001, "mreducemax.col">;
+  def ZTT_MREDUCEMAX_ROW : ZTT_UNARYELEMENTWISE<0b0000111, 0b001, "mreducemax.row">;
+  def ZTT_MROWUNZIP_EW : ZTT_UNARYELEMENTWISE<0b0000101, 0b001, "mrowunzip.ew">;
 }
 
 // Base class for binary matrix input, matrix output instructions
 // (op md, ms1, ms2).
-class AME_BINARYELEMENTWISE<bits<7> funct7, bits<3> funct3, string opcodestr>
+class ZTT_BINARYELEMENTWISE<bits<7> funct7, bits<3> funct3, string opcodestr>
     : RVInstAME32<funct7,
                   (outs),
                   (ins ZttMatrixRegIndex: $md, 
@@ -125,48 +125,48 @@ class AME_BINARYELEMENTWISE<bits<7> funct7, bits<3> funct3, string opcodestr>
 
 let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
     mayStore = 0 in {
-  def AME_MABSDIFF_EW : AME_BINARYELEMENTWISE<0b0000100, 0b000, "mabsdiff.ew">;
-  def AME_MADD_EW : AME_BINARYELEMENTWISE<0b0000000, 0b000, "madd.ew">;
-  def AME_MAND_EW : AME_BINARYELEMENTWISE<0b0000111, 0b000, "mand.ew">;
-  def AME_MANDNOT_EW : AME_BINARYELEMENTWISE<0b0001000, 0b000, "mandnot.ew">;
-  def AME_MCMOVGE_EW : AME_BINARYELEMENTWISE<0b0010000, 0b000, "mcmovge.ew">;
-  def AME_MCMOVLT_EW : AME_BINARYELEMENTWISE<0b0010001, 0b000, "mcmovlt.ew">;
-  def AME_MCMPGE_EW : AME_BINARYELEMENTWISE<0b0001100, 0b000, "mcmpge.ew">;
-  def AME_MCMPLT_EW : AME_BINARYELEMENTWISE<0b0001101, 0b000, "mcmplt.ew">;
-  def AME_MGATHER_EW : AME_BINARYELEMENTWISE<0b0011000, 0b000, "mgather.ew">;
-  def AME_MHDIFF_EW : AME_BINARYELEMENTWISE<0b0000011, 0b000, "mhdiff.ew">;
-  def AME_MLDEXP_EW : AME_BINARYELEMENTWISE<0b0010010, 0b000, "mldexp.ew">;
-  def AME_MLDEXPACC_EW : AME_BINARYELEMENTWISE<0b0010011, 0b000, "mldexpacc.ew">;
-  def AME_MLOG2SUB_EW : AME_BINARYELEMENTWISE<0b0010110, 0b000, "mlog2sub.ew">;
-  def AME_MMAX_EW : AME_BINARYELEMENTWISE<0b0000101, 0b000, "mmax.ew">;
-  def AME_MMEAN_EW : AME_BINARYELEMENTWISE<0b0000010, 0b000, "mmean.ew">;
-  def AME_MMIN_EW : AME_BINARYELEMENTWISE<0b0000110, 0b000, "mmin.ew">;
-  def AME_MMUL_EW : AME_BINARYELEMENTWISE<0b0011100, 0b000, "mmul.ew">;
-  def AME_MMULACC_EW : AME_BINARYELEMENTWISE<0b0011101, 0b000, "mmulacc.ew">;
-  def AME_MMULACCNEG_EW : AME_BINARYELEMENTWISE<0b0100000, 0b000, "mmulaccneg.ew">;
-  def AME_MMULADD_EW : AME_BINARYELEMENTWISE<0b0011110, 0b000, "mmuladd.ew">;
-  def AME_MMULNEG_EW : AME_BINARYELEMENTWISE<0b0100001, 0b000, "mmulneg.ew">;
-  def AME_MMULSUB_EW : AME_BINARYELEMENTWISE<0b0011111, 0b000, "mmulsub.ew">;
-  def AME_MOR_EW : AME_BINARYELEMENTWISE<0b0001001, 0b000, "mor.ew">;
-  def AME_MORNOT_EW : AME_BINARYELEMENTWISE<0b0001010, 0b000, "mornot.ew">;
-  def AME_MRDEXP_EW : AME_BINARYELEMENTWISE<0b0010100, 0b000, "mrdexp.ew">;
-  def AME_MRDEXPACC_EW : AME_BINARYELEMENTWISE<0b0010101, 0b000, "mrdexpacc.ew">;
-  def AME_MROWZIP_EW : AME_BINARYELEMENTWISE<0b0011011, 0b000, "mrowzip.ew">;
-  def AME_MSCATADD_COL : AME_BINARYELEMENTWISE<0b0100010, 0b000, "mscatadd.col">;
-  def AME_MSCATADD_ROW : AME_BINARYELEMENTWISE<0b0011001, 0b000, "mscatadd.row">;
-  def AME_MSCATMAX_COL : AME_BINARYELEMENTWISE<0b0100011, 0b000, "mscatmax.col">;
-  def AME_MSCATMAX_ROW : AME_BINARYELEMENTWISE<0b0011010, 0b000, "mscatmax.row">;
-  def AME_MSELGE_EW : AME_BINARYELEMENTWISE<0b0001110, 0b000, "mselge.ew">;
-  def AME_MSELLT_EW : AME_BINARYELEMENTWISE<0b0001111, 0b000, "msellt.ew">;
-  def AME_MSUB_EW : AME_BINARYELEMENTWISE<0b0000001, 0b000, "msub.ew">;
-  def AME_MSUBLOG2_EW : AME_BINARYELEMENTWISE<0b0010111, 0b000, "msublog2.ew">;
-  def AME_MXOR_EW : AME_BINARYELEMENTWISE<0b0001011, 0b000, "mxor.ew">;
+  def ZTT_MABSDIFF_EW : ZTT_BINARYELEMENTWISE<0b0000100, 0b000, "mabsdiff.ew">;
+  def ZTT_MADD_EW : ZTT_BINARYELEMENTWISE<0b0000000, 0b000, "madd.ew">;
+  def ZTT_MAND_EW : ZTT_BINARYELEMENTWISE<0b0000111, 0b000, "mand.ew">;
+  def ZTT_MANDNOT_EW : ZTT_BINARYELEMENTWISE<0b0001000, 0b000, "mandnot.ew">;
+  def ZTT_MCMOVGE_EW : ZTT_BINARYELEMENTWISE<0b0010000, 0b000, "mcmovge.ew">;
+  def ZTT_MCMOVLT_EW : ZTT_BINARYELEMENTWISE<0b0010001, 0b000, "mcmovlt.ew">;
+  def ZTT_MCMPGE_EW : ZTT_BINARYELEMENTWISE<0b0001100, 0b000, "mcmpge.ew">;
+  def ZTT_MCMPLT_EW : ZTT_BINARYELEMENTWISE<0b0001101, 0b000, "mcmplt.ew">;
+  def ZTT_MGATHER_EW : ZTT_BINARYELEMENTWISE<0b0011000, 0b000, "mgather.ew">;
+  def ZTT_MHDIFF_EW : ZTT_BINARYELEMENTWISE<0b0000011, 0b000, "mhdiff.ew">;
+  def ZTT_MLDEXP_EW : ZTT_BINARYELEMENTWISE<0b0010010, 0b000, "mldexp.ew">;
+  def ZTT_MLDEXPACC_EW : ZTT_BINARYELEMENTWISE<0b0010011, 0b000, "mldexpacc.ew">;
+  def ZTT_MLOG2SUB_EW : ZTT_BINARYELEMENTWISE<0b0010110, 0b000, "mlog2sub.ew">;
+  def ZTT_MMAX_EW : ZTT_BINARYELEMENTWISE<0b0000101, 0b000, "mmax.ew">;
+  def ZTT_MMEAN_EW : ZTT_BINARYELEMENTWISE<0b0000010, 0b000, "mmean.ew">;
+  def ZTT_MMIN_EW : ZTT_BINARYELEMENTWISE<0b0000110, 0b000, "mmin.ew">;
+  def ZTT_MMUL_EW : ZTT_BINARYELEMENTWISE<0b0011100, 0b000, "mmul.ew">;
+  def ZTT_MMULACC_EW : ZTT_BINARYELEMENTWISE<0b0011101, 0b000, "mmulacc.ew">;
+  def ZTT_MMULACCNEG_EW : ZTT_BINARYELEMENTWISE<0b0100000, 0b000, "mmulaccneg.ew">;
+  def ZTT_MMULADD_EW : ZTT_BINARYELEMENTWISE<0b0011110, 0b000, "mmuladd.ew">;
+  def ZTT_MMULNEG_EW : ZTT_BINARYELEMENTWISE<0b0100001, 0b000, "mmulneg.ew">;
+  def ZTT_MMULSUB_EW : ZTT_BINARYELEMENTWISE<0b0011111, 0b000, "mmulsub.ew">;
+  def ZTT_MOR_EW : ZTT_BINARYELEMENTWISE<0b0001001, 0b000, "mor.ew">;
+  def ZTT_MORNOT_EW : ZTT_BINARYELEMENTWISE<0b0001010, 0b000, "mornot.ew">;
+  def ZTT_MRDEXP_EW : ZTT_BINARYELEMENTWISE<0b0010100, 0b000, "mrdexp.ew">;
+  def ZTT_MRDEXPACC_EW : ZTT_BINARYELEMENTWISE<0b0010101, 0b000, "mrdexpacc.ew">;
+  def ZTT_MROWZIP_EW : ZTT_BINARYELEMENTWISE<0b0011011, 0b000, "mrowzip.ew">;
+  def ZTT_MSCATADD_COL : ZTT_BINARYELEMENTWISE<0b0100010, 0b000, "mscatadd.col">;
+  def ZTT_MSCATADD_ROW : ZTT_BINARYELEMENTWISE<0b0011001, 0b000, "mscatadd.row">;
+  def ZTT_MSCATMAX_COL : ZTT_BINARYELEMENTWISE<0b0100011, 0b000, "mscatmax.col">;
+  def ZTT_MSCATMAX_ROW : ZTT_BINARYELEMENTWISE<0b0011010, 0b000, "mscatmax.row">;
+  def ZTT_MSELGE_EW : ZTT_BINARYELEMENTWISE<0b0001110, 0b000, "mselge.ew">;
+  def ZTT_MSELLT_EW : ZTT_BINARYELEMENTWISE<0b0001111, 0b000, "msellt.ew">;
+  def ZTT_MSUB_EW : ZTT_BINARYELEMENTWISE<0b0000001, 0b000, "msub.ew">;
+  def ZTT_MSUBLOG2_EW : ZTT_BINARYELEMENTWISE<0b0010111, 0b000, "msublog2.ew">;
+  def ZTT_MXOR_EW : ZTT_BINARYELEMENTWISE<0b0001011, 0b000, "mxor.ew">;
 }
 
 // Base class for binary matrix input, matrix output instructions where the
 // second source is a scalar GPR instead of a matrix register
 // (op md, xs1, ms2). Scalar type is inferred from Md[ms2].
-class AME_BINARYELEMENTWISE_X<bits<7> funct7, bits<3> funct3, string opcodestr>
+class ZTT_BINARYELEMENTWISE_X<bits<7> funct7, bits<3> funct3, string opcodestr>
     : RVInstAME32<funct7,
                   (outs),
                   (ins ZttMatrixRegIndex: $md, 
@@ -185,35 +185,35 @@ class AME_BINARYELEMENTWISE_X<bits<7> funct7, bits<3> funct3, string opcodestr>
 
 let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
     mayStore = 0 in {
-  def AME_MABSDIFF_EW_X : AME_BINARYELEMENTWISE_X<0b0000101, 0b010, "mabsdiff.ew.x">;
-  def AME_MADD_EW_X : AME_BINARYELEMENTWISE_X<0b0000000, 0b010, "madd.ew.x">;
-  def AME_MAND_EW_X : AME_BINARYELEMENTWISE_X<0b0000111, 0b010, "mand.ew.x">;
-  def AME_MANDNOT_EW_X : AME_BINARYELEMENTWISE_X<0b0001000, 0b010, "mandnot.ew.x">;
-  def AME_MCMPGE_EW_X : AME_BINARYELEMENTWISE_X<0b0001100, 0b010, "mcmpge.ew.x">;
-  def AME_MCMPLT_EW_X : AME_BINARYELEMENTWISE_X<0b0001101, 0b010, "mcmplt.ew.x">;
-  def AME_MHDIFF_EW_X : AME_BINARYELEMENTWISE_X<0b0000110, 0b010, "mhdiff.ew.x">;
-  def AME_MLDEXP_EW_X : AME_BINARYELEMENTWISE_X<0b0010000, 0b010, "mldexp.ew.x">;
-  def AME_MLDEXPACC_EW_X : AME_BINARYELEMENTWISE_X<0b0010001, 0b010, "mldexpacc.ew.x">;
-  def AME_MLOG2SUB_EW_X : AME_BINARYELEMENTWISE_X<0b0001110, 0b010, "mlog2sub.ew.x">;
-  def AME_MMAX_EW_X : AME_BINARYELEMENTWISE_X<0b0000011, 0b010, "mmax.ew.x">;
-  def AME_MMEAN_EW_X : AME_BINARYELEMENTWISE_X<0b0000100, 0b010, "mmean.ew.x">;
-  def AME_MMIN_EW_X : AME_BINARYELEMENTWISE_X<0b0000010, 0b010, "mmin.ew.x">;
-  def AME_MMUL_EW_X : AME_BINARYELEMENTWISE_X<0b0010010, 0b010, "mmul.ew.x">;
-  def AME_MMULACC_EW_X : AME_BINARYELEMENTWISE_X<0b0010011, 0b010, "mmulacc.ew.x">;
-  def AME_MMULACCNEG_EW_X : AME_BINARYELEMENTWISE_X<0b0010110, 0b010, "mmulaccneg.ew.x">;
-  def AME_MMULADD_EW_X : AME_BINARYELEMENTWISE_X<0b0010100, 0b010, "mmuladd.ew.x">;
-  def AME_MMULNEG_EW_X : AME_BINARYELEMENTWISE_X<0b0010111, 0b010, "mmulneg.ew.x">;
-  def AME_MMULSUB_EW_X : AME_BINARYELEMENTWISE_X<0b0010101, 0b010, "mmulsub.ew.x">;
-  def AME_MOR_EW_X : AME_BINARYELEMENTWISE_X<0b0001001, 0b010, "mor.ew.x">;
-  def AME_MORNOT_EW_X : AME_BINARYELEMENTWISE_X<0b0001010, 0b010, "mornot.ew.x">;
-  def AME_MSUB_EW_X : AME_BINARYELEMENTWISE_X<0b0000001, 0b010, "msub.ew.x">;
-  def AME_MSUBLOG2_EW_X : AME_BINARYELEMENTWISE_X<0b0001111, 0b010, "msublog2.ew.x">;
-  def AME_MXOR_EW_X : AME_BINARYELEMENTWISE_X<0b0001011, 0b010, "mxor.ew.x">;
+  def ZTT_MABSDIFF_EW_X : ZTT_BINARYELEMENTWISE_X<0b0000101, 0b010, "mabsdiff.ew.x">;
+  def ZTT_MADD_EW_X : ZTT_BINARYELEMENTWISE_X<0b0000000, 0b010, "madd.ew.x">;
+  def ZTT_MAND_EW_X : ZTT_BINARYELEMENTWISE_X<0b0000111, 0b010, "mand.ew.x">;
+  def ZTT_MANDNOT_EW_X : ZTT_BINARYELEMENTWISE_X<0b0001000, 0b010, "mandnot.ew.x">;
+  def ZTT_MCMPGE_EW_X : ZTT_BINARYELEMENTWISE_X<0b0001100, 0b010, "mcmpge.ew.x">;
+  def ZTT_MCMPLT_EW_X : ZTT_BINARYELEMENTWISE_X<0b0001101, 0b010, "mcmplt.ew.x">;
+  def ZTT_MHDIFF_EW_X : ZTT_BINARYELEMENTWISE_X<0b0000110, 0b010, "mhdiff.ew.x">;
+  def ZTT_MLDEXP_EW_X : ZTT_BINARYELEMENTWISE_X<0b0010000, 0b010, "mldexp.ew.x">;
+  def ZTT_MLDEXPACC_EW_X : ZTT_BINARYELEMENTWISE_X<0b0010001, 0b010, "mldexpacc.ew.x">;
+  def ZTT_MLOG2SUB_EW_X : ZTT_BINARYELEMENTWISE_X<0b0001110, 0b010, "mlog2sub.ew.x">;
+  def ZTT_MMAX_EW_X : ZTT_BINARYELEMENTWISE_X<0b0000011, 0b010, "mmax.ew.x">;
+  def ZTT_MMEAN_EW_X : ZTT_BINARYELEMENTWISE_X<0b0000100, 0b010, "mmean.ew.x">;
+  def ZTT_MMIN_EW_X : ZTT_BINARYELEMENTWISE_X<0b0000010, 0b010, "mmin.ew.x">;
+  def ZTT_MMUL_EW_X : ZTT_BINARYELEMENTWISE_X<0b0010010, 0b010, "mmul.ew.x">;
+  def ZTT_MMULACC_EW_X : ZTT_BINARYELEMENTWISE_X<0b0010011, 0b010, "mmulacc.ew.x">;
+  def ZTT_MMULACCNEG_EW_X : ZTT_BINARYELEMENTWISE_X<0b0010110, 0b010, "mmulaccneg.ew.x">;
+  def ZTT_MMULADD_EW_X : ZTT_BINARYELEMENTWISE_X<0b0010100, 0b010, "mmuladd.ew.x">;
+  def ZTT_MMULNEG_EW_X : ZTT_BINARYELEMENTWISE_X<0b0010111, 0b010, "mmulneg.ew.x">;
+  def ZTT_MMULSUB_EW_X : ZTT_BINARYELEMENTWISE_X<0b0010101, 0b010, "mmulsub.ew.x">;
+  def ZTT_MOR_EW_X : ZTT_BINARYELEMENTWISE_X<0b0001001, 0b010, "mor.ew.x">;
+  def ZTT_MORNOT_EW_X : ZTT_BINARYELEMENTWISE_X<0b0001010, 0b010, "mornot.ew.x">;
+  def ZTT_MSUB_EW_X : ZTT_BINARYELEMENTWISE_X<0b0000001, 0b010, "msub.ew.x">;
+  def ZTT_MSUBLOG2_EW_X : ZTT_BINARYELEMENTWISE_X<0b0001111, 0b010, "msublog2.ew.x">;
+  def ZTT_MXOR_EW_X : ZTT_BINARYELEMENTWISE_X<0b0001011, 0b010, "mxor.ew.x">;
 }
 
 // Base class for 2D matrix multiply instructions (op acc, ms1, ms2).
 // acc is only 2 bits, freeing bits 14-10.
-class AME_MATMUL2D<bits<7> funct7, string opcodestr>
+class ZTT_MATMUL2D<bits<7> funct7, string opcodestr>
     : RVInstAME32<funct7,
                   (outs ),
                   (ins ZttAccRegIndex: $acc, 
@@ -233,19 +233,19 @@ class AME_MATMUL2D<bits<7> funct7, string opcodestr>
 
 let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
     mayStore = 0 in {
-  def AME_MMUL_2D : AME_MATMUL2D<0b0000000, "mmul.2d">;
-  def AME_MMULACC_2D : AME_MATMUL2D<0b0000001, "mmulacc.2d">;
-  def AME_MMULACCNEG_2D : AME_MATMUL2D<0b0000011, "mmulaccneg.2d">;
-  def AME_MMULAT_2D : AME_MATMUL2D<0b0000100, "mmulat.2d">;
-  def AME_MMULATACC_2D : AME_MATMUL2D<0b0000101, "mmulatacc.2d">;
-  def AME_MMULBT_2D : AME_MATMUL2D<0b0000110, "mmulbt.2d">;
-  def AME_MMULBTACC_2D : AME_MATMUL2D<0b0000111, "mmulbtacc.2d">;
-  def AME_MMULNEG_2D : AME_MATMUL2D<0b0000010, "mmulneg.2d">;
+  def ZTT_MMUL_2D : ZTT_MATMUL2D<0b0000000, "mmul.2d">;
+  def ZTT_MMULACC_2D : ZTT_MATMUL2D<0b0000001, "mmulacc.2d">;
+  def ZTT_MMULACCNEG_2D : ZTT_MATMUL2D<0b0000011, "mmulaccneg.2d">;
+  def ZTT_MMULAT_2D : ZTT_MATMUL2D<0b0000100, "mmulat.2d">;
+  def ZTT_MMULATACC_2D : ZTT_MATMUL2D<0b0000101, "mmulatacc.2d">;
+  def ZTT_MMULBT_2D : ZTT_MATMUL2D<0b0000110, "mmulbt.2d">;
+  def ZTT_MMULBTACC_2D : ZTT_MATMUL2D<0b0000111, "mmulbtacc.2d">;
+  def ZTT_MMULNEG_2D : ZTT_MATMUL2D<0b0000010, "mmulneg.2d">;
 }
 
 // Base class for the interoperability load instructions (mls, mls.cm,
 // mls.rm).
-class AME_LOAD<bits<7> funct7, string opcodestr>
+class ZTT_LOAD<bits<7> funct7, string opcodestr>
     : RVInstAME32<funct7, (outs ),
                   (ins ZttMatrixRegIndex: $md, 
                        GPR: $xs1),
@@ -261,14 +261,14 @@ class AME_LOAD<bits<7> funct7, string opcodestr>
 
 let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 1,
     mayStore = 0 in {
-  def AME_MLS : AME_LOAD<0b0000010, "mls">;
-  def AME_MLS_CM : AME_LOAD<0b0000001, "mls.cm">;
-  def AME_MLS_RM : AME_LOAD<0b0000000, "mls.rm">;
+  def ZTT_MLS : ZTT_LOAD<0b0000010, "mls">;
+  def ZTT_MLS_CM : ZTT_LOAD<0b0000001, "mls.cm">;
+  def ZTT_MLS_RM : ZTT_LOAD<0b0000000, "mls.rm">;
 }
 
 // Base class for the interoperability store instructions (mss, mss.cm,
 // mss.rm). 
-class AME_STORE<bits<7> funct7, string opcodestr>
+class ZTT_STORE<bits<7> funct7, string opcodestr>
     : RVInstAME32<funct7, (outs),
                   (ins ZttMatrixRegIndex: $ms1, 
                        GPR: $xs1),
@@ -284,24 +284,24 @@ class AME_STORE<bits<7> funct7, string opcodestr>
 
 let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
     mayStore = 1 in {
-  def AME_MSS : AME_STORE<0b0000101, "mss">;
-  def AME_MSS_CM : AME_STORE<0b0000100, "mss.cm">;
-  def AME_MSS_RM : AME_STORE<0b0000011, "mss.rm">;
+  def ZTT_MSS : ZTT_STORE<0b0000101, "mss">;
+  def ZTT_MSS_CM : ZTT_STORE<0b0000100, "mss.cm">;
+  def ZTT_MSS_RM : ZTT_STORE<0b0000011, "mss.rm">;
 }
 
 def Simm7AsmOperand : SImmAsmOperand<7>;
 
-// 7-bit signed intermediate instr operand class (for AME_MSHIFT_EW)
+// 7-bit signed intermediate instr operand class (for ZTT_MSHIFT_EW)
 def simm7 : Operand<XLenVT> {
   let ParserMatchClass = Simm7AsmOperand;
   let DecoderMethod = "decodeSImmOperand<7>";
-  let OperandType = "OPERAND_SIMM7";
+  let OperandType = "OPERAND_IMMEDIATE";
 }
 
 let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
     mayStore = 0 in {
   // mzero.2d - clears an accumulator.
-  def AME_MZERO_2D : RVInstAME32<0b0001000, (outs),
+  def ZTT_MZERO_2D : RVInstAME32<0b0001000, (outs),
                                  (ins ZttAccRegIndex: $acc), "mzero.2d", "$acc"> {
     bits<2> acc;
 
@@ -311,7 +311,7 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
   }
 
   // mmov.a.m - copy an Acc register into an M register.
-  def AME_MMOV_A_M : RVInstAME32<0b0000011, (outs ),
+  def ZTT_MMOV_A_M : RVInstAME32<0b0000011, (outs ),
                                  (ins ZttMatrixRegIndex: $md, 
                                       ZttAccRegIndex: $acc),
                                  "mmov.a.m", "$md, $acc"> {
@@ -325,7 +325,7 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
   }
 
   // mmov.m.m - copy one M register into another.
-  def AME_MMOV_M_M : RVInstAME32<0b0000010, (outs ),
+  def ZTT_MMOV_M_M : RVInstAME32<0b0000010, (outs ),
                                  (ins ZttMatrixRegIndex: $md, 
                                       ZttMatrixRegIndex: $ms),
                                  "mmov.m.m", "$md, $ms"> {
@@ -338,7 +338,7 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
   }
 
   // mgettyp - read an M register's dtype tag into a GPR.
-  def AME_MGETTYP : RVInstAME32<0b0000010, (outs GPR: $xd),
+  def ZTT_MGETTYP : RVInstAME32<0b0000010, (outs GPR: $xd),
                                 (ins ZttMatrixRegIndex: $ms1),
                                 "mgettyp", "$xd, $ms1"> {
     bits<5> ms1;
@@ -351,7 +351,7 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
   }
 
   // agettyp - read an Acc register's dtype tag into a GPR.
-  def AME_AGETTYP : RVInstAME32<0b0000100, (outs GPR: $xd),
+  def ZTT_AGETTYP : RVInstAME32<0b0000100, (outs GPR: $xd),
                                 (ins ZttAccRegIndex: $ad),
                                 "agettyp", "$xd, $ad"> {
     bits<2> ad;
@@ -364,7 +364,7 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
   }
 
   // msettyp - write a GPR value as an M register's dtype tag.
-  def AME_MSETTYP : RVInstAME32<0b0000001, (outs ),
+  def ZTT_MSETTYP : RVInstAME32<0b0000001, (outs ),
                                 (ins ZttMatrixRegIndex: $md, 
                                      GPR: $xs1),
                                 "msettyp", "$md, $xs1"> {
@@ -378,7 +378,7 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
   }
 
   // asettyp - write a GPR value as an Acc register's dtype tag.
-  def AME_ASETTYP : RVInstAME32<0b0000011, (outs ),
+  def ZTT_ASETTYP : RVInstAME32<0b0000011, (outs ),
                                 (ins ZttAccRegIndex: $ad, 
                                      GPR: $xs1),
                                 "asettyp", "$ad, $xs1"> {
@@ -392,7 +392,7 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
   }
 
   // mbcast.x - broadcast a GPR scalar to every element of an M register.
-  def AME_MBCAST_X : RVInstAME32<0b0000000, (outs ),
+  def ZTT_MBCAST_X : RVInstAME32<0b0000000, (outs ),
                                  (ins ZttMatrixRegIndex: $md, 
                                       GPR: $xs1),
                                  "mbcast.x", "$md, $xs1"> {
@@ -407,7 +407,7 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
 
 
   // mshift.ew - md[i,j] = ms1[i, j+imm], or 0 if j+imm is out of bounds
-  def AME_MSHIFT_EW : RVInst<(outs ),
+  def ZTT_MSHIFT_EW : RVInst<(outs ),
                             (ins ZttMatrixRegIndex:$md, ZttMatrixRegIndex:$ms1, simm7:$imm),
                             "mshift.ew", "$md, $ms1, $imm", [], InstFormatOther> {
     bits<5> ms1;
@@ -433,21 +433,21 @@ class AMEUnaryPat<Intrinsic intr, Instruction inst>
           (inst timm:$md, timm:$ms1)>;
 
 let Predicates = [HasStdExtZtt] in {
-  def : AMEUnaryPat<int_riscv_ame_mabs_ew,       AME_MABS_EW>;
-  def : AMEUnaryPat<int_riscv_ame_mcolunzip_ew,  AME_MCOLUNZIP_EW>;
-  def : AMEUnaryPat<int_riscv_ame_mcolzip_ew,    AME_MCOLZIP_EW>;
-  def : AMEUnaryPat<int_riscv_ame_mconv_ew,      AME_MCONV_EW>;
-  def : AMEUnaryPat<int_riscv_ame_mexp2_ew,      AME_MEXP2_EW>;
-  def : AMEUnaryPat<int_riscv_ame_mlog2_ew,      AME_MLOG2_EW>;
-  def : AMEUnaryPat<int_riscv_ame_mprefixadd_col, AME_MPREFIXADD_COL>;
-  def : AMEUnaryPat<int_riscv_ame_mprefixadd_row, AME_MPREFIXADD_ROW>;
-  def : AMEUnaryPat<int_riscv_ame_mprefixmax_col, AME_MPREFIXMAX_COL>;
-  def : AMEUnaryPat<int_riscv_ame_mprefixmax_row, AME_MPREFIXMAX_ROW>;
-  def : AMEUnaryPat<int_riscv_ame_mreduceadd_col, AME_MREDUCEADD_COL>;
-  def : AMEUnaryPat<int_riscv_ame_mreduceadd_row, AME_MREDUCEADD_ROW>;
-  def : AMEUnaryPat<int_riscv_ame_mreducemax_col, AME_MREDUCEMAX_COL>;
-  def : AMEUnaryPat<int_riscv_ame_mreducemax_row, AME_MREDUCEMAX_ROW>;
-  def : AMEUnaryPat<int_riscv_ame_mrowunzip_ew,  AME_MROWUNZIP_EW>;
+  def : AMEUnaryPat<int_riscv_ztt_mabs_ew,       ZTT_MABS_EW>;
+  def : AMEUnaryPat<int_riscv_ztt_mcolunzip_ew,  ZTT_MCOLUNZIP_EW>;
+  def : AMEUnaryPat<int_riscv_ztt_mcolzip_ew,    ZTT_MCOLZIP_EW>;
+  def : AMEUnaryPat<int_riscv_ztt_mconv_ew,      ZTT_MCONV_EW>;
+  def : AMEUnaryPat<int_riscv_ztt_mexp2_ew,      ZTT_MEXP2_EW>;
+  def : AMEUnaryPat<int_riscv_ztt_mlog2_ew,      ZTT_MLOG2_EW>;
+  def : AMEUnaryPat<int_riscv_ztt_mprefixadd_col, ZTT_MPREFIXADD_COL>;
+  def : AMEUnaryPat<int_riscv_ztt_mprefixadd_row, ZTT_MPREFIXADD_ROW>;
+  def : AMEUnaryPat<int_riscv_ztt_mprefixmax_col, ZTT_MPREFIXMAX_COL>;
+  def : AMEUnaryPat<int_riscv_ztt_mprefixmax_row, ZTT_MPREFIXMAX_ROW>;
+  def : AMEUnaryPat<int_riscv_ztt_mreduceadd_col, ZTT_MREDUCEADD_COL>;
+  def : AMEUnaryPat<int_riscv_ztt_mreduceadd_row, ZTT_MREDUCEADD_ROW>;
+  def : AMEUnaryPat<int_riscv_ztt_mreducemax_col, ZTT_MREDUCEMAX_COL>;
+  def : AMEUnaryPat<int_riscv_ztt_mreducemax_row, ZTT_MREDUCEMAX_ROW>;
+  def : AMEUnaryPat<int_riscv_ztt_mrowunzip_ew,  ZTT_MROWUNZIP_EW>;
 }
 
 // Base pattern helper for matrix-matrix binary operations
@@ -456,42 +456,42 @@ class AMEBinMatPat<Intrinsic intr, Instruction inst>
           (inst timm:$md, timm:$ms1, timm:$ms2)>;
 
 let Predicates = [HasStdExtZtt] in {
-  def : AMEBinMatPat<int_riscv_ame_mabsdiff_ew,   AME_MABSDIFF_EW>;
-  def : AMEBinMatPat<int_riscv_ame_madd_ew,       AME_MADD_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mand_ew,       AME_MAND_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mandnot_ew,    AME_MANDNOT_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mcmovge_ew,    AME_MCMOVGE_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mcmovlt_ew,    AME_MCMOVLT_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mcmpge_ew,     AME_MCMPGE_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mcmplt_ew,     AME_MCMPLT_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mgather_ew,    AME_MGATHER_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mhdiff_ew,     AME_MHDIFF_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mldexp_ew,     AME_MLDEXP_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mldexpacc_ew,  AME_MLDEXPACC_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mlog2sub_ew,   AME_MLOG2SUB_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mmax_ew,       AME_MMAX_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mmean_ew,       AME_MMEAN_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mmin_ew,       AME_MMIN_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mmul_ew,       AME_MMUL_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mmulacc_ew,    AME_MMULACC_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mmulaccneg_ew, AME_MMULACCNEG_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mmuladd_ew,    AME_MMULADD_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mmulneg_ew,    AME_MMULNEG_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mmulsub_ew,    AME_MMULSUB_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mor_ew,        AME_MOR_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mornot_ew,     AME_MORNOT_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mrdexp_ew,     AME_MRDEXP_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mrdexpacc_ew,  AME_MRDEXPACC_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mrowzip_ew,    AME_MROWZIP_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mscatadd_col,  AME_MSCATADD_COL>;
-  def : AMEBinMatPat<int_riscv_ame_mscatadd_row,  AME_MSCATADD_ROW>;
-  def : AMEBinMatPat<int_riscv_ame_mscatmax_col,  AME_MSCATMAX_COL>;
-  def : AMEBinMatPat<int_riscv_ame_mscatmax_row,  AME_MSCATMAX_ROW>;
-  def : AMEBinMatPat<int_riscv_ame_mselge_ew,     AME_MSELGE_EW>;
-  def : AMEBinMatPat<int_riscv_ame_msellt_ew,     AME_MSELLT_EW>;
-  def : AMEBinMatPat<int_riscv_ame_msub_ew,       AME_MSUB_EW>;
-  def : AMEBinMatPat<int_riscv_ame_msublog2_ew,   AME_MSUBLOG2_EW>;
-  def : AMEBinMatPat<int_riscv_ame_mxor_ew,       AME_MXOR_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mabsdiff_ew,   ZTT_MABSDIFF_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_madd_ew,       ZTT_MADD_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mand_ew,       ZTT_MAND_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mandnot_ew,    ZTT_MANDNOT_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mcmovge_ew,    ZTT_MCMOVGE_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mcmovlt_ew,    ZTT_MCMOVLT_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mcmpge_ew,     ZTT_MCMPGE_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mcmplt_ew,     ZTT_MCMPLT_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mgather_ew,    ZTT_MGATHER_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mhdiff_ew,     ZTT_MHDIFF_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mldexp_ew,     ZTT_MLDEXP_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mldexpacc_ew,  ZTT_MLDEXPACC_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mlog2sub_ew,   ZTT_MLOG2SUB_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mmax_ew,       ZTT_MMAX_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mmean_ew,       ZTT_MMEAN_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mmin_ew,       ZTT_MMIN_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mmul_ew,       ZTT_MMUL_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mmulacc_ew,    ZTT_MMULACC_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mmulaccneg_ew, ZTT_MMULACCNEG_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mmuladd_ew,    ZTT_MMULADD_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mmulneg_ew,    ZTT_MMULNEG_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mmulsub_ew,    ZTT_MMULSUB_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mor_ew,        ZTT_MOR_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mornot_ew,     ZTT_MORNOT_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mrdexp_ew,     ZTT_MRDEXP_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mrdexpacc_ew,  ZTT_MRDEXPACC_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mrowzip_ew,    ZTT_MROWZIP_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mscatadd_col,  ZTT_MSCATADD_COL>;
+  def : AMEBinMatPat<int_riscv_ztt_mscatadd_row,  ZTT_MSCATADD_ROW>;
+  def : AMEBinMatPat<int_riscv_ztt_mscatmax_col,  ZTT_MSCATMAX_COL>;
+  def : AMEBinMatPat<int_riscv_ztt_mscatmax_row,  ZTT_MSCATMAX_ROW>;
+  def : AMEBinMatPat<int_riscv_ztt_mselge_ew,     ZTT_MSELGE_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_msellt_ew,     ZTT_MSELLT_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_msub_ew,       ZTT_MSUB_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_msublog2_ew,   ZTT_MSUBLOG2_EW>;
+  def : AMEBinMatPat<int_riscv_ztt_mxor_ew,       ZTT_MXOR_EW>;
 }
 
 // Base pattern helper for matrix-scalar operations.
@@ -501,30 +501,30 @@ class AMEBinScalarPat<Intrinsic intr, Instruction inst>
           (inst timm:$md, GPR:$xs1, timm:$ms2)>;
 
 let Predicates = [HasStdExtZtt, IsRV64] in {
-  def : AMEBinScalarPat<int_riscv_ame_mabsdiff_ew_x,   AME_MABSDIFF_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_madd_ew_x,       AME_MADD_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mand_ew_x,       AME_MAND_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mandnot_ew_x,    AME_MANDNOT_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mcmpge_ew_x,     AME_MCMPGE_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mcmplt_ew_x,     AME_MCMPLT_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mhdiff_ew_x,      AME_MHDIFF_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mldexp_ew_x,     AME_MLDEXP_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mldexpacc_ew_x,  AME_MLDEXPACC_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mlog2sub_ew_x,   AME_MLOG2SUB_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mmax_ew_x,       AME_MMAX_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mmean_ew_x,       AME_MMEAN_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mmin_ew_x,       AME_MMIN_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mmul_ew_x,       AME_MMUL_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mmulacc_ew_x,    AME_MMULACC_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mmulaccneg_ew_x, AME_MMULACCNEG_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mmuladd_ew_x,    AME_MMULADD_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mmulneg_ew_x,    AME_MMULNEG_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mmulsub_ew_x,    AME_MMULSUB_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mor_ew_x,        AME_MOR_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mornot_ew_x,     AME_MORNOT_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_msub_ew_x,       AME_MSUB_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_msublog2_ew_x,   AME_MSUBLOG2_EW_X>;
-  def : AMEBinScalarPat<int_riscv_ame_mxor_ew_x,       AME_MXOR_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mabsdiff_ew_x,   ZTT_MABSDIFF_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_madd_ew_x,       ZTT_MADD_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mand_ew_x,       ZTT_MAND_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mandnot_ew_x,    ZTT_MANDNOT_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mcmpge_ew_x,     ZTT_MCMPGE_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mcmplt_ew_x,     ZTT_MCMPLT_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mhdiff_ew_x,      ZTT_MHDIFF_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mldexp_ew_x,     ZTT_MLDEXP_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mldexpacc_ew_x,  ZTT_MLDEXPACC_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mlog2sub_ew_x,   ZTT_MLOG2SUB_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mmax_ew_x,       ZTT_MMAX_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mmean_ew_x,       ZTT_MMEAN_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mmin_ew_x,       ZTT_MMIN_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mmul_ew_x,       ZTT_MMUL_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mmulacc_ew_x,    ZTT_MMULACC_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mmulaccneg_ew_x, ZTT_MMULACCNEG_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mmuladd_ew_x,    ZTT_MMULADD_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mmulneg_ew_x,    ZTT_MMULNEG_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mmulsub_ew_x,    ZTT_MMULSUB_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mor_ew_x,        ZTT_MOR_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mornot_ew_x,     ZTT_MORNOT_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_msub_ew_x,       ZTT_MSUB_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_msublog2_ew_x,   ZTT_MSUBLOG2_EW_X>;
+  def : AMEBinScalarPat<int_riscv_ztt_mxor_ew_x,       ZTT_MXOR_EW_X>;
 }
 
 // Base class helper for matrix multiplication operations.
@@ -534,48 +534,48 @@ class AMEMatMulPat<Intrinsic intr, Instruction inst>
           (inst timm:$acc, timm:$ms1, timm:$ms2)>;
 
 let Predicates = [HasStdExtZtt] in {
-  def : AMEMatMulPat<int_riscv_ame_mmul_2d,        AME_MMUL_2D>;
-  def : AMEMatMulPat<int_riscv_ame_mmulacc_2d,     AME_MMULACC_2D>;
-  def : AMEMatMulPat<int_riscv_ame_mmulaccneg_2d,  AME_MMULACCNEG_2D>;
-  def : AMEMatMulPat<int_riscv_ame_mmulat_2d,      AME_MMULAT_2D>;
-  def : AMEMatMulPat<int_riscv_ame_mmulatacc_2d,   AME_MMULATACC_2D>;
-  def : AMEMatMulPat<int_riscv_ame_mmulbt_2d,      AME_MMULBT_2D>;
-  def : AMEMatMulPat<int_riscv_ame_mmulbtacc_2d,   AME_MMULBTACC_2D>;
-  def : AMEMatMulPat<int_riscv_ame_mmulneg_2d,     AME_MMULNEG_2D>;
+  def : AMEMatMulPat<int_riscv_ztt_mmul_2d,        ZTT_MMUL_2D>;
+  def : AMEMatMulPat<int_riscv_ztt_mmulacc_2d,     ZTT_MMULACC_2D>;
+  def : AMEMatMulPat<int_riscv_ztt_mmulaccneg_2d,  ZTT_MMULACCNEG_2D>;
+  def : AMEMatMulPat<int_riscv_ztt_mmulat_2d,      ZTT_MMULAT_2D>;
+  def : AMEMatMulPat<int_riscv_ztt_mmulatacc_2d,   ZTT_MMULATACC_2D>;
+  def : AMEMatMulPat<int_riscv_ztt_mmulbt_2d,      ZTT_MMULBT_2D>;
+  def : AMEMatMulPat<int_riscv_ztt_mmulbtacc_2d,   ZTT_MMULBTACC_2D>;
+  def : AMEMatMulPat<int_riscv_ztt_mmulneg_2d,     ZTT_MMULNEG_2D>;
 }
 
 // Miscellaneous instructions
 let Predicates = [HasStdExtZtt] in {
   // Load/Store Patterns (Memory addresses are handled as ptr_ty -> GPR)
-  def : Pat<(int_riscv_ame_mls timm:$md, iPTR:$xs1), (AME_MLS timm:$md, GPR:$xs1)>;
-  def : Pat<(int_riscv_ame_mls_cm timm:$md, iPTR:$xs1), (AME_MLS_CM timm:$md, GPR:$xs1)>;
-  def : Pat<(int_riscv_ame_mls_rm timm:$md, iPTR:$xs1), (AME_MLS_RM timm:$md, GPR:$xs1)>;
-  def : Pat<(int_riscv_ame_mss timm:$ms1, iPTR:$xs1), (AME_MSS timm:$ms1, GPR:$xs1)>;
-  def : Pat<(int_riscv_ame_mss_cm timm:$ms1, iPTR:$xs1), (AME_MSS_CM timm:$ms1, GPR:$xs1)>;
-  def : Pat<(int_riscv_ame_mss_rm timm:$ms1, iPTR:$xs1), (AME_MSS_RM timm:$ms1, GPR:$xs1)>;
+  def : Pat<(int_riscv_ztt_mls timm:$md, iPTR:$xs1), (ZTT_MLS timm:$md, GPR:$xs1)>;
+  def : Pat<(int_riscv_ztt_mls_cm timm:$md, iPTR:$xs1), (ZTT_MLS_CM timm:$md, GPR:$xs1)>;
+  def : Pat<(int_riscv_ztt_mls_rm timm:$md, iPTR:$xs1), (ZTT_MLS_RM timm:$md, GPR:$xs1)>;
+  def : Pat<(int_riscv_ztt_mss timm:$ms1, iPTR:$xs1), (ZTT_MSS timm:$ms1, GPR:$xs1)>;
+  def : Pat<(int_riscv_ztt_mss_cm timm:$ms1, iPTR:$xs1), (ZTT_MSS_CM timm:$ms1, GPR:$xs1)>;
+  def : Pat<(int_riscv_ztt_mss_rm timm:$ms1, iPTR:$xs1), (ZTT_MSS_RM timm:$ms1, GPR:$xs1)>;
 
   // Broadcast & Zero
-  def : Pat<(int_riscv_ame_mzero_2d timm:$acc), (AME_MZERO_2D timm:$acc)>;
+  def : Pat<(int_riscv_ztt_mzero_2d timm:$acc), (ZTT_MZERO_2D timm:$acc)>;
 
   // Type operations
-  def : Pat<(int_riscv_ame_mgettyp timm:$ms1), (AME_MGETTYP timm:$ms1)>;
-  def : Pat<(int_riscv_ame_agettyp timm:$ad), (AME_AGETTYP timm:$ad)>;
+  def : Pat<(int_riscv_ztt_mgettyp timm:$ms1), (ZTT_MGETTYP timm:$ms1)>;
+  def : Pat<(int_riscv_ztt_agettyp timm:$ad), (ZTT_AGETTYP timm:$ad)>;
 
   // Moves
-  def : Pat<(int_riscv_ame_mmov_a_m timm:$md, timm:$acc), (AME_MMOV_A_M timm:$md, timm:$acc)>;
-  def : Pat<(int_riscv_ame_mmov_m_m timm:$md, timm:$ms), (AME_MMOV_M_M timm:$md, timm:$ms)>;
-  def : Pat<(int_riscv_ame_mshift_ew timm:$md, timm:$ms1, timm:$imm), 
-            (AME_MSHIFT_EW timm:$md, timm:$ms1, timm:$imm)>;
+  def : Pat<(int_riscv_ztt_mmov_a_m timm:$md, timm:$acc), (ZTT_MMOV_A_M timm:$md, timm:$acc)>;
+  def : Pat<(int_riscv_ztt_mmov_m_m timm:$md, timm:$ms), (ZTT_MMOV_M_M timm:$md, timm:$ms)>;
+  def : Pat<(int_riscv_ztt_mshift_ew timm:$md, timm:$ms1, timm:$imm), 
+            (ZTT_MSHIFT_EW timm:$md, timm:$ms1, timm:$imm)>;
 }
 
 // Miscellaneous instructions with scalar operands
 let Predicates = [HasStdExtZtt, IsRV64] in {
   // Broadcast & Zero
-  def : Pat<(int_riscv_ame_mbcast_x timm:$md, i64:$xs1), (AME_MBCAST_X timm:$md, GPR:$xs1)>;
+  def : Pat<(int_riscv_ztt_mbcast_x timm:$md, i64:$xs1), (ZTT_MBCAST_X timm:$md, GPR:$xs1)>;
 
   // Type operations
-  def : Pat<(int_riscv_ame_msettyp timm:$md, i64:$xs1), (AME_MSETTYP timm:$md, GPR:$xs1)>;
-  def : Pat<(int_riscv_ame_asettyp timm:$ad, i64:$xs1), (AME_ASETTYP timm:$ad, GPR:$xs1)>;
+  def : Pat<(int_riscv_ztt_msettyp timm:$md, i64:$xs1), (ZTT_MSETTYP timm:$md, GPR:$xs1)>;
+  def : Pat<(int_riscv_ztt_asettyp timm:$ad, i64:$xs1), (ZTT_ASETTYP timm:$ad, GPR:$xs1)>;
 }
 
 // TODO:

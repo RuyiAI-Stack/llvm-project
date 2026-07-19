@@ -959,23 +959,23 @@ def HasStdExtZvvmttls : Predicate<"Subtarget->hasStdExtZvvmttls()">,
 
 // Attached Matrix Extension 
 def FeatureStdExtZttMatrixRegs16
-    : SubtargetFeature<"experimental-ztt-ame-mregs-16", "HasAMEMatrixRegs16", "true",
+    : SubtargetFeature<"experimental-ztt-ame-mregs-16", "HasZttMatrixRegs16", "true",
                        "Enable support for 16 AME matrix registers">;
 
 def FeatureStdExtZttMatrixRegs32
-    : SubtargetFeature<"experimental-ztt-ame-mregs-32", "HasAMEMatrixRegs32", "true",
+    : SubtargetFeature<"experimental-ztt-ame-mregs-32", "HasZttMatrixRegs32", "true",
                        "Enable support for 32 AME matrix registers">;
 
 def FeatureStdExtZttAccRegs1
-    : SubtargetFeature<"experimental-ztt-ame-accregs-1", "HasAMEAccRegs1", "true",
+    : SubtargetFeature<"experimental-ztt-ame-accregs-1", "HasZttAccRegs1", "true",
                        "Enable support for AME accumulator register">;
 
 def FeatureStdExtZttAccRegs2
-    : SubtargetFeature<"experimental-ztt-ame-accregs-2", "HasAMEAccRegs2", "true",
+    : SubtargetFeature<"experimental-ztt-ame-accregs-2", "HasZttAccRegs2", "true",
                        "Enable support for 2 AME accumulator registers">;
 
 def FeatureStdExtZttAccRegs4
-    : SubtargetFeature<"experimental-ztt-ame-accregs-4", "HasAMEAccRegs4", "true",
+    : SubtargetFeature<"experimental-ztt-ame-accregs-4", "HasZttAccRegs4", "true",
                        "Enable support for 4 AME accumulator registers">;
 
 let Implies = [FeatureStdExtZttMatrixRegs32, FeatureStdExtZttAccRegs4] in {

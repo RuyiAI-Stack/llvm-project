@@ -1057,6 +1057,8 @@ public:
         [](int64_t Imm) { return Imm != INT64_MIN && isInt<5>(Imm - 1); });
   }
 
+  bool isSImm7() const { return isSImm<7>(); }
+
   bool isSImm18() const {
     return isSImmPred([](int64_t Imm) { return isInt<18>(Imm); });
   }
@@ -2686,9 +2688,16 @@ ParseStatus RISCVAsmParser::parseZttMatrixRegIndex(OperandVector &Operands) {
 
   unsigned MaxIndex;
   const auto &Features = STI->getFeatureBits();
-  if (Features[RISCV::FeatureStdExtZttMatrixRegs32])
+
+  bool HasZttMatrixRegs32 = Features[RISCV::FeatureStdExtZttMatrixRegs32];
+  bool HasZttMatrixRegs16 = Features[RISCV::FeatureStdExtZttMatrixRegs16];
+  if (HasZttMatrixRegs16 && HasZttMatrixRegs32)
+    return Error(getLoc(),
+                 "conflicting ztt (AME) matrix register bounds chosen; cannot enable both 16 and 32 matrix registers simultaneously");
+
+  if (HasZttMatrixRegs32)
     MaxIndex = 31;
-  else if (Features[RISCV::FeatureStdExtZttMatrixRegs16])
+  else if (HasZttMatrixRegs16)
     MaxIndex = 15;
   else
     return Error(getLoc(),
@@ -2719,6 +2728,14 @@ ParseStatus RISCVAsmParser::parseZttAccRegIndex(OperandVector &Operands) {
 
   unsigned MaxIndex;
   const auto &Features = STI->getFeatureBits();
+
+  bool HasZttAccRegs4 = Features[RISCV::FeatureStdExtZttAccRegs4];
+  bool HasZttAccRegs2 = Features[RISCV::FeatureStdExtZttAccRegs2];
+  bool HasZttAccRegs1 = Features[RISCV::FeatureStdExtZttAccRegs1];
+  if ((HasZttAccRegs4 + HasZttAccRegs2 + HasZttAccRegs1) > 1)
+    return Error(getLoc(),
+                 "conflicting ztt (AME) accumulator register bounds chosen; cannot enable multiple accumulator register configurations simultaneously");
+
   if (Features[RISCV::FeatureStdExtZttAccRegs4])
     MaxIndex = 3;
   else if (Features[RISCV::FeatureStdExtZttAccRegs2])
