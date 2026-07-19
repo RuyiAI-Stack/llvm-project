@@ -37,17 +37,17 @@ class AME_DataType_Set_Intr
                 [IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>]>;
 
 let TargetPrefix = "riscv" in {
-  // agettype - get the dtype of an Acc register
+  // agettyp - get the dtype of an Acc register
   def int_riscv_ame_agettyp : AME_DataType_Get_Intr;
 
-  // asettype - set the dtype of an Acc register; zeroes the Acc register
+  // asettyp - set the dtype of an Acc register; zeroes the Acc register
   def int_riscv_ame_asettyp : AME_DataType_Set_Intr;
 
-  // mgettype - get the dtype of a M (matrix) register
-  def int_riscv_ame_mgettype : AME_DataType_Get_Intr;
+  // mgettyp - get the dtype of a M (matrix) register
+  def int_riscv_ame_mgettyp : AME_DataType_Get_Intr;
 
-  // sgettype - set the dtype of a M (matrix) register; zeroes the M register
-  def int_riscv_ame_msettype : AME_DataType_Set_Intr;
+  // sgettyp - set the dtype of a M (matrix) register; zeroes the M register
+  def int_riscv_ame_msettyp : AME_DataType_Set_Intr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -144,7 +144,7 @@ let TargetPrefix = "riscv" in {
   def int_riscv_ame_mmulneg_ew : AME_Elementwise_Arithmetic_Intr;
 
   // mmulneg.ew.x - md[i] = -(scalar * ms2[i])
-  def int_riscv_ame_mmulneg_ew_X : AME_Elementwise_Arithmetic_Scalar_Intr;
+  def int_riscv_ame_mmulneg_ew_x : AME_Elementwise_Arithmetic_Scalar_Intr;
 
   // mmulsub.ew - md[i] = ms1[i] - ms2[i] * md[i]
   def int_riscv_ame_mmulsub_ew : AME_Elementwise_Arithmetic_Intr;

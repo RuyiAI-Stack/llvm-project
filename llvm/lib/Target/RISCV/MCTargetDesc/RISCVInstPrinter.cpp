@@ -360,6 +360,25 @@ void RISCVInstPrinter::printTHeadAMEMatrixReg(const MCInst *MI, unsigned OpNo,
   O << "m" << (MO.getReg() - RISCV::THeadAMEM0);
 }
 
+void RISCVInstPrinter::printZttMatrixRegIndex(const MCInst *MI, unsigned OpNo,
+                                              const MCSubtargetInfo &STI,
+                                              raw_ostream &O) {
+  const MCOperand &MO = MI->getOperand(OpNo);
+
+  assert(MO.isImm() &&
+         "printZttMatrixRegIndex can only print immediate operands");
+  O << "m" << MO.getImm();
+}
+
+void RISCVInstPrinter::printZttAccRegIndex(const MCInst *MI, unsigned OpNo,
+                                           const MCSubtargetInfo &STI,
+                                           raw_ostream &O) {
+  const MCOperand &MO = MI->getOperand(OpNo);
+
+  assert(MO.isImm() && "printZttAccRegIndex can only print immediate operands");
+  O << "acc" << MO.getImm();
+}
+
 void RISCVInstPrinter::printVScaleReg(const MCInst *MI, unsigned OpNo,
                                       const MCSubtargetInfo &STI,
                                       raw_ostream &O) {

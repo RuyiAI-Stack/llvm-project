@@ -3248,7 +3248,7 @@ bool RISCVInstrInfo::verifyInstruction(const MachineInstr &MI,
         return false;
       }
       break;
-    case RISCVOp::OPERAND_AME_MATRIX_REG: {
+    case RISCVOp::OPERAND_ZTT_MATRIX_REG: {
       if (!MO.isImm()) {
         ErrInfo = "Expected an immediate operand.";
         return false;
@@ -3265,7 +3265,7 @@ bool RISCVInstrInfo::verifyInstruction(const MachineInstr &MI,
       break;
     }
 
-    case RISCVOp::OPERAND_AME_ACC_REG: {
+    case RISCVOp::OPERAND_ZTT_ACC_REG: {
       if (!MO.isImm()) {
         ErrInfo = "Expected an immediate operand.";
         return false;
@@ -3277,7 +3277,8 @@ bool RISCVInstrInfo::verifyInstruction(const MachineInstr &MI,
           (Features[RISCV::FeatureStdExtZttAccRegs2] &&
            (Val < 0 || Val >= 2)) ||
           (Features[RISCV::FeatureStdExtZttAccRegs1] && Val != 0)) {
-        ErrInfo = "accumulator index out of range for current subtarget";
+        ErrInfo =
+            "accumulator register index out of range for current subtarget";
         return false;
       }
       break;

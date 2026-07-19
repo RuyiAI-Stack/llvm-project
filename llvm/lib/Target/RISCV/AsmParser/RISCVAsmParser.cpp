@@ -222,6 +222,8 @@ class RISCVAsmParser : public MCTargetAsmParser {
   ParseStatus parseVTypeI(OperandVector &Operands);
   ParseStatus parseMaskReg(OperandVector &Operands);
   ParseStatus parseTHeadAMEMatrixReg(OperandVector &Operands);
+  ParseStatus parseZttMatrixRegIndex(OperandVector &Operands);
+  ParseStatus parseZttAccRegIndex(OperandVector &Operands);
   ParseStatus parseVScaleReg(OperandVector &Operands);
   ParseStatus parseTileLambda(OperandVector &Operands);
   ParseStatus parseInsnDirectiveOpcode(OperandVector &Operands);
@@ -2671,6 +2673,74 @@ ParseStatus RISCVAsmParser::parseTHeadAMEMatrixReg(OperandVector &Operands) {
   return ParseStatus::Success;
 }
 
+ParseStatus RISCVAsmParser::parseZttMatrixRegIndex(OperandVector &Operands) {
+  if (getLexer().isNot(AsmToken::Identifier))
+    return ParseStatus::NoMatch;
+
+  StringRef Name = getLexer().getTok().getIdentifier();
+  if (!Name.consume_front("m"))
+    return ParseStatus::NoMatch;
+
+  unsigned Index;
+  if (Name.getAsInteger(10, Index))
+    return ParseStatus::NoMatch;
+
+  unsigned MaxIndex;
+  const auto &Features = STI->getFeatureBits();
+  if (Features[RISCV::FeatureStdExtZttMatrixRegs32])
+    MaxIndex = 31;
+  else if (Features[RISCV::FeatureStdExtZttMatrixRegs16])
+    MaxIndex = 15;
+  else
+    return Error(getLoc(),
+                 "no ztt (AME) matrix register count feature enabled");
+
+  if (Index > MaxIndex)
+    return generateImmOutOfRangeError(getLoc(), 0, MaxIndex);
+
+  SMLoc S = getLoc();
+  SMLoc E = getTok().getEndLoc();
+  getLexer().Lex();
+  Operands.push_back(RISCVOperand::createExpr(
+      MCConstantExpr::create(Index, getContext()), S, E, isRV64()));
+  return ParseStatus::Success;
+}
+
+ParseStatus RISCVAsmParser::parseZttAccRegIndex(OperandVector &Operands) {
+  if (getLexer().isNot(AsmToken::Identifier))
+    return ParseStatus::NoMatch;
+
+  StringRef Name = getLexer().getTok().getIdentifier();
+  if (!Name.consume_front("acc"))
+    return ParseStatus::NoMatch;
+
+  unsigned Index;
+  if (Name.getAsInteger(10, Index))
+    return ParseStatus::NoMatch;
+
+  unsigned MaxIndex;
+  const auto &Features = STI->getFeatureBits();
+  if (Features[RISCV::FeatureStdExtZttAccRegs4])
+    MaxIndex = 3;
+  else if (Features[RISCV::FeatureStdExtZttAccRegs2])
+    MaxIndex = 1;
+  else if (Features[RISCV::FeatureStdExtZttAccRegs1])
+    MaxIndex = 0;
+  else
+    return Error(getLoc(),
+                 "no ztt (AME) accumulator register count feature enabled");
+
+  if (Index > MaxIndex)
+    return generateImmOutOfRangeError(getLoc(), 0, MaxIndex);
+
+  SMLoc S = getLoc();
+  SMLoc E = getTok().getEndLoc();
+  getLexer().Lex();
+  Operands.push_back(RISCVOperand::createExpr(
+      MCConstantExpr::create(Index, getContext()), S, E, isRV64()));
+  return ParseStatus::Success;
+}
+
 ParseStatus RISCVAsmParser::parseVScaleReg(OperandVector &Operands) {
   if (getLexer().isNot(AsmToken::Identifier))
     return ParseStatus::NoMatch;
@@ -2754,8 +2824,8 @@ ParseStatus RISCVAsmParser::parseGPRPairAsFPR64(OperandVector &Operands) {
     return ParseStatus::NoMatch;
 
   if ((Reg - RISCV::X0) & 1) {
-    // Only report the even register error if we have at least Zfinx so we know
-    // some FP is enabled. We already checked F earlier.
+    // Only report the even register error if we have at least Zfinx so we
+    // know some FP is enabled. We already checked F earlier.
     if (getSTI().hasFeature(RISCV::FeatureStdExtZfinx))
       return TokError("double precision floating point operands must use even "
                       "numbered X register");
@@ -2784,8 +2854,8 @@ ParseStatus RISCVAsmParser::parseGPRPair(OperandVector &Operands,
   // If this is not an RV64 GPRPair instruction, don't parse as a GPRPair on
   // RV64 as it will prevent matching the RV64 version of the same instruction
   // that doesn't use a GPRPair.
-  // If this is an RV64 GPRPair instruction, there is no RV32 version so we can
-  // still parse as a pair.
+  // If this is an RV64 GPRPair instruction, there is no RV32 version so we
+  // can still parse as a pair.
   if (!IsRV64Inst && isRV64())
     return ParseStatus::NoMatch;
 
@@ -2930,24 +3000,24 @@ ParseStatus RISCVAsmParser::parseMemOpBaseReg(OperandVector &Operands) {
 }
 
 ParseStatus RISCVAsmParser::parseZeroOffsetMemOp(OperandVector &Operands) {
-  // Atomic operations such as lr.w, sc.w, and amo*.w accept a "memory operand"
-  // as one of their register operands, such as `(a0)`. This just denotes that
-  // the register (in this case `a0`) contains a memory address.
+  // Atomic operations such as lr.w, sc.w, and amo*.w accept a "memory
+  // operand" as one of their register operands, such as `(a0)`. This just
+  // denotes that the register (in this case `a0`) contains a memory address.
   //
   // Normally, we would be able to parse these by putting the parens into the
   // instruction string. However, GNU as also accepts a zero-offset memory
-  // operand (such as `0(a0)`), and ignores the 0. Normally this would be parsed
-  // with parseExpression followed by parseMemOpBaseReg, but these instructions
-  // do not accept an immediate operand, and we do not want to add a "dummy"
-  // operand that is silently dropped.
+  // operand (such as `0(a0)`), and ignores the 0. Normally this would be
+  // parsed with parseExpression followed by parseMemOpBaseReg, but these
+  // instructions do not accept an immediate operand, and we do not want to
+  // add a "dummy" operand that is silently dropped.
   //
   // Instead, we use this custom parser. This will: allow (and discard) an
   // offset if it is zero; require (and discard) parentheses; and add only the
   // parsed register operand to `Operands`.
   //
   // These operands are printed with RISCVInstPrinter::printZeroOffsetMemOp,
-  // which will only print the register surrounded by parentheses (which GNU as
-  // also uses as its canonical representation for these operands).
+  // which will only print the register surrounded by parentheses (which GNU
+  // as also uses as its canonical representation for these operands).
   std::unique_ptr<RISCVOperand> OptionalImmOp;
 
   if (getLexer().isNot(AsmToken::LParen)) {
@@ -2979,7 +3049,8 @@ ParseStatus RISCVAsmParser::parseZeroOffsetMemOp(OperandVector &Operands) {
   if (parseToken(AsmToken::RParen, "expected ')'"))
     return ParseStatus::Failure;
 
-  // Deferred Handling of non-zero offsets. This makes the error messages nicer.
+  // Deferred Handling of non-zero offsets. This makes the error messages
+  // nicer.
   if (OptionalImmOp && !OptionalImmOp->isImmZero())
     return Error(
         OptionalImmOp->getStartLoc(), "optional integer offset must be 0",
@@ -3160,13 +3231,13 @@ ParseStatus RISCVAsmParser::parseZcmpStackAdj(OperandVector &Operands,
 }
 
 /// Looks at a token type and creates the relevant operand from this
-/// information, adding to Operands. If operand was parsed, returns false, else
-/// true.
+/// information, adding to Operands. If operand was parsed, returns false,
+/// else true.
 bool RISCVAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
-  // Check if the current operand has a custom associated parser, if so, try to
-  // custom parse the operand, or fallback to the general approach.
-  ParseStatus Result =
-      MatchOperandParserImpl(Operands, Mnemonic, /*ParseForAllFeatures=*/true);
+  // Check if the current operand has a custom associated parser, if so, try
+  // to custom parse the operand, or fallback to the general approach.
+  ParseStatus Result = MatchOperandParserImpl(Operands, Mnemonic,
+                                              /*ParseForAllFeatures=*/true);
   if (Result.isSuccess())
     return false;
   if (Result.isFailure())
@@ -3193,8 +3264,8 @@ bool RISCVAsmParser::parseInstruction(ParseInstructionInfo &Info,
                                       StringRef Name, SMLoc NameLoc,
                                       OperandVector &Operands) {
   // Apply mnemonic aliases because the destination mnemonic may have require
-  // custom operand parsing. The generic tblgen'erated code does this later, at
-  // the start of MatchInstructionImpl(), but that's too late for custom
+  // custom operand parsing. The generic tblgen'erated code does this later,
+  // at the start of MatchInstructionImpl(), but that's too late for custom
   // operand parsing.
   const FeatureBitset &AvailableFeatures = getAvailableFeatures();
   applyMnemonicAliases(Name, AvailableFeatures, 0);
@@ -3648,13 +3719,13 @@ bool RISCVAsmParser::parseDirectiveInsn(SMLoc L) {
     }
 
     // We only derive a length from the encoding for 16- and 32-bit
-    // instructions, as the encodings for longer instructions are not frozen in
-    // the spec.
+    // instructions, as the encodings for longer instructions are not frozen
+    // in the spec.
     int64_t EncodingDerivedLength = ((Value & 0b11) == 0b11) ? 4 : 2;
 
     if (Length) {
-      // Only check the length against the encoding if the length is present and
-      // could match
+      // Only check the length against the encoding if the length is present
+      // and could match
       if ((*Length <= 4) && (*Length != EncodingDerivedLength))
         return Error(ErrorLoc,
                      "instruction length does not match the encoding");
@@ -4362,8 +4433,8 @@ bool RISCVAsmParser::validateInstruction(MCInst &Inst,
   }
 
   if (MCID.TSFlags & RISCVII::SMTConstraintMask) {
-    // smt.vmadot with sp and hp: the vmask operand (only use V0 or V1) must not
-    // overlap with any of vd, vs1, or vs2.
+    // smt.vmadot with sp and hp: the vmask operand (only use V0 or V1) must
+    // not overlap with any of vd, vs1, or vs2.
     int VMaskIdx =
         RISCV::getNamedOperandIdx(Inst.getOpcode(), RISCV::OpName::vmask);
     MCRegister MaskReg = Inst.getOperand(VMaskIdx).getReg();
@@ -4490,7 +4561,8 @@ bool RISCVAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
     emitLoadStoreSymbol(Inst, RISCV::LD, IDLoc, Out, /*HasTmpReg=*/false);
     return false;
   case RISCV::PseudoLD_RV32:
-    emitLoadStoreSymbol(Inst, RISCV::LD_RV32, IDLoc, Out, /*HasTmpReg=*/false);
+    emitLoadStoreSymbol(Inst, RISCV::LD_RV32, IDLoc, Out,
+                        /*HasTmpReg=*/false);
     return false;
   case RISCV::PseudoFLH:
     emitLoadStoreSymbol(Inst, RISCV::FLH, IDLoc, Out, /*HasTmpReg=*/true);
@@ -4593,8 +4665,8 @@ bool RISCVAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
     return false;
   case RISCV::PseudoVMSGE_VI:
   case RISCV::PseudoVMSLT_VI: {
-    // These instructions are signed and so is immediate so we can subtract one
-    // and change the opcode.
+    // These instructions are signed and so is immediate so we can subtract
+    // one and change the opcode.
     int64_t Imm = Inst.getOperand(2).getImm();
     unsigned Opc = Inst.getOpcode() == RISCV::PseudoVMSGE_VI ? RISCV::VMSGT_VI
                                                              : RISCV::VMSLE_VI;
@@ -4610,8 +4682,8 @@ bool RISCVAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
   case RISCV::PseudoVMSLTU_VI: {
     int64_t Imm = Inst.getOperand(2).getImm();
     // Unsigned comparisons are tricky because the immediate is signed. If the
-    // immediate is 0 we can't just subtract one. vmsltu.vi v0, v1, 0 is always
-    // false, but vmsle.vi v0, v1, -1 is always true. Instead we use
+    // immediate is 0 we can't just subtract one. vmsltu.vi v0, v1, 0 is
+    // always false, but vmsle.vi v0, v1, -1 is always true. Instead we use
     // vmsne v0, v1, v1 which is always false.
     if (Imm == 0) {
       unsigned Opc = Inst.getOpcode() == RISCV::PseudoVMSGEU_VI

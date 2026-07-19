@@ -147,8 +147,8 @@ enum OperandType : unsigned {
   OPERAND_SMTVType,
   OPERAND_SMTI8,
 
-  OPERAND_AME_MATRIX_REG,
-  OPERAND_AME_ACC_REG,
+  OPERAND_ZTT_MATRIX_REG,
+  OPERAND_ZTT_ACC_REG,
 };
 } // namespace RISCVOp
 
