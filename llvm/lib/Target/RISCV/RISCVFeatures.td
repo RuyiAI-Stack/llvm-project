@@ -979,7 +979,7 @@ def FeatureStdExtZttAccRegs4
                        "Enable support for 4 AME accumulator registers">;
 
 let Implies = [FeatureStdExtZttMatrixRegs32, FeatureStdExtZttAccRegs4] in {
-  def FeatureStdExtZtt // By default, enabling "+ztt" implies 32 Matrix Regs and 4 Accumulators.
+  def FeatureStdExtZtt // By default, enabling "+experimental-ztt" implies 32 Matrix Regs and 4 Accumulators.
     : RISCVExperimentalExtension<0, 1, "Attached Matrix Extension">;
 }
 

@@ -304,9 +304,13 @@ static inline bool isTiedPseudo(uint64_t TSFlags) {
   return TSFlags & IsTiedPseudoMask;
 }
 /// \returns true if there is a SEW operand for the instruction.
-static inline bool hasSEWOp(uint64_t TSFlags) { return TSFlags & HasSEWOpMask; }
+static inline bool hasSEWOp(uint64_t TSFlags) {
+  return TSFlags & HasSEWOpMask;
+}
 /// \returns true if there is a VL operand for the instruction.
-static inline bool hasVLOp(uint64_t TSFlags) { return TSFlags & HasVLOpMask; }
+static inline bool hasVLOp(uint64_t TSFlags) {
+  return TSFlags & HasVLOpMask;
+}
 /// \returns true if there is a vector policy operand for this instruction.
 static inline bool hasVecPolicyOp(uint64_t TSFlags) {
   return TSFlags & HasVecPolicyOpMask;
@@ -492,7 +496,12 @@ enum {
 
 // Describes the predecessor/successor bits used in the FENCE instruction.
 namespace RISCVFenceField {
-enum FenceField { I = 8, O = 4, R = 2, W = 1 };
+enum FenceField {
+  I = 8,
+  O = 4,
+  R = 2,
+  W = 1
+};
 }
 
 // Describes the supported floating point rounding mode encodings.
@@ -591,7 +600,13 @@ inline static bool isValidSMTVTypeMode(unsigned Mode) {
 } // namespace XSMTVTypeMode
 
 namespace RISCVVXRndMode {
-enum RoundingMode { RNU = 0, RNE = 1, RDN = 2, ROD = 3, Invalid };
+enum RoundingMode {
+  RNU = 0,
+  RNE = 1,
+  RDN = 2,
+  ROD = 3,
+  Invalid
+};
 
 inline static StringRef roundingModeToString(RoundingMode RndMode) {
   switch (RndMode) {
