@@ -333,12 +333,6 @@ let TargetPrefix = "riscv" in {
   // Given i <= 0 < N, 0 <= j < N
   // md[i, j] = md[i, j + imm] if 0 <= j + imm < N else md[i, j] = 0
   def int_riscv_ztt_mshift_ew : ZTT_Perm3_Intr;
-
-  // mshift.m1 - alias for mshift.ew when imm = -1
-  def int_riscv_ztt_mshift_m1 : ZTT_Perm2_Intr;
-
-  // mshift.p1 - alias for mshift.ew when imm = 1
-  def int_riscv_ztt_mshift_p1 : ZTT_Perm2_Intr;
 }
 
 //===----------------------------------------------------------------------===//

@@ -384,7 +384,7 @@ static unsigned getBOSCAMETileReg(unsigned Index) {
   static const unsigned Regs[] = {RISCV::BOSCAMETR0, RISCV::BOSCAMETR1,
                                   RISCV::BOSCAMETR2, RISCV::BOSCAMETR3,
                                   RISCV::BOSCAMETR4, RISCV::BOSCAMETR5,
-                                  RISCV::BOSCAMETR4, RISCV::BOSCAMETR7};
+                                  RISCV::BOSCAMETR6, RISCV::BOSCAMETR7};
   assert(Index < 8 && "invalid AME tile register index");
   return Regs[Index];
 }

@@ -1,4 +1,4 @@
-//===- RISCVInstrInfoZtt.td - 'Ztt' ----------*- tablegen -*-===//
+//===- RISCVInstrInfoZtt.td - 'Ztt' ----------*- tablegen -*---------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -385,6 +385,7 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
     bits<5> xs1;
     bits<2> ad;
 
+    let Inst{24 - 20} = 0b00000;
     let Inst{19 - 15} = xs1;
     let Inst{14 - 10} = 0b10100;
     let Inst{9 - 8} = ad;
@@ -421,6 +422,16 @@ let Predicates = [HasStdExtZtt], hasSideEffects = 1, mayLoad = 0,
     let Inst{11 - 7} = md;
     let Inst{6 - 0} = 0b0101011;
   }
+}
+
+let Predicates = [HasStdExtZtt] in {
+  // mshift.m1 - alias for mshift.ew when imm = -1
+  def ZTT_MSHIFT_M1: InstAlias<"mshift.m1 $md, $ms1",
+                 (ZTT_MSHIFT_EW ZttMatrixRegIndex:$md, ZttMatrixRegIndex:$ms1, -1)>;
+
+  // mshift.p1 - alias for mshift.ew when imm = 1
+  def ZTT_MSHIFT_P1: InstAlias<"mshift.p1 $md, $ms1",
+                 (ZTT_MSHIFT_EW ZttMatrixRegIndex:$md, ZttMatrixRegIndex:$ms1, 1)>;
 }
 
 //===-----------------------------------------------------------------------------------===//

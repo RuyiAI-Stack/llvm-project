@@ -1281,7 +1281,7 @@ public:
   }
 
   static std::unique_ptr<RISCVOperand> createRegList(unsigned RlistEncode,
-                                                   SMLoc S) {
+                                                     SMLoc S) {
     auto Op = std::make_unique<RISCVOperand>(KindTy::RegList);
     Op->RegList.Encoding = RlistEncode;
     Op->StartLoc = S;
@@ -1298,7 +1298,8 @@ public:
     return Op;
   }
 
-  static std::unique_ptr<RISCVOperand> createStackAdj(unsigned StackAdj, SMLoc S) {
+  static std::unique_ptr<RISCVOperand> createStackAdj(unsigned StackAdj,
+                                                      SMLoc S) {
     auto Op = std::make_unique<RISCVOperand>(KindTy::StackAdj);
     Op->StackAdj.Val = StackAdj;
     Op->StartLoc = S;
@@ -2275,8 +2276,8 @@ ParseStatus RISCVAsmParser::parseFPImm(OperandVector &Operands) {
   if (IsNegative)
     RealVal.changeSign();
 
-  Operands.push_back(RISCVOperand::createFPImm(
-      RealVal.bitcastToAPInt().getZExtValue(), S));
+  Operands.push_back(
+      RISCVOperand::createFPImm(RealVal.bitcastToAPInt().getZExtValue(), S));
 
   Lex(); // Eat the token.
 
@@ -2693,7 +2694,8 @@ ParseStatus RISCVAsmParser::parseZttMatrixRegIndex(OperandVector &Operands) {
   bool HasZttMatrixRegs16 = Features[RISCV::FeatureStdExtZttMatrixRegs16];
   if (HasZttMatrixRegs16 && HasZttMatrixRegs32)
     return Error(getLoc(),
-                 "conflicting ztt (AME) matrix register bounds chosen; cannot enable both 16 and 32 matrix registers simultaneously");
+                 "conflicting ztt (AME) matrix register bounds chosen; cannot "
+                 "enable both 16 and 32 matrix registers simultaneously");
 
   if (HasZttMatrixRegs32)
     MaxIndex = 31;
@@ -2733,8 +2735,10 @@ ParseStatus RISCVAsmParser::parseZttAccRegIndex(OperandVector &Operands) {
   bool HasZttAccRegs2 = Features[RISCV::FeatureStdExtZttAccRegs2];
   bool HasZttAccRegs1 = Features[RISCV::FeatureStdExtZttAccRegs1];
   if ((HasZttAccRegs4 + HasZttAccRegs2 + HasZttAccRegs1) > 1)
-    return Error(getLoc(),
-                 "conflicting ztt (AME) accumulator register bounds chosen; cannot enable multiple accumulator register configurations simultaneously");
+    return Error(
+        getLoc(),
+        "conflicting ztt (AME) accumulator register bounds chosen; cannot "
+        "enable multiple accumulator register configurations simultaneously");
 
   if (Features[RISCV::FeatureStdExtZttAccRegs4])
     MaxIndex = 3;
@@ -3486,9 +3490,10 @@ bool RISCVAsmParser::parseDirectiveOption() {
 
           std::string Buffer;
           raw_string_ostream OutputErrMsg(Buffer);
-          handleAllErrors(ParseResult.takeError(), [&](llvm::StringError &ErrMsg) {
-            OutputErrMsg << ErrMsg.getMessage();
-          });
+          handleAllErrors(ParseResult.takeError(),
+                          [&](llvm::StringError &ErrMsg) {
+                            OutputErrMsg << ErrMsg.getMessage();
+                          });
 
           return Error(Loc, OutputErrMsg.str());
         }

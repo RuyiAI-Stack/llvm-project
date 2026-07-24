@@ -406,3 +406,11 @@ mshift.ew m1, m2, 5
 mshift.ew m1, m2, -3
 # CHECK-INST: mshift.ew m1, m2, -3
 # CHECK-ENCODING: [0xab,0x60,0xd1,0x07]
+
+mshift.m1 m1, m2
+# CHECK-INST: mshift.m1 m1, m2
+# CHECK-ENCODING: [0xab,0x60,0xf1,0x07]
+
+mshift.p1 m1, m2
+# CHECK-INST: mshift.p1 m1, m2
+# CHECK-ENCODING: [0xab,0x60,0x11,0x00]
