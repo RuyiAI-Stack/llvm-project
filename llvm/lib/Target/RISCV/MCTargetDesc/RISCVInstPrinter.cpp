@@ -13,6 +13,7 @@
 #include "RISCVInstPrinter.h"
 #include "RISCVBaseInfo.h"
 #include "RISCVMCAsmInfo.h"
+#include "RISCVMCTargetDesc.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -148,7 +149,7 @@ void RISCVInstPrinter::printFenceArg(const MCInst *MI, unsigned OpNo,
                                      const MCSubtargetInfo &STI,
                                      raw_ostream &O) {
   unsigned FenceArg = MI->getOperand(OpNo).getImm();
-  assert (((FenceArg >> 4) == 0) && "Invalid immediate in printFenceArg");
+  assert(((FenceArg >> 4) == 0) && "Invalid immediate in printFenceArg");
 
   if ((FenceArg & RISCVFenceField::I) != 0)
     O << 'i';
@@ -259,7 +260,8 @@ void RISCVInstPrinter::printXSfmmVType(const MCInst *MI, unsigned OpNo,
 // than ABI register names, we need to print "{x1, x8-x9, x18-x27}" for all
 // registers. Otherwise, we print "{ra, s0-s11}".
 void RISCVInstPrinter::printRegList(const MCInst *MI, unsigned OpNo,
-                                    const MCSubtargetInfo &STI, raw_ostream &O) {
+                                    const MCSubtargetInfo &STI,
+                                    raw_ostream &O) {
   unsigned Imm = MI->getOperand(OpNo).getImm();
 
   assert(Imm >= RISCVZC::RLISTENCODE::RA &&
@@ -346,15 +348,35 @@ void RISCVInstPrinter::printVMaskReg(const MCInst *MI, unsigned OpNo,
   O << ".t";
 }
 
-void RISCVInstPrinter::printMatrixReg(const MCInst *MI, unsigned OpNo,
-                                      const MCSubtargetInfo &STI,
-                                      raw_ostream &O) {
+void RISCVInstPrinter::printTHeadAMEMatrixReg(const MCInst *MI, unsigned OpNo,
+                                              const MCSubtargetInfo &STI,
+                                              raw_ostream &O) {
   const MCOperand &MO = MI->getOperand(OpNo);
 
-  assert(MO.isReg() && "printMatrixReg can only print register operands");
-  assert(MO.getReg() >= RISCV::AMEM0 && MO.getReg() <= RISCV::AMEM7 &&
+  assert(MO.isReg() &&
+         "printTHeadAMEMatrixReg can only print register operands");
+  assert(MO.getReg() >= RISCV::THeadAMEM0 && MO.getReg() <= RISCV::THeadAMEM7 &&
          "unexpected matrix register");
-  O << "m" << (MO.getReg() - RISCV::AMEM0);
+  O << "m" << (MO.getReg() - RISCV::THeadAMEM0);
+}
+
+void RISCVInstPrinter::printZttMatrixRegIndex(const MCInst *MI, unsigned OpNo,
+                                              const MCSubtargetInfo &STI,
+                                              raw_ostream &O) {
+  const MCOperand &MO = MI->getOperand(OpNo);
+
+  assert(MO.isImm() &&
+         "printZttMatrixRegIndex can only print immediate operands");
+  O << "m" << MO.getImm();
+}
+
+void RISCVInstPrinter::printZttAccRegIndex(const MCInst *MI, unsigned OpNo,
+                                           const MCSubtargetInfo &STI,
+                                           raw_ostream &O) {
+  const MCOperand &MO = MI->getOperand(OpNo);
+
+  assert(MO.isImm() && "printZttAccRegIndex can only print immediate operands");
+  O << "acc" << MO.getImm();
 }
 
 void RISCVInstPrinter::printVScaleReg(const MCInst *MI, unsigned OpNo,

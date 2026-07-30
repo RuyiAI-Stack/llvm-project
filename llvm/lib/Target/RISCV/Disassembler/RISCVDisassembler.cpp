@@ -24,6 +24,7 @@
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Endian.h"
+#include <cstdint>
 
 using namespace llvm;
 using namespace llvm::MCD;
@@ -96,28 +97,30 @@ static DecodeStatus DecodeSimpleRegisterClass(MCInst &Inst, uint32_t RegNo,
 constexpr auto DecodeGPRRegisterClass =
     DecodeSimpleRegisterClass<RISCV::X0, 32, /*RVELimit=*/16>;
 
-static DecodeStatus DecodeTileRegRegisterClass(MCInst &Inst, uint32_t RegNo,
-                                               uint64_t Address,
-                                               const MCDisassembler *Decoder) {
-  return DecodeSimpleRegisterClass<RISCV::TR0, 8>(Inst, RegNo, Address,
-                                                  Decoder);
+static DecodeStatus
+DecodeBOSCAMETileRegRegisterClass(MCInst &Inst, uint32_t RegNo,
+                                  uint64_t Address,
+                                  const MCDisassembler *Decoder) {
+  return DecodeSimpleRegisterClass<RISCV::BOSCAMETR0, 8>(Inst, RegNo, Address,
+                                                         Decoder);
 }
 
-static DecodeStatus DecodeAccRegRegisterClass(MCInst &Inst, uint32_t RegNo,
-                                              uint64_t Address,
-                                              const MCDisassembler *Decoder) {
+static DecodeStatus
+DecodeBOSCAMEAccRegRegisterClass(MCInst &Inst, uint32_t RegNo, uint64_t Address,
+                                 const MCDisassembler *Decoder) {
   if (RegNo < 8 || RegNo > 15)
     return MCDisassembler::Fail;
 
-  Inst.addOperand(MCOperand::createReg(RISCV::ACC0 + (RegNo - 8)));
+  Inst.addOperand(MCOperand::createReg(RISCV::BOSCAMEACC0 + (RegNo - 8)));
   return MCDisassembler::Success;
 }
 
-static DecodeStatus DecodeMatrixRegRegisterClass(
-    MCInst &Inst, uint32_t RegNo, uint64_t Address,
-    const MCDisassembler *Decoder) {
-  return DecodeSimpleRegisterClass<RISCV::AMEM0, 8>(Inst, RegNo, Address,
-                                                    Decoder);
+static DecodeStatus
+DecodeTHeadAMEMatrixRegRegisterClass(MCInst &Inst, uint32_t RegNo,
+                                     uint64_t Address,
+                                     const MCDisassembler *Decoder) {
+  return DecodeSimpleRegisterClass<RISCV::THeadAMEM0, 8>(Inst, RegNo, Address,
+                                                         Decoder);
 }
 
 static DecodeStatus DecodeGPRX1X5RegisterClass(MCInst &Inst, uint32_t RegNo,

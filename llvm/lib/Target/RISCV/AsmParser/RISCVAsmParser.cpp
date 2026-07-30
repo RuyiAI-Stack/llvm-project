@@ -221,7 +221,9 @@ class RISCVAsmParser : public MCTargetAsmParser {
   ParseStatus parseJALOffset(OperandVector &Operands);
   ParseStatus parseVTypeI(OperandVector &Operands);
   ParseStatus parseMaskReg(OperandVector &Operands);
-  ParseStatus parseMatrixReg(OperandVector &Operands);
+  ParseStatus parseTHeadAMEMatrixReg(OperandVector &Operands);
+  ParseStatus parseZttMatrixRegIndex(OperandVector &Operands);
+  ParseStatus parseZttAccRegIndex(OperandVector &Operands);
   ParseStatus parseVScaleReg(OperandVector &Operands);
   ParseStatus parseTileLambda(OperandVector &Operands);
   ParseStatus parseInsnDirectiveOpcode(OperandVector &Operands);
@@ -494,9 +496,9 @@ public:
   bool isV0Reg() const {
     return Kind == KindTy::Register && Reg.Reg == RISCV::V0;
   }
-  bool isMatrixReg() const {
-    return Kind == KindTy::Register && Reg.Reg >= RISCV::AMEM0 &&
-           Reg.Reg <= RISCV::AMEM7;
+  bool isTHeadAMEMatrixReg() const {
+    return Kind == KindTy::Register && Reg.Reg >= RISCV::THeadAMEM0 &&
+           Reg.Reg <= RISCV::THeadAMEM7;
   }
   bool isAnyReg() const {
     return Kind == KindTy::Register &&
@@ -1055,6 +1057,8 @@ public:
         [](int64_t Imm) { return Imm != INT64_MIN && isInt<5>(Imm - 1); });
   }
 
+  bool isSImm7() const { return isSImm<7>(); }
+
   bool isSImm18() const {
     return isSImmPred([](int64_t Imm) { return isInt<18>(Imm); });
   }
@@ -1277,7 +1281,7 @@ public:
   }
 
   static std::unique_ptr<RISCVOperand> createRegList(unsigned RlistEncode,
-                                                   SMLoc S) {
+                                                     SMLoc S) {
     auto Op = std::make_unique<RISCVOperand>(KindTy::RegList);
     Op->RegList.Encoding = RlistEncode;
     Op->StartLoc = S;
@@ -1294,7 +1298,8 @@ public:
     return Op;
   }
 
-  static std::unique_ptr<RISCVOperand> createStackAdj(unsigned StackAdj, SMLoc S) {
+  static std::unique_ptr<RISCVOperand> createStackAdj(unsigned StackAdj,
+                                                      SMLoc S) {
     auto Op = std::make_unique<RISCVOperand>(KindTy::StackAdj);
     Op->StackAdj.Val = StackAdj;
     Op->StartLoc = S;
@@ -2271,8 +2276,8 @@ ParseStatus RISCVAsmParser::parseFPImm(OperandVector &Operands) {
   if (IsNegative)
     RealVal.changeSign();
 
-  Operands.push_back(RISCVOperand::createFPImm(
-      RealVal.bitcastToAPInt().getZExtValue(), S));
+  Operands.push_back(
+      RISCVOperand::createFPImm(RealVal.bitcastToAPInt().getZExtValue(), S));
 
   Lex(); // Eat the token.
 
@@ -2654,7 +2659,7 @@ ParseStatus RISCVAsmParser::parseMaskReg(OperandVector &Operands) {
   return ParseStatus::Success;
 }
 
-ParseStatus RISCVAsmParser::parseMatrixReg(OperandVector &Operands) {
+ParseStatus RISCVAsmParser::parseTHeadAMEMatrixReg(OperandVector &Operands) {
   if (getLexer().isNot(AsmToken::Identifier))
     return ParseStatus::NoMatch;
 
@@ -2666,7 +2671,93 @@ ParseStatus RISCVAsmParser::parseMatrixReg(OperandVector &Operands) {
   SMLoc E = getTok().getEndLoc();
   getLexer().Lex();
   Operands.push_back(
-      RISCVOperand::createReg(RISCV::AMEM0 + (Name[1] - '0'), S, E));
+      RISCVOperand::createReg(RISCV::THeadAMEM0 + (Name[1] - '0'), S, E));
+  return ParseStatus::Success;
+}
+
+ParseStatus RISCVAsmParser::parseZttMatrixRegIndex(OperandVector &Operands) {
+  if (getLexer().isNot(AsmToken::Identifier))
+    return ParseStatus::NoMatch;
+
+  StringRef Name = getLexer().getTok().getIdentifier();
+  if (!Name.consume_front("m"))
+    return ParseStatus::NoMatch;
+
+  unsigned Index;
+  if (Name.getAsInteger(10, Index))
+    return ParseStatus::NoMatch;
+
+  unsigned MaxIndex;
+  const auto &Features = STI->getFeatureBits();
+
+  bool HasZttMatrixRegs32 = Features[RISCV::FeatureStdExtZttMatrixRegs32];
+  bool HasZttMatrixRegs16 = Features[RISCV::FeatureStdExtZttMatrixRegs16];
+  if (HasZttMatrixRegs16 && HasZttMatrixRegs32)
+    return Error(getLoc(),
+                 "conflicting ztt (AME) matrix register bounds chosen; cannot "
+                 "enable both 16 and 32 matrix registers simultaneously");
+
+  if (HasZttMatrixRegs32)
+    MaxIndex = 31;
+  else if (HasZttMatrixRegs16)
+    MaxIndex = 15;
+  else
+    return Error(getLoc(),
+                 "no ztt (AME) matrix register count feature enabled");
+
+  if (Index > MaxIndex)
+    return generateImmOutOfRangeError(getLoc(), 0, MaxIndex);
+
+  SMLoc S = getLoc();
+  SMLoc E = getTok().getEndLoc();
+  getLexer().Lex();
+  Operands.push_back(RISCVOperand::createExpr(
+      MCConstantExpr::create(Index, getContext()), S, E, isRV64()));
+  return ParseStatus::Success;
+}
+
+ParseStatus RISCVAsmParser::parseZttAccRegIndex(OperandVector &Operands) {
+  if (getLexer().isNot(AsmToken::Identifier))
+    return ParseStatus::NoMatch;
+
+  StringRef Name = getLexer().getTok().getIdentifier();
+  if (!Name.consume_front("acc"))
+    return ParseStatus::NoMatch;
+
+  unsigned Index;
+  if (Name.getAsInteger(10, Index))
+    return ParseStatus::NoMatch;
+
+  unsigned MaxIndex;
+  const auto &Features = STI->getFeatureBits();
+
+  bool HasZttAccRegs4 = Features[RISCV::FeatureStdExtZttAccRegs4];
+  bool HasZttAccRegs2 = Features[RISCV::FeatureStdExtZttAccRegs2];
+  bool HasZttAccRegs1 = Features[RISCV::FeatureStdExtZttAccRegs1];
+  if ((HasZttAccRegs4 + HasZttAccRegs2 + HasZttAccRegs1) > 1)
+    return Error(
+        getLoc(),
+        "conflicting ztt (AME) accumulator register bounds chosen; cannot "
+        "enable multiple accumulator register configurations simultaneously");
+
+  if (Features[RISCV::FeatureStdExtZttAccRegs4])
+    MaxIndex = 3;
+  else if (Features[RISCV::FeatureStdExtZttAccRegs2])
+    MaxIndex = 1;
+  else if (Features[RISCV::FeatureStdExtZttAccRegs1])
+    MaxIndex = 0;
+  else
+    return Error(getLoc(),
+                 "no ztt (AME) accumulator register count feature enabled");
+
+  if (Index > MaxIndex)
+    return generateImmOutOfRangeError(getLoc(), 0, MaxIndex);
+
+  SMLoc S = getLoc();
+  SMLoc E = getTok().getEndLoc();
+  getLexer().Lex();
+  Operands.push_back(RISCVOperand::createExpr(
+      MCConstantExpr::create(Index, getContext()), S, E, isRV64()));
   return ParseStatus::Success;
 }
 
@@ -3399,9 +3490,10 @@ bool RISCVAsmParser::parseDirectiveOption() {
 
           std::string Buffer;
           raw_string_ostream OutputErrMsg(Buffer);
-          handleAllErrors(ParseResult.takeError(), [&](llvm::StringError &ErrMsg) {
-            OutputErrMsg << ErrMsg.getMessage();
-          });
+          handleAllErrors(ParseResult.takeError(),
+                          [&](llvm::StringError &ErrMsg) {
+                            OutputErrMsg << ErrMsg.getMessage();
+                          });
 
           return Error(Loc, OutputErrMsg.str());
         }

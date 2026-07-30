@@ -33,6 +33,12 @@
 ; CHECK-NEXT:   experimental-zibi                - 'Zibi' (Branch with Immediate).
 ; CHECK-NEXT:   experimental-zicfilp             - 'Zicfilp' (Landing pad).
 ; CHECK-NEXT:   experimental-zicfiss             - 'Zicfiss' (Shadow stack).
+; CHECK-NEXT:   experimental-ztt                 - 'Ztt' (Attached Matrix Extension).
+; CHECK-NEXT:   experimental-ztt-ame-accregs-1   - Enable support for AME accumulator register.
+; CHECK-NEXT:   experimental-ztt-ame-accregs-2   - Enable support for 2 AME accumulator registers.
+; CHECK-NEXT:   experimental-ztt-ame-accregs-4   - Enable support for 4 AME accumulator registers.
+; CHECK-NEXT:   experimental-ztt-ame-mregs-16    - Enable support for 16 AME matrix registers.
+; CHECK-NEXT:   experimental-ztt-ame-mregs-32    - Enable support for 32 AME matrix registers.
 ; CHECK-NEXT:   experimental-zvabd               - 'Zvabd' (Vector Absolute Difference).
 ; CHECK-NEXT:   experimental-zvbc32e             - 'Zvbc32e' (Vector Carryless Multiplication with 32-bits elements).
 ; CHECK-NEXT:   experimental-zvdot4a8i           - 'Zvdot4a8i' (Vector 4-element Dot Product of packed 8-bit Integers).
