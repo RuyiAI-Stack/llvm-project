@@ -1398,26 +1398,26 @@ def HasVendorXBOSCAME
           "'XBOSCAME' (BOSC AME extension)">;
 
 def FeatureVendorXBBPebble
-    : RISCVExtension<1, 0, "Buckyball CNN extension">;
+    : RISCVExtension<1, 0, "Buckyball Pebble core extension">;
 def HasVendorXBBPebble
     : Predicate<"Subtarget->hasVendorXBBPebble()">,
       AssemblerPredicate<(all_of FeatureVendorXBBPebble),
-          "'XBBPebble' (Buckyball CNN extension)">;
+          "'XBBPebble' (Buckyball Pebble core extension)">;
 
-def FeatureVendorXBBMeteor
-    : RISCVExtension<1, 0, "Buckyball Large Language Model extension">;
-def HasVendorXBBMeteor
-    : Predicate<"Subtarget->hasVendorXBBMeteor()">,
-      AssemblerPredicate<(all_of FeatureVendorXBBMeteor),
-          "'XBBMeteor' (Buckyball Large Language Model extension)">;
+def FeatureVendorXBuckyball
+    : RISCVExtension<1, 0, "Buckyball custom instruction carrier">;
+def HasVendorXBuckyball
+    : Predicate<"Subtarget->hasVendorXBuckyball()">,
+      AssemblerPredicate<(all_of FeatureVendorXBuckyball),
+          "'XBuckyball' (Buckyball custom instruction carrier)">;
 
 def HasVendorXBuckyballBase
     : Predicate<"Subtarget->hasVendorXBBPebble() || "
-                "Subtarget->hasVendorXBBMeteor()">,
+                "Subtarget->hasVendorXBuckyball()">,
       AssemblerPredicate<(any_of FeatureVendorXBBPebble,
-                                 FeatureVendorXBBMeteor),
-          "'XBBPebble' (Buckyball CNN extension) or "
-          "'XBBMeteor' (Buckyball Large Language Model extension)">;
+                                 FeatureVendorXBuckyball),
+          "'XBBPebble' (Buckyball Pebble core extension) or "
+          "'XBuckyball' (Buckyball custom instruction carrier)">;
 
 class XTHeadAMEExtension<int major, int minor, string desc>
     : RISCVExtension<major, minor, "T-Head AME " # desc>;
