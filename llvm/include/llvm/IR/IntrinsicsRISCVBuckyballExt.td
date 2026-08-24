@@ -15,11 +15,15 @@
 //===----------------------------------------------------------------------===//
 
 let TargetPrefix = "riscv" in {
-  def int_riscv_bb_mvin : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty], []>;
+  def int_riscv_bb_fence : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty], []>;
+  def int_riscv_bb_barrier : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty], []>;
   def int_riscv_bb_mvout : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty], []>;
   def int_riscv_bb_mset : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty], []>;
-  def int_riscv_bb_fence : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty], []>;
+  def int_riscv_bb_mvin : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty], []>;
+  def int_riscv_bb_mvin_mmio : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty], []>;
+  def int_riscv_buckyball_custom
+      : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty],
+                  [ImmArg<ArgIndex<2>>]>;
 }
 
 include "llvm/IR/IntrinsicsRISCVXBBPebble.td"
-include "llvm/IR/IntrinsicsRISCVXBBMeteor.td"
