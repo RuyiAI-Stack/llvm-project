@@ -259,7 +259,7 @@ namespace llvm {
     /// Return true if this is an overloaded type for TableGen.
     bool isOverloaded() const {
       return (V == MVT::iAny || V == MVT::fAny || V == MVT::vAny ||
-              V == MVT::pAny);
+              V == MVT::pAny || V == MVT::mAny);
     }
 
     /// Return true if the bit size is a multiple of 8.
