@@ -14,32 +14,22 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Buckyball Pebble CNN Extension.
+// Named encodings for the Pebble core ballISA.
+// funct7 matches examples/cores/pebble/configs/balldomains/default.toml.
+// Compiler still emits Ball ops via bb_custom; these exist for MC/asm.
+//
+//   IM2COL          48 = 0b0110000  enable=011 (1rd+1wr)
+//   TRANSPOSE       49 = 0b0110001
+//   FP2INT          51 = 0b0110011
+//   INT2FP_TENSOR   52 = 0b0110100
+//   INT2FP_CHANNEL  54 = 0b0110110
+//   SMATMUL_OS      65 = 0b1000001  enable=100 (2rd+1wr)
+//   SMATMUL_WS      68 = 0b1000100
 //
 //===----------------------------------------------------------------------===//
 
-let isCodeGenOnly = 1, Predicates = [HasVendorXBBPebble] in
-def BB_MUL_WARP16 : RVInstR<0b1000000, 0b011, OPC_CUSTOM_3, (outs),
-                            (ins GPR:$rs1, GPR:$rs2), "bb_mul_warp16",
-                            "$rs1, $rs2"> {
-  let rd = 0;
-}
-
 let hasSideEffects = 1, mayLoad = 1, mayStore = 1, isCodeGenOnly = 1,
     Predicates = [HasVendorXBBPebble] in
-def BB_RELU : RVInstR<0b0110010, 0b011, OPC_CUSTOM_3, (outs),
-                      (ins GPR:$rs1, GPR:$rs2), "bb_relu", "$rs1, $rs2"> {
-  let rd = 0;
-}
-
-let isCodeGenOnly = 1, Predicates = [HasVendorXBBPebble] in
-def BB_TRANSPOSE : RVInstR<0b0110001, 0b011, OPC_CUSTOM_3, (outs),
-                           (ins GPR:$rs1, GPR:$rs2), "bb_transpose",
-                           "$rs1, $rs2"> {
-  let rd = 0;
-}
-
-let isCodeGenOnly = 1, Predicates = [HasVendorXBBPebble] in
 def BB_IM2COL : RVInstR<0b0110000, 0b011, OPC_CUSTOM_3, (outs),
                         (ins GPR:$rs1, GPR:$rs2), "bb_im2col",
                         "$rs1, $rs2"> {
@@ -48,39 +38,65 @@ def BB_IM2COL : RVInstR<0b0110000, 0b011, OPC_CUSTOM_3, (outs),
 
 let hasSideEffects = 1, mayLoad = 1, mayStore = 1, isCodeGenOnly = 1,
     Predicates = [HasVendorXBBPebble] in
-def BB_FP2INT : RVInstR<0b0110011, 0b011, OPC_CUSTOM_3, (outs),
-                        (ins GPR:$rs1, GPR:$rs2), "bb_quant", "$rs1, $rs2"> {
+def BB_TRANSPOSE : RVInstR<0b0110001, 0b011, OPC_CUSTOM_3, (outs),
+                           (ins GPR:$rs1, GPR:$rs2), "bb_transpose",
+                           "$rs1, $rs2"> {
   let rd = 0;
 }
 
 let hasSideEffects = 1, mayLoad = 1, mayStore = 1, isCodeGenOnly = 1,
     Predicates = [HasVendorXBBPebble] in
-def BB_INT2FP : RVInstR<0b0110100, 0b011, OPC_CUSTOM_3, (outs),
-                        (ins GPR:$rs1, GPR:$rs2), "bb_dequant",
+def BB_FP2INT : RVInstR<0b0110011, 0b011, OPC_CUSTOM_3, (outs),
+                        (ins GPR:$rs1, GPR:$rs2), "bb_fp2int",
                         "$rs1, $rs2"> {
   let rd = 0;
 }
 
-let Predicates = [HasVendorXBBPebble] in
-def : Pat<(int_riscv_bb_mul_warp16 GPR:$rs1, GPR:$rs2),
-          (BB_MUL_WARP16 GPR:$rs1, GPR:$rs2)>;
+let hasSideEffects = 1, mayLoad = 1, mayStore = 1, isCodeGenOnly = 1,
+    Predicates = [HasVendorXBBPebble] in
+def BB_INT2FP_TENSOR : RVInstR<0b0110100, 0b011, OPC_CUSTOM_3, (outs),
+                               (ins GPR:$rs1, GPR:$rs2),
+                               "bb_int2fp_tensor", "$rs1, $rs2"> {
+  let rd = 0;
+}
 
-let Predicates = [HasVendorXBBPebble] in
-def : Pat<(int_riscv_bb_relu GPR:$rs1, GPR:$rs2),
-          (BB_RELU GPR:$rs1, GPR:$rs2)>;
+let hasSideEffects = 1, mayLoad = 1, mayStore = 1, isCodeGenOnly = 1,
+    Predicates = [HasVendorXBBPebble] in
+def BB_INT2FP_CHANNEL : RVInstR<0b0110110, 0b011, OPC_CUSTOM_3, (outs),
+                                (ins GPR:$rs1, GPR:$rs2),
+                                "bb_int2fp_channel", "$rs1, $rs2"> {
+  let rd = 0;
+}
 
-let Predicates = [HasVendorXBBPebble] in
-def : Pat<(int_riscv_bb_transpose GPR:$rs1, GPR:$rs2),
-          (BB_TRANSPOSE GPR:$rs1, GPR:$rs2)>;
+let hasSideEffects = 1, mayLoad = 1, mayStore = 1, isCodeGenOnly = 1,
+    Predicates = [HasVendorXBBPebble] in
+def BB_SMATMUL_OS : RVInstR<0b1000001, 0b011, OPC_CUSTOM_3, (outs),
+                            (ins GPR:$rs1, GPR:$rs2), "bb_smatmul_os",
+                            "$rs1, $rs2"> {
+  let rd = 0;
+}
 
-let Predicates = [HasVendorXBBPebble] in
-def : Pat<(int_riscv_bb_im2col GPR:$rs1, GPR:$rs2),
-          (BB_IM2COL GPR:$rs1, GPR:$rs2)>;
+let hasSideEffects = 1, mayLoad = 1, mayStore = 1, isCodeGenOnly = 1,
+    Predicates = [HasVendorXBBPebble] in
+def BB_SMATMUL_WS : RVInstR<0b1000100, 0b011, OPC_CUSTOM_3, (outs),
+                            (ins GPR:$rs1, GPR:$rs2), "bb_smatmul_ws",
+                            "$rs1, $rs2"> {
+  let rd = 0;
+}
 
-let Predicates = [HasVendorXBBPebble] in
-def : Pat<(int_riscv_bb_fp2int GPR:$rs1, GPR:$rs2),
-          (BB_FP2INT GPR:$rs1, GPR:$rs2)>;
-
-let Predicates = [HasVendorXBBPebble] in
-def : Pat<(int_riscv_bb_int2fp GPR:$rs1, GPR:$rs2),
-          (BB_INT2FP GPR:$rs1, GPR:$rs2)>;
+let Predicates = [HasVendorXBBPebble] in {
+  def : Pat<(int_riscv_bb_im2col GPR:$rs1, GPR:$rs2),
+            (BB_IM2COL GPR:$rs1, GPR:$rs2)>;
+  def : Pat<(int_riscv_bb_transpose GPR:$rs1, GPR:$rs2),
+            (BB_TRANSPOSE GPR:$rs1, GPR:$rs2)>;
+  def : Pat<(int_riscv_bb_fp2int GPR:$rs1, GPR:$rs2),
+            (BB_FP2INT GPR:$rs1, GPR:$rs2)>;
+  def : Pat<(int_riscv_bb_int2fp_tensor GPR:$rs1, GPR:$rs2),
+            (BB_INT2FP_TENSOR GPR:$rs1, GPR:$rs2)>;
+  def : Pat<(int_riscv_bb_int2fp_channel GPR:$rs1, GPR:$rs2),
+            (BB_INT2FP_CHANNEL GPR:$rs1, GPR:$rs2)>;
+  def : Pat<(int_riscv_bb_smatmul_os GPR:$rs1, GPR:$rs2),
+            (BB_SMATMUL_OS GPR:$rs1, GPR:$rs2)>;
+  def : Pat<(int_riscv_bb_smatmul_ws GPR:$rs1, GPR:$rs2),
+            (BB_SMATMUL_WS GPR:$rs1, GPR:$rs2)>;
+}

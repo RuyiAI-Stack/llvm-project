@@ -4,8 +4,8 @@
 ; RUN: llc -mtriple=riscv64 -mattr=+xboscame %s -o - | FileCheck --check-prefixes=CHECK,RV64XBOSCAME %s
 ; RUN: llc -mtriple=riscv32 -mattr=+xbbpebble %s -o - | FileCheck --check-prefixes=CHECK,RV32XBBPEBBLE %s
 ; RUN: llc -mtriple=riscv64 -mattr=+xbbpebble %s -o - | FileCheck --check-prefixes=CHECK,RV64XBBPEBBLE %s
-; RUN: llc -mtriple=riscv32 -mattr=+xbbmeteor %s -o - | FileCheck --check-prefixes=CHECK,RV32XBBMETEOR %s
-; RUN: llc -mtriple=riscv64 -mattr=+xbbmeteor %s -o - | FileCheck --check-prefixes=CHECK,RV64XBBMETEOR %s
+; RUN: llc -mtriple=riscv32 -mattr=+xbuckyball %s -o - | FileCheck --check-prefixes=CHECK,RV32XBUCKYBALL %s
+; RUN: llc -mtriple=riscv64 -mattr=+xbuckyball %s -o - | FileCheck --check-prefixes=CHECK,RV64XBUCKYBALL %s
 ; RUN: llc -mtriple=riscv32 -mattr=+xgemmini %s -o - | FileCheck --check-prefixes=CHECK,RV32XGEMMINI %s
 ; RUN: llc -mtriple=riscv64 -mattr=+xgemmini %s -o - | FileCheck --check-prefixes=CHECK,RV64XGEMMINI %s
 ; RUN: llc -mtriple=riscv32 -mattr=+v,+xsmtime %s -o - | FileCheck --check-prefixes=CHECK,RV32XSMTIME %s
@@ -17,8 +17,8 @@
 ; RV64XBOSCAME: .attribute 5, "rv64i2p1_xxiangshaname1p0"
 ; RV32XBBPEBBLE: .attribute 5, "rv32i2p1_xbbpebble1p0"
 ; RV64XBBPEBBLE: .attribute 5, "rv64i2p1_xbbpebble1p0"
-; RV32XBBMETEOR: .attribute 5, "rv32i2p1_xbbmeteor1p0"
-; RV64XBBMETEOR: .attribute 5, "rv64i2p1_xbbmeteor1p0"
+; RV32XBUCKYBALL: .attribute 5, "rv32i2p1_xbuckyball1p0"
+; RV64XBUCKYBALL: .attribute 5, "rv64i2p1_xbuckyball1p0"
 ; RV32XGEMMINI: .attribute 5, "rv32i2p1_xgemmini1p0"
 ; RV64XGEMMINI: .attribute 5, "rv64i2p1_xgemmini1p0"
 ; RV32XSMTIME: .attribute 5, "rv32i2p1_f2p2_d2p2_v1p0_zicsr2p0_zve32f1p0_zve32x1p0_zve64d1p0_zve64f1p0_zve64x1p0_zvl128b1p0_zvl32b1p0_zvl64b1p0_xsmtime1p0"
