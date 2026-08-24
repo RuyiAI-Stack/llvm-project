@@ -272,6 +272,18 @@ def AnyKindElementConstraint {
   int Pointer = 3;
 }
 
+// Intrinsic argument kinds. The current IIT representation encodes overload
+// constraints with AnyKind*Constraint, while ArgCode records the logical type
+// category used by an LLVMAnyType.
+def ArgKind {
+  int Any        = 0;
+  int AnyInteger = 1;
+  int AnyFloat   = 2;
+  int AnyVector  = 3;
+  int AnyMatrix  = 4;
+  int AnyPointer = 5;
+}
+
 // Placeholder to encode the overload index of the current type. We encode a
 // value > 255 to indicate that this entry needs to be patched up with the
 // overload index (to prevent conflict with any valid not-to-be-patched IIT
@@ -419,6 +431,14 @@ class LLVMType<ValueType vt> {
 }
 
 class LLVMAnyType<ValueType vt, int VecKind, int ElemKind> : LLVMType<vt> {
+  int ArgCode = !cond(
+    !eq(vt, Any)  : ArgKind.Any,
+    !eq(vt, iAny) : ArgKind.AnyInteger,
+    !eq(vt, fAny) : ArgKind.AnyFloat,
+    !eq(vt, vAny) : ArgKind.AnyVector,
+    !eq(vt, mAny) : ArgKind.AnyMatrix,
+    !eq(vt, pAny) : ArgKind.AnyPointer,
+  );
   let Sig = [
     IIT_ANY.Number,
 
@@ -608,6 +628,11 @@ def llvm_any_vector_ptr_ty : LLVMAnyType<pAny,
 
 // Other overloaded types.
 def llvm_anyvector_ty  : LLVMAnyType<vAny,
+                                     AnyKindVectorConstraint.Vector,
+                                     AnyKindElementConstraint.None>;
+
+// Matrix overloads are represented by scalable vector machine value types.
+def llvm_anymatrix_ty  : LLVMAnyType<mAny,
                                      AnyKindVectorConstraint.Vector,
                                      AnyKindElementConstraint.None>;
 

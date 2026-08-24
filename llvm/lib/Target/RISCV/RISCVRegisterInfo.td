@@ -1002,6 +1002,49 @@ def : RISCVRegisterClass<[XLenVT], 32, (add SF_VCIX_STATE)> {
 }
 
 //===----------------------------------------------------------------------===//
+// BOSC AME matrix registers
+//===----------------------------------------------------------------------===//
+
+defvar mint8_t  = nxv128i8;
+defvar mint16_t = nxv64i16;
+defvar mint32_t = nxv32i32;
+defvar mint64_t = nxv16i64;
+defvar mfloat16_t = nxv64f16;
+defvar mfloat32_t = nxv32f32;
+defvar mfloat64_t = nxv16f64;
+
+let RegAltNameIndices = [ABIRegAltName] in {
+  foreach Index = 0-7 in
+    def TR#Index : RISCVReg<Index, "tr"#Index, ["tr"#Index]>,
+                   DwarfRegNum<[!add(Index, 128)]>;
+
+  foreach Index = 0-7 in
+    def ACC#Index : RISCVReg<Index, "acc"#Index, ["acc"#Index]>,
+                    DwarfRegNum<[!add(Index, 136)]>;
+
+  def MTYPE : RISCVReg<0, "mtype", ["mtype"]>;
+  def TILEM : RISCVReg<0, "tilem", ["tilem"]>;
+  def TILEN : RISCVReg<0, "tilen", ["tilen"]>;
+  def TILEK : RISCVReg<0, "tilek", ["tilek"]>;
+}
+
+class BOSCAMEReg<list<ValueType> RegTypes, dag RegList, int LMUL>
+    : RISCVRegisterClass<RegTypes, 64, RegList> {
+  int VLMul = LMUL;
+  int Size = !mul(LMUL, 64);
+}
+
+def TileReg : BOSCAMEReg<
+    [mint8_t, mint16_t, mint32_t, mint64_t,
+     mfloat16_t, mfloat32_t, mfloat64_t],
+    (add (sequence "TR%u", 0, 7)), 1>;
+
+def AccReg : BOSCAMEReg<
+    [mint8_t, mint16_t, mint32_t, mint64_t,
+     mfloat16_t, mfloat32_t, mfloat64_t],
+    (add (sequence "ACC%u", 0, 7)), 1>;
+
+//===----------------------------------------------------------------------===//
 // XSfmmbase tiles
 //===----------------------------------------------------------------------===//
 foreach Index = 0-15 in

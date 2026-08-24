@@ -382,21 +382,21 @@ void RISCVAsmPrinter::emitNTLHint(const MachineInstr *MI) {
   EmitToStreamer(*OutStreamer, Hint);
 }
 
-static unsigned getAMETileReg(unsigned Index) {
-  static const unsigned Regs[] = {RISCV::TR0, RISCV::TR1, RISCV::TR2,
-                                  RISCV::TR3, RISCV::TR4, RISCV::TR5,
-                                  RISCV::TR6, RISCV::TR7};
-  assert(Index < 8 && "invalid AME tile register index");
-  return Regs[Index];
-}
+// static unsigned getAMETileReg(unsigned Index) {
+//   static const unsigned Regs[] = {RISCV::TR0, RISCV::TR1, RISCV::TR2,
+//                                   RISCV::TR3, RISCV::TR4, RISCV::TR5,
+//                                   RISCV::TR6, RISCV::TR7};
+//   assert(Index < 8 && "invalid AME tile register index");
+//   return Regs[Index];
+// }
 
-static unsigned getAMEAccReg(unsigned Index) {
-  static const unsigned Regs[] = {RISCV::ACC0, RISCV::ACC1, RISCV::ACC2,
-                                  RISCV::ACC3, RISCV::ACC4, RISCV::ACC5,
-                                  RISCV::ACC6, RISCV::ACC7};
-  assert(Index < 8 && "invalid AME accumulator register index");
-  return Regs[Index];
-}
+// static unsigned getAMEAccReg(unsigned Index) {
+//   static const unsigned Regs[] = {RISCV::ACC0, RISCV::ACC1, RISCV::ACC2,
+//                                   RISCV::ACC3, RISCV::ACC4, RISCV::ACC5,
+//                                   RISCV::ACC6, RISCV::ACC7};
+//   assert(Index < 8 && "invalid AME accumulator register index");
+//   return Regs[Index];
+// }
 
 static unsigned getAMEMatrixReg(unsigned Index) {
   static const unsigned Regs[] = {RISCV::AMEM0, RISCV::AMEM1, RISCV::AMEM2,
@@ -420,14 +420,14 @@ bool RISCVAsmPrinter::lowerMatrixExtPseudo(const MachineInstr *MI,
     return true;
   };
 
-  auto AddTileIndex = [&](unsigned OpNo) {
-    Inst.addOperand(
-        MCOperand::createReg(getAMETileReg(MI->getOperand(OpNo).getImm())));
-  };
-  auto AddAccIndex = [&](unsigned OpNo) {
-    Inst.addOperand(
-        MCOperand::createReg(getAMEAccReg(MI->getOperand(OpNo).getImm())));
-  };
+  // auto AddTileIndex = [&](unsigned OpNo) {
+  //   Inst.addOperand(
+  //       MCOperand::createReg(getAMETileReg(MI->getOperand(OpNo).getImm())));
+  // };
+  // auto AddAccIndex = [&](unsigned OpNo) {
+  //   Inst.addOperand(
+  //       MCOperand::createReg(getAMEAccReg(MI->getOperand(OpNo).getImm())));
+  // };
   auto AddMatrixIndex = [&](unsigned OpNo) {
     Inst.addOperand(MCOperand::createReg(
         getAMEMatrixReg(MI->getOperand(OpNo).getImm())));
@@ -436,47 +436,47 @@ bool RISCVAsmPrinter::lowerMatrixExtPseudo(const MachineInstr *MI,
   switch (MI->getOpcode()) {
   default:
     return false;
-  case RISCV::BOSC_AME_MSETTILEMI_PSEUDO:
-    Inst.setOpcode(RISCV::BOSC_AME_MSETTILEMI);
-    if (!AddLoweredOperand(0))
-      return false;
-    addImmOperand(Inst, MI->getOperand(1));
-    return true;
-  case RISCV::BOSC_AME_MSETTILENI_PSEUDO:
-    Inst.setOpcode(RISCV::BOSC_AME_MSETTILENI);
-    if (!AddLoweredOperand(0))
-      return false;
-    addImmOperand(Inst, MI->getOperand(1));
-    return true;
-  case RISCV::BOSC_AME_MSETTILEKI_PSEUDO:
-    Inst.setOpcode(RISCV::BOSC_AME_MSETTILEKI);
-    if (!AddLoweredOperand(0))
-      return false;
-    addImmOperand(Inst, MI->getOperand(1));
-    return true;
+  // case RISCV::BOSC_AME_MSETTILEMI_PSEUDO:
+  //   Inst.setOpcode(RISCV::BOSC_AME_MSETTILEMI);
+  //   if (!AddLoweredOperand(0))
+  //     return false;
+  //   addImmOperand(Inst, MI->getOperand(1));
+  //   return true;
+  // case RISCV::BOSC_AME_MSETTILENI_PSEUDO:
+  //   Inst.setOpcode(RISCV::BOSC_AME_MSETTILENI);
+  //   if (!AddLoweredOperand(0))
+  //     return false;
+  //   addImmOperand(Inst, MI->getOperand(1));
+  //   return true;
+  // case RISCV::BOSC_AME_MSETTILEKI_PSEUDO:
+  //   Inst.setOpcode(RISCV::BOSC_AME_MSETTILEKI);
+  //   if (!AddLoweredOperand(0))
+  //     return false;
+  //   addImmOperand(Inst, MI->getOperand(1));
+  //   return true;
   // case RISCV::BOSC_AME_MZERO_PSEUDO:
   //   Inst.setOpcode(RISCV::BOSC_AME_MZERO_M);
   //   AddAccIndex(0);
   //   return true;
-  case RISCV::BOSC_AME_MLAE32_M_PSEUDO:
-    Inst.setOpcode(RISCV::BOSC_AME_MLAE32_M);
-    AddTileIndex(0);
-    return AddLoweredOperand(1) && AddLoweredOperand(2);
-  case RISCV::BOSC_AME_MLBE32_M_PSEUDO:
-    Inst.setOpcode(RISCV::BOSC_AME_MLBE32_M);
-    AddTileIndex(0);
-    return AddLoweredOperand(1) && AddLoweredOperand(2);
-  case RISCV::BOSC_AME_MSCE32_M_PSEUDO:
-    Inst.setOpcode(RISCV::BOSC_AME_MSCE32_M);
-    AddAccIndex(0);
-    return AddLoweredOperand(1) && AddLoweredOperand(2);
-  case RISCV::BOSC_AME_MMA_W_MM_PSEUDO:
-    Inst.setOpcode(RISCV::BOSC_AME_MMA_W_MM);
-    AddAccIndex(0);
-    AddAccIndex(0);
-    AddTileIndex(1);
-    AddTileIndex(2);
-    return true;
+  // case RISCV::BOSC_AME_MLAE32_M_PSEUDO:
+  //   Inst.setOpcode(RISCV::BOSC_AME_MLAE32_M);
+  //   AddTileIndex(0);
+  //   return AddLoweredOperand(1) && AddLoweredOperand(2);
+  // case RISCV::BOSC_AME_MLBE32_M_PSEUDO:
+  //   Inst.setOpcode(RISCV::BOSC_AME_MLBE32_M);
+  //   AddTileIndex(0);
+  //   return AddLoweredOperand(1) && AddLoweredOperand(2);
+  // case RISCV::BOSC_AME_MSCE32_M_PSEUDO:
+  //   Inst.setOpcode(RISCV::BOSC_AME_MSCE32_M);
+  //   AddAccIndex(0);
+  //   return AddLoweredOperand(1) && AddLoweredOperand(2);
+  // case RISCV::BOSC_AME_MMA_W_MM_PSEUDO:
+  //   Inst.setOpcode(RISCV::BOSC_AME_MMA_W_MM);
+  //   AddAccIndex(0);
+  //   AddAccIndex(0);
+  //   AddTileIndex(1);
+  //   AddTileIndex(2);
+  //   return true;
   case RISCV::TH_MCFGMI_PSEUDO:
     Inst.setOpcode(RISCV::TH_MCFGMI);
     addImmOperand(Inst, MI->getOperand(0));

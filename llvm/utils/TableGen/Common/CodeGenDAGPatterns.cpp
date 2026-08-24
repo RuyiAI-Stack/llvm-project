@@ -849,6 +849,14 @@ void TypeInfer::expandOverloads(TypeSetByHwMode::SetType &Out,
     for (MVT T : MVT::vector_valuetypes())
       if (Legal.count(T))
         Out.insert(T);
+  } else if (Out.count(MVT::mAny)) {
+    Out.erase(MVT::mAny);
+    for (MVT T : MVT::fp_scalable_vector_valuetypes())
+      if (Legal.count(T))
+        Out.insert(T);
+    for (MVT T : MVT::integer_scalable_vector_valuetypes())
+      if (Legal.count(T))
+        Out.insert(T);
   } else if (Out.count(MVT::Any)) {
     Out.erase(MVT::Any);
     for (MVT T : MVT::all_valuetypes())

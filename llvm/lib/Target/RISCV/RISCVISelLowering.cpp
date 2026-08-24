@@ -189,6 +189,35 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
     else
       addRegisterClass(MVT::f64, &RISCV::GPRPairRegClass);
   }
+  
+  // BOSC AME matrix values default to TileReg. TableGen patterns constrain
+  // accumulator operands/results to AccReg explicitly.
+  if (Subtarget.hasVendorXBOSCAME()) {
+    static const MVT::SimpleValueType BOSCIntTypes[] = {
+      MVT::nxv128i8,  MVT::nxv256i8,  MVT::nxv512i8,   MVT::nxv1024i8, MVT::nxv2048i8,
+      MVT::nxv64i16,  MVT::nxv128i16, MVT::nxv256i16,  MVT::nxv512i16, MVT::nxv1024i16,
+      MVT::nxv32i32,  MVT::nxv64i32,  MVT::nxv128i32,  MVT::nxv256i32, MVT::nxv512i32,
+      MVT::nxv16i64,  MVT::nxv32i64,  MVT::nxv64i64,   MVT::nxv128i64, MVT::nxv256i64,
+    };
+    static const MVT::SimpleValueType BOSCF16Types[] = {
+      MVT::nxv64f16,  MVT::nxv128f16, MVT::nxv256f16,  MVT::nxv512f16, MVT::nxv1024f16,
+    };
+    static const MVT::SimpleValueType BOSCF32Types[] = {
+      MVT::nxv32f32,  MVT::nxv64f32,  MVT::nxv128f32,  MVT::nxv256f32, MVT::nxv512f32,
+    };
+    static const MVT::SimpleValueType BOSCF64Types[] = {
+      MVT::nxv16f64,  MVT::nxv32f64,  MVT::nxv64f64,   MVT::nxv128f64, MVT::nxv256f64,
+    };
+
+    for (MVT VT : BOSCIntTypes)
+      addRegisterClass(VT, &RISCV::TileRegRegClass);
+    for (MVT VT : BOSCF16Types)
+      addRegisterClass(VT, &RISCV::TileRegRegClass);
+    for (MVT VT : BOSCF32Types)
+      addRegisterClass(VT, &RISCV::TileRegRegClass);
+    for (MVT VT : BOSCF64Types)
+      addRegisterClass(VT, &RISCV::TileRegRegClass);
+  }
 
   static const MVT::SimpleValueType BoolVecVTs[] = {
       MVT::nxv1i1,  MVT::nxv2i1,  MVT::nxv4i1, MVT::nxv8i1,

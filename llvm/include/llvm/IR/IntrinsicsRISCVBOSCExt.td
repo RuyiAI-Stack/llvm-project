@@ -26,42 +26,42 @@
 let TargetPrefix = "riscv" in {
   // Configuration Register Instructions
   // msettype - Set the mtype CSR based on register value
-  def int_riscv_bosc_msettype : Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+  def int_riscv_bosc_msettype : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>],
                                                 [IntrNoMem, IntrHasSideEffects]>;
 
   // msettilem - Set tile M dimension from register value
-  def int_riscv_bosc_msettilem : Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+  def int_riscv_bosc_msettilem : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>],
                                                  [IntrNoMem, IntrHasSideEffects]>;
 
   // msettilen - Set tile N dimension from register value
-  def int_riscv_bosc_msettilen : Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+  def int_riscv_bosc_msettilen : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>],
                                                  [IntrNoMem, IntrHasSideEffects]>;
 
   // msettilek - Set tile K dimension from register value
-  def int_riscv_bosc_msettilek : Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+  def int_riscv_bosc_msettilek : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>],
                                                  [IntrNoMem, IntrHasSideEffects]>;
 
   // msettypei - Set the mtype CSR based on immediate
-  def int_riscv_bosc_msettypei : Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+  def int_riscv_bosc_msettypei : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>],
                                              [IntrNoMem, IntrHasSideEffects,
                                               ImmArg<ArgIndex<0>>]>;
 
-  def int_riscv_bosc_msettypehi : Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+  def int_riscv_bosc_msettypehi : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>],
                                              [IntrNoMem, IntrHasSideEffects,
                                               ImmArg<ArgIndex<0>>]>;
 
   // msettilemi - Set tile M dimension with immediate
-  def int_riscv_bosc_msettilemi : Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+  def int_riscv_bosc_msettilemi : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>],
                                              [IntrNoMem, IntrHasSideEffects,
                                               ImmArg<ArgIndex<0>>]>;
 
   // msettileni - Set tile N dimension with immediate
-  def int_riscv_bosc_msettileni : Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+  def int_riscv_bosc_msettileni : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>],
                                              [IntrNoMem, IntrHasSideEffects,
                                               ImmArg<ArgIndex<0>>]>;
 
   // msettileki - Set tile K dimension with immediate
-  def int_riscv_bosc_msettileki : Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+  def int_riscv_bosc_msettileki : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>],
                                              [IntrNoMem, IntrHasSideEffects,
                                              ImmArg<ArgIndex<0>>]>;
 }
@@ -72,16 +72,16 @@ let TargetPrefix = "riscv" in {
 // Base class for all Matrix Load Intrinsics
 // Signature: void (index: i64, base_ptr: ptr, stride: i64)
 class BOSC_AME_Load_Intr
-    : Intrinsic<[], [llvm_i64_ty, llvm_ptr_ty, llvm_i64_ty],
-                [IntrReadMem, IntrHasSideEffects,
-                ImmArg<ArgIndex<0>>]>;
+    : Intrinsic<[llvm_anymatrix_ty],
+                [llvm_ptr_ty, llvm_anyint_ty],
+                [NoCapture<ArgIndex<0>>, IntrReadMem]>, RISCVVIntrinsic;
 
 // Base class for all Matrix Store Intrinsics
 // Signature: void (index: i64, base_ptr: ptr, stride: i64)
 class BOSC_AME_Store_Intr
-    : Intrinsic<[], [llvm_i64_ty, llvm_ptr_ty, llvm_i64_ty],
-                [IntrWriteMem, IntrHasSideEffects,
-                ImmArg<ArgIndex<0>>]>;
+    : Intrinsic<[],
+                [llvm_anymatrix_ty, llvm_ptr_ty, llvm_anyint_ty],
+                [NoCapture<ArgIndex<1>>, IntrWriteMem]>, RISCVVIntrinsic;
 
 //===----------------------------------------------------------------------===//
 // Load/Store Intrinsic Instantiations
@@ -185,42 +185,50 @@ let TargetPrefix = "riscv" in {
 
 // 1. Matrix to Matrix (2 Immediates: md, ms1) -> No return
 class BOSC_AME_Move_T_T_Intr
-    : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty],
-                [IntrNoMem, IntrHasSideEffects,
-                ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>]>;
+    : Intrinsic<[llvm_anymatrix_ty],
+                [LLVMMatchType<0>],
+                [IntrNoMem]>, RISCVVIntrinsic;
 
 // 2. Matrix to Matrix with GPR Index (2 Immediates: md, ms1; 1 GPR: rs2) -> No return
 class BOSC_AME_Move_A_T_Intr
-    : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i64_ty],
-                [IntrNoMem, IntrHasSideEffects,
-                ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>]>;
+    : Intrinsic<[llvm_anymatrix_ty],
+                [llvm_anymatrix_ty, llvm_anyint_ty],
+                [IntrNoMem]>, RISCVVIntrinsic;
 
 // 3. Matrix to Matrix with Immediate Index (3 Immediates: md, ms1, imm) -> No return
 class BOSC_AME_MoveImm_A_T_Intr
-    : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i64_ty],
-                [IntrNoMem, IntrHasSideEffects,
-                ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>,
-                ImmArg<ArgIndex<2>>]>;
+    : Intrinsic<[llvm_anymatrix_ty],
+                [llvm_anymatrix_ty, llvm_anyint_ty],
+                [IntrNoMem, ImmArg<ArgIndex<1>>]>, RISCVVIntrinsic;
 
 // 4. Matrix to Scalar Move (1 Immediate: ms1; 1 GPR: rs2) -> Returns GPR (i64)
 class BOSC_AME_Move_X_T_Intr
-    : Intrinsic<[llvm_i64_ty], [llvm_i64_ty, llvm_i64_ty],
-                [IntrNoMem, IntrHasSideEffects,
-                ImmArg<ArgIndex<0>>]>;
+    : Intrinsic<[llvm_anyint_ty],
+                [llvm_anymatrix_ty, llvm_anyint_ty],
+                [IntrNoMem]>, RISCVVIntrinsic;
+
+class BOSC_AME_Move_F_T_Intr
+    : Intrinsic<[llvm_anyfloat_ty],
+                [llvm_anymatrix_ty, llvm_anyint_ty],
+                [IntrNoMem]>, RISCVVIntrinsic;
 
 // 5. Scalar to Matrix Move (1 Immediate: md; 2 GPRs: rs1, rs2) -> No return
 class BOSC_AME_Move_T_X_Intr
-    : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i64_ty],
-                [IntrNoMem, IntrHasSideEffects,
-                ImmArg<ArgIndex<0>>]>;
+    : Intrinsic<[llvm_anymatrix_ty],
+                [LLVMMatchType<0>, llvm_anyint_ty, llvm_anyint_ty],
+                [IntrNoMem]>, RISCVVIntrinsic;
 
+class BOSC_AME_Move_T_F_Intr
+    : Intrinsic<[llvm_anymatrix_ty],
+                [LLVMMatchType<0>, llvm_anyfloat_ty, llvm_anyint_ty],
+                [IntrNoMem]>, RISCVVIntrinsic;
 
 //===----------------------------------------------------------------------===//
 // Intrinsic Instantiations
 //===----------------------------------------------------------------------===//
 let TargetPrefix = "riscv" in {
   //----------------------------------------------------------------------
-  // 1. Matrix-Matrix Move Pseudos (Pure Matrix)
+  // 1. Matrix-Matrix Move 
   //----------------------------------------------------------------------
   def int_riscv_bosc_mmve8_t_t  : BOSC_AME_Move_T_T_Intr;
   def int_riscv_bosc_mmve16_t_t : BOSC_AME_Move_T_T_Intr;
@@ -268,15 +276,15 @@ let TargetPrefix = "riscv" in {
   def int_riscv_bosc_mmve32_x_a : BOSC_AME_Move_X_T_Intr;
   def int_riscv_bosc_mmve64_x_a : BOSC_AME_Move_X_T_Intr;
 
-  def int_riscv_bosc_mfmve8_f_t  : BOSC_AME_Move_X_T_Intr;
-  def int_riscv_bosc_mfmve16_f_t : BOSC_AME_Move_X_T_Intr;
-  def int_riscv_bosc_mfmve32_f_t : BOSC_AME_Move_X_T_Intr;
-  def int_riscv_bosc_mfmve64_f_t : BOSC_AME_Move_X_T_Intr;
+  def int_riscv_bosc_mfmve8_f_t  : BOSC_AME_Move_F_T_Intr;
+  def int_riscv_bosc_mfmve16_f_t : BOSC_AME_Move_F_T_Intr;
+  def int_riscv_bosc_mfmve32_f_t : BOSC_AME_Move_F_T_Intr;
+  def int_riscv_bosc_mfmve64_f_t : BOSC_AME_Move_F_T_Intr;
 
-  def int_riscv_bosc_mfmve8_f_a  : BOSC_AME_Move_X_T_Intr;
-  def int_riscv_bosc_mfmve16_f_a : BOSC_AME_Move_X_T_Intr;
-  def int_riscv_bosc_mfmve32_f_a : BOSC_AME_Move_X_T_Intr;
-  def int_riscv_bosc_mfmve64_f_a : BOSC_AME_Move_X_T_Intr;
+  def int_riscv_bosc_mfmve8_f_a  : BOSC_AME_Move_F_T_Intr;
+  def int_riscv_bosc_mfmve16_f_a : BOSC_AME_Move_F_T_Intr;
+  def int_riscv_bosc_mfmve32_f_a : BOSC_AME_Move_F_T_Intr;
+  def int_riscv_bosc_mfmve64_f_a : BOSC_AME_Move_F_T_Intr;
   //----------------------------------------------------------------------
   // 5. Scalar GPR to Matrix Move
   //----------------------------------------------------------------------
@@ -290,15 +298,15 @@ let TargetPrefix = "riscv" in {
   def int_riscv_bosc_mmve32_a_x : BOSC_AME_Move_T_X_Intr;
   def int_riscv_bosc_mmve64_a_x : BOSC_AME_Move_T_X_Intr;
 
-  def int_riscv_bosc_mfmve8_t_f  : BOSC_AME_Move_T_X_Intr;
-  def int_riscv_bosc_mfmve16_t_f : BOSC_AME_Move_T_X_Intr;
-  def int_riscv_bosc_mfmve32_t_f : BOSC_AME_Move_T_X_Intr;
-  def int_riscv_bosc_mfmve64_t_f : BOSC_AME_Move_T_X_Intr;
+  def int_riscv_bosc_mfmve8_t_f  : BOSC_AME_Move_T_F_Intr;
+  def int_riscv_bosc_mfmve16_t_f : BOSC_AME_Move_T_F_Intr;
+  def int_riscv_bosc_mfmve32_t_f : BOSC_AME_Move_T_F_Intr;
+  def int_riscv_bosc_mfmve64_t_f : BOSC_AME_Move_T_F_Intr;
 
-  def int_riscv_bosc_mfmve8_a_f  : BOSC_AME_Move_T_X_Intr;
-  def int_riscv_bosc_mfmve16_a_f : BOSC_AME_Move_T_X_Intr;
-  def int_riscv_bosc_mfmve32_a_f : BOSC_AME_Move_T_X_Intr;
-  def int_riscv_bosc_mfmve64_a_f : BOSC_AME_Move_T_X_Intr;
+  def int_riscv_bosc_mfmve8_a_f  : BOSC_AME_Move_T_F_Intr;
+  def int_riscv_bosc_mfmve16_a_f : BOSC_AME_Move_T_F_Intr;
+  def int_riscv_bosc_mfmve32_a_f : BOSC_AME_Move_T_F_Intr;
+  def int_riscv_bosc_mfmve64_a_f : BOSC_AME_Move_T_F_Intr;
   //----------------------------------------------------------------------
   // 6. Broadcast Intrinsics
   //----------------------------------------------------------------------
@@ -358,19 +366,21 @@ let TargetPrefix = "riscv" in {
 // Element-Wise Intrinsic Base Classes
 //===----------------------------------------------------------------------===//
 // Base class for 3-operand element-wise intrinsics (md, ms1, ms2)
-// Signature: void (md_idx: i64, ms1_idx: i64, ms2_idx: i64)
 class BOSC_AME_EleWise3_Intr
-    : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i64_ty],
-                [IntrNoMem, IntrHasSideEffects,
-                 ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>,
-                 ImmArg<ArgIndex<2>>]>;
+    : Intrinsic<[llvm_anymatrix_ty],
+                [LLVMMatchType<0>, LLVMMatchType<0>],
+                [IntrNoMem]>, RISCVVIntrinsic;
 
-// Base class for 2-operand element-wise intrinsics (md, ms1) - Used for SQRT
-// Signature: void (md_idx: i64, ms1_idx: i64)
+class BOSC_AME_WidenEleWise3_Intr
+    : Intrinsic<[llvm_anymatrix_ty],
+                [llvm_anymatrix_ty, LLVMMatchType<1>],
+                [IntrNoMem]>, RISCVVIntrinsic;
+
+// Base class for 2-operand element-wise intrinsics (md, ms1) 
 class BOSC_AME_EleWise2_Intr
-    : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty],
-                [IntrNoMem, IntrHasSideEffects,
-                 ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>]>;
+    : Intrinsic<[llvm_anymatrix_ty],
+                [LLVMMatchType<0>],
+                [IntrNoMem]>, RISCVVIntrinsic;
 
 //===----------------------------------------------------------------------===//
 // Element-Wise Intrinsic Instantiations
@@ -380,147 +390,147 @@ let TargetPrefix = "riscv" in {
   // 1. ADD / SUB - No Widen
   //===--------------------------------------------------------------------===//
   def int_riscv_bosc_maddu_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_maddu_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_maddu_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_maddu_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_maddu_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_maddu_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_maddu_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_msaddu_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_msaddu_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_msaddu_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msaddu_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msaddu_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msaddu_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msaddu_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_madd_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_madd_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_madd_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_madd_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_madd_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_madd_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_madd_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_msadd_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_msadd_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_msadd_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msadd_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msadd_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msadd_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msadd_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_mfadd_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mfadd_cf_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_mfadd_cf_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mfadd_hf_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mfadd_f_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mfadd_d_mm  : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_msubu_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_msubu_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_msubu_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msubu_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msubu_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msubu_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msubu_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_mssubu_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mssubu_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_mssubu_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mssubu_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mssubu_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mssubu_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mssubu_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_msub_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_msub_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_msub_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msub_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msub_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msub_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msub_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_mssub_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mssub_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_mssub_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mssub_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mssub_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mssub_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mssub_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_mfsub_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mfsub_cf_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_mfsub_cf_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mfsub_hf_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mfsub_f_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mfsub_d_mm  : BOSC_AME_EleWise3_Intr;
   //===--------------------------------------------------------------------===//
   // 2. ADD / SUB - Double Widen
   //===--------------------------------------------------------------------===//
-  def int_riscv_bosc_mwaddu_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwaddu_hb_mm : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwaddu_b_mm  : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwaddu_h_mm  : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwaddu_w_mm  : BOSC_AME_EleWise3_Intr;
+  def int_riscv_bosc_mwaddu_mm    : BOSC_AME_WidenEleWise3_Intr;
+  //def int_riscv_bosc_mwaddu_hb_mm : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwaddu_b_mm  : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwaddu_h_mm  : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwaddu_w_mm  : BOSC_AME_WidenEleWise3_Intr;
 
-  def int_riscv_bosc_mwadd_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwadd_hb_mm : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwadd_b_mm  : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwadd_h_mm  : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwadd_w_mm  : BOSC_AME_EleWise3_Intr;
+  def int_riscv_bosc_mwadd_mm    : BOSC_AME_WidenEleWise3_Intr;
+  //def int_riscv_bosc_mwadd_hb_mm : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwadd_b_mm  : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwadd_h_mm  : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwadd_w_mm  : BOSC_AME_WidenEleWise3_Intr;
 
-  def int_riscv_bosc_mfwadd_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mfwadd_cf_mm : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mfwadd_hf_mm : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mfwadd_f_mm  : BOSC_AME_EleWise3_Intr;
+  def int_riscv_bosc_mfwadd_mm    : BOSC_AME_WidenEleWise3_Intr;
+  //def int_riscv_bosc_mfwadd_cf_mm : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mfwadd_hf_mm : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mfwadd_f_mm  : BOSC_AME_WidenEleWise3_Intr;
 
-  def int_riscv_bosc_mwsubu_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwsubu_hb_mm : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwsubu_b_mm  : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwsubu_h_mm  : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwsubu_w_mm  : BOSC_AME_EleWise3_Intr;
+  def int_riscv_bosc_mwsubu_mm    : BOSC_AME_WidenEleWise3_Intr;
+  //def int_riscv_bosc_mwsubu_hb_mm : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwsubu_b_mm  : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwsubu_h_mm  : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwsubu_w_mm  : BOSC_AME_WidenEleWise3_Intr;
 
-  def int_riscv_bosc_mwsub_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwsub_hb_mm : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwsub_b_mm  : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwsub_h_mm  : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwsub_w_mm  : BOSC_AME_EleWise3_Intr;
+  def int_riscv_bosc_mwsub_mm    : BOSC_AME_WidenEleWise3_Intr;
+  //def int_riscv_bosc_mwsub_hb_mm : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwsub_b_mm  : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwsub_h_mm  : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwsub_w_mm  : BOSC_AME_WidenEleWise3_Intr;
 
-  def int_riscv_bosc_mfwsub_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mfwsub_cf_mm : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mfwsub_hf_mm : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mfwsub_f_mm  : BOSC_AME_EleWise3_Intr;
+  def int_riscv_bosc_mfwsub_mm    : BOSC_AME_WidenEleWise3_Intr;
+  //def int_riscv_bosc_mfwsub_cf_mm : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mfwsub_hf_mm : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mfwsub_f_mm  : BOSC_AME_WidenEleWise3_Intr;
   //===--------------------------------------------------------------------===//
   // 3. MIN / MAX - No Widen
   //===--------------------------------------------------------------------===//
   def int_riscv_bosc_mminu_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mminu_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_mminu_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mminu_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mminu_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mminu_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mminu_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_mmaxu_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mmaxu_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_mmaxu_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmaxu_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmaxu_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmaxu_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmaxu_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_mmin_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mmin_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_mmin_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmin_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmin_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmin_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmin_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_mmax_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mmax_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_mmax_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmax_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmax_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmax_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmax_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_mfmin_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mfmin_cf_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_mfmin_cf_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mfmin_hf_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mfmin_f_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mfmin_d_mm  : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_mfmax_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mfmax_cf_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_mfmax_cf_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mfmax_hf_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mfmax_f_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mfmax_d_mm  : BOSC_AME_EleWise3_Intr;
@@ -528,90 +538,90 @@ let TargetPrefix = "riscv" in {
   // 4. MUL / MULH / DIV - No Widen
   //===--------------------------------------------------------------------===//
   def int_riscv_bosc_msmulu_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_msmulu_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_msmulu_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msmulu_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msmulu_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msmulu_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msmulu_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_mmul_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mmul_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_mmul_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmul_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmul_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmul_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmul_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_msmul_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_msmul_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_msmul_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msmul_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msmul_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msmul_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msmul_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_mfmul_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mfmul_cf_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_mfmul_cf_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mfmul_hf_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mfmul_f_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mfmul_d_mm  : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_mmulhu_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mmulhu_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_mmulhu_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmulhu_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmulhu_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmulhu_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmulhu_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_mmulh_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mmulh_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_mmulh_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmulh_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmulh_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmulh_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmulh_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_mmulhsu_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mmulhsu_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_mmulhsu_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmulhsu_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmulhsu_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmulhsu_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mmulhsu_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_msmulsu_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_msmulsu_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_msmulsu_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msmulsu_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msmulsu_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msmulsu_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msmulsu_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_mfdiv_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mfdiv_cf_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_mfdiv_cf_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mfdiv_hf_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mfdiv_f_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_mfdiv_d_mm  : BOSC_AME_EleWise3_Intr;
   //===--------------------------------------------------------------------===//
   // 5. MUL - Double Widen
   //===--------------------------------------------------------------------===//
-  def int_riscv_bosc_mwmulu_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwmulu_hb_mm : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwmulu_b_mm  : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwmulu_h_mm  : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwmulu_w_mm  : BOSC_AME_EleWise3_Intr;
+  def int_riscv_bosc_mwmulu_mm    : BOSC_AME_WidenEleWise3_Intr;
+  //def int_riscv_bosc_mwmulu_hb_mm : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwmulu_b_mm  : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwmulu_h_mm  : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwmulu_w_mm  : BOSC_AME_WidenEleWise3_Intr;
 
-  def int_riscv_bosc_mwmul_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwmul_hb_mm : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwmul_b_mm  : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwmul_h_mm  : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwmul_w_mm  : BOSC_AME_EleWise3_Intr;
+  def int_riscv_bosc_mwmul_mm    : BOSC_AME_WidenEleWise3_Intr;
+  //def int_riscv_bosc_mwmul_hb_mm : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwmul_b_mm  : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwmul_h_mm  : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwmul_w_mm  : BOSC_AME_WidenEleWise3_Intr;
 
-  def int_riscv_bosc_mwmulsu_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwmulsu_hb_mm : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwmulsu_b_mm  : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwmulsu_h_mm  : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mwmulsu_w_mm  : BOSC_AME_EleWise3_Intr;
+  def int_riscv_bosc_mwmulsu_mm    : BOSC_AME_WidenEleWise3_Intr;
+  //def int_riscv_bosc_mwmulsu_hb_mm : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwmulsu_b_mm  : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwmulsu_h_mm  : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mwmulsu_w_mm  : BOSC_AME_WidenEleWise3_Intr;
 
-  def int_riscv_bosc_mfwmul_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mfwmul_cf_mm : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mfwmul_hf_mm : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_mfwmul_f_mm  : BOSC_AME_EleWise3_Intr;
+  def int_riscv_bosc_mfwmul_mm    : BOSC_AME_WidenEleWise3_Intr;
+  //def int_riscv_bosc_mfwmul_cf_mm : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mfwmul_hf_mm : BOSC_AME_WidenEleWise3_Intr;
+  def int_riscv_bosc_mfwmul_f_mm  : BOSC_AME_WidenEleWise3_Intr;
   //===--------------------------------------------------------------------===//
   // 6. LOGIC & SHIFT - No Widen
   //===--------------------------------------------------------------------===//
@@ -620,21 +630,21 @@ let TargetPrefix = "riscv" in {
   def int_riscv_bosc_mxor_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_msll_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_msll_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_msll_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msll_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msll_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msll_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msll_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_msrl_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_msrl_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_msrl_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msrl_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msrl_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msrl_w_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msrl_dw_mm : BOSC_AME_EleWise3_Intr;
 
   def int_riscv_bosc_msra_mm    : BOSC_AME_EleWise3_Intr;
-  def int_riscv_bosc_msra_hb_mm : BOSC_AME_EleWise3_Intr;
+  //def int_riscv_bosc_msra_hb_mm : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msra_b_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msra_h_mm  : BOSC_AME_EleWise3_Intr;
   def int_riscv_bosc_msra_w_mm  : BOSC_AME_EleWise3_Intr;
@@ -643,23 +653,26 @@ let TargetPrefix = "riscv" in {
   // 7. SQRT - No Widen (Unary, 2-Operand)
   // NOTE: Uses EleWise2_Intr
   //===--------------------------------------------------------------------===//
-  def int_riscv_bosc_mfsqrt_mm    : BOSC_AME_EleWise2_Intr;
-  def int_riscv_bosc_mfsqrt_cf_mm : BOSC_AME_EleWise2_Intr;
-  def int_riscv_bosc_mfsqrt_hf_mm : BOSC_AME_EleWise2_Intr;
-  def int_riscv_bosc_mfsqrt_f_mm  : BOSC_AME_EleWise2_Intr;
-  def int_riscv_bosc_mfsqrt_d_mm  : BOSC_AME_EleWise2_Intr;
+  def int_riscv_bosc_mfsqrt_m    : BOSC_AME_EleWise2_Intr;
+  //def int_riscv_bosc_mfsqrt_cf_m : BOSC_AME_EleWise2_Intr;
+  def int_riscv_bosc_mfsqrt_hf_m : BOSC_AME_EleWise2_Intr;
+  def int_riscv_bosc_mfsqrt_f_m  : BOSC_AME_EleWise2_Intr;
+  def int_riscv_bosc_mfsqrt_d_m  : BOSC_AME_EleWise2_Intr;
 }
 
 //===----------------------------------------------------------------------===//
 // Matrix Multiply-Accumulate (MMA) Intrinsic Base Class
 //===----------------------------------------------------------------------===//
 // Base class for all 3-operand Matrix Multiply-Accumulate intrinsics
-// Signature: void (md_idx: i64, ms1_idx: i64, ms2_idx: i64)
 class BOSC_AME_MMA_Intr
-    : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i64_ty],
-                [IntrNoMem, IntrHasSideEffects,
-                 ImmArg<ArgIndex<0>>, ImmArg<ArgIndex<1>>,
-                 ImmArg<ArgIndex<2>>]>;
+    : Intrinsic<[llvm_anymatrix_ty],
+                [LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>],
+                [IntrNoMem]>, RISCVVIntrinsic;
+
+class BOSC_AME_WidenMMA_Intr
+    : Intrinsic<[llvm_anymatrix_ty],
+                [LLVMMatchType<0>, llvm_anymatrix_ty, LLVMMatchType<1>],
+                [IntrNoMem]>, RISCVVIntrinsic;
 
 //===----------------------------------------------------------------------===//
 // MMA Intrinsic Instantiations
@@ -701,68 +714,68 @@ let TargetPrefix = "riscv" in {
   // 2. Double-widen matrix multiply-accumulate
   //===--------------------------------------------------------------------===//
   // uint
-  def int_riscv_bosc_mwmau_mm   : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_mwmau_h_mm : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_mwmau_w_mm : BOSC_AME_MMA_Intr;
+  def int_riscv_bosc_mwmau_mm   : BOSC_AME_WidenMMA_Intr;
+  def int_riscv_bosc_mwmau_h_mm : BOSC_AME_WidenMMA_Intr;
+  def int_riscv_bosc_mwmau_w_mm : BOSC_AME_WidenMMA_Intr;
 
   // uint, saturated
-  def int_riscv_bosc_mswmau_mm   : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_mswmau_h_mm : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_mswmau_w_mm : BOSC_AME_MMA_Intr;
+  def int_riscv_bosc_mswmau_mm   : BOSC_AME_WidenMMA_Intr;
+  def int_riscv_bosc_mswmau_h_mm : BOSC_AME_WidenMMA_Intr;
+  def int_riscv_bosc_mswmau_w_mm : BOSC_AME_WidenMMA_Intr;
 
   // int
-  def int_riscv_bosc_mwma_mm   : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_mwma_h_mm : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_mwma_w_mm : BOSC_AME_MMA_Intr;
+  def int_riscv_bosc_mwma_mm   : BOSC_AME_WidenMMA_Intr;
+  def int_riscv_bosc_mwma_h_mm : BOSC_AME_WidenMMA_Intr;
+  def int_riscv_bosc_mwma_w_mm : BOSC_AME_WidenMMA_Intr;
 
   // int, saturated
-  def int_riscv_bosc_mswma_mm   : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_mswma_h_mm : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_mswma_w_mm : BOSC_AME_MMA_Intr;
+  def int_riscv_bosc_mswma_mm   : BOSC_AME_WidenMMA_Intr;
+  def int_riscv_bosc_mswma_h_mm : BOSC_AME_WidenMMA_Intr;
+  def int_riscv_bosc_mswma_w_mm : BOSC_AME_WidenMMA_Intr;
 
   // float point
-  def int_riscv_bosc_mfwma_mm    : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_mfwma_cf_mm : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_mfwma_hf_mm : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_mfwma_f_mm  : BOSC_AME_MMA_Intr;
+  def int_riscv_bosc_mfwma_mm    : BOSC_AME_WidenMMA_Intr;
+  //def int_riscv_bosc_mfwma_cf_mm : BOSC_AME_WidenMMA_Intr;
+  def int_riscv_bosc_mfwma_hf_mm : BOSC_AME_WidenMMA_Intr;
+  def int_riscv_bosc_mfwma_f_mm  : BOSC_AME_WidenMMA_Intr;
   //===--------------------------------------------------------------------===//
   // 3. Quad-widen matrix multiply-accumulate
   //===--------------------------------------------------------------------===//
   // uint
-  def int_riscv_bosc_mqmau_mm   : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_mqmau_b_mm : BOSC_AME_MMA_Intr;
+  def int_riscv_bosc_mqmau_mm   : BOSC_AME_WidenMMA_Intr;
+  def int_riscv_bosc_mqmau_b_mm : BOSC_AME_WidenMMA_Intr;
 
   // uint, saturated
-  def int_riscv_bosc_msqmau_mm   : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_msqmau_b_mm : BOSC_AME_MMA_Intr;
+  def int_riscv_bosc_msqmau_mm   : BOSC_AME_WidenMMA_Intr;
+  def int_riscv_bosc_msqmau_b_mm : BOSC_AME_WidenMMA_Intr;
 
   // int
-  def int_riscv_bosc_mqma_mm   : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_mqma_b_mm : BOSC_AME_MMA_Intr;
+  def int_riscv_bosc_mqma_mm   : BOSC_AME_WidenMMA_Intr;
+  def int_riscv_bosc_mqma_b_mm : BOSC_AME_WidenMMA_Intr;
 
   // int, saturated
-  def int_riscv_bosc_msqma_mm   : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_msqma_b_mm : BOSC_AME_MMA_Intr;
+  def int_riscv_bosc_msqma_mm   : BOSC_AME_WidenMMA_Intr;
+  def int_riscv_bosc_msqma_b_mm : BOSC_AME_WidenMMA_Intr;
 
   // float point
-  def int_riscv_bosc_mfqma_mm    : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_mfqma_cf_mm : BOSC_AME_MMA_Intr;
+  def int_riscv_bosc_mfqma_mm    : BOSC_AME_WidenMMA_Intr;
+  //def int_riscv_bosc_mfqma_cf_mm : BOSC_AME_WidenMMA_Intr;
   //===--------------------------------------------------------------------===//
   // 4. Oct-widen matrix multiply-accumulate
   //===--------------------------------------------------------------------===//
   // uint
-  def int_riscv_bosc_momau_mm    : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_momau_hb_mm : BOSC_AME_MMA_Intr;
+  def int_riscv_bosc_momau_mm    : BOSC_AME_WidenMMA_Intr;
+  //def int_riscv_bosc_momau_hb_mm : BOSC_AME_WidenMMA_Intr;
 
   // uint, saturated
-  def int_riscv_bosc_msomau_mm    : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_msomau_hb_mm : BOSC_AME_MMA_Intr;
+  def int_riscv_bosc_msomau_mm    : BOSC_AME_WidenMMA_Intr;
+  //def int_riscv_bosc_msomau_hb_mm : BOSC_AME_WidenMMA_Intr;
 
   // int
-  def int_riscv_bosc_moma_mm    : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_moma_hb_mm : BOSC_AME_MMA_Intr;
+  def int_riscv_bosc_moma_mm    : BOSC_AME_WidenMMA_Intr;
+  //def int_riscv_bosc_moma_hb_mm : BOSC_AME_WidenMMA_Intr;
 
   // int, saturated
-  def int_riscv_bosc_msoma_mm    : BOSC_AME_MMA_Intr;
-  def int_riscv_bosc_msoma_hb_mm : BOSC_AME_MMA_Intr;
+  def int_riscv_bosc_msoma_mm    : BOSC_AME_WidenMMA_Intr;
+  //def int_riscv_bosc_msoma_hb_mm : BOSC_AME_WidenMMA_Intr;
 }

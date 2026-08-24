@@ -44,49 +44,12 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-// AME Custom Operand Types for Tile Register Indices
-//===----------------------------------------------------------------------===//
-// These operand types allow intrinsics to pass immediate indices (0-7)
-// for tile and accumulator registers. The AsmString of pseudo instructions
-// hardcodes "acc" and "tr" prefixes so that indices 0-7 are printed as
-// acc0-acc7 and tr0-tr7 respectively, without modifying LLVM submodule.
-
-// AsmOperandClass for tile register index (0-7)
-def BOSCAMETileIndexAsmOperand : AsmOperandClass {
-  let Name = "BOSCAMETileIndex";
-  let RenderMethod = "addImmOperands";
-  let PredicateMethod = "isUImm3";
-  let DiagnosticType = "InvalidBOSCAMETileIndex";
-}
-
-// AsmOperandClass for accumulator register index (0-7)
-def BOSCAMEAccIndexAsmOperand : AsmOperandClass {
-  let Name = "BOSCAMEAccIndex";
-  let RenderMethod = "addImmOperands";
-  let PredicateMethod = "isUImm3";
-  let DiagnosticType = "InvalidBOSCAMEAccIndex";
-}
-
-// Operand type for TileReg index (0-7), printed with "tr" prefix in AsmString
-def BOSCAMETileIndex : RISCVOp<i64> {
-  let ParserMatchClass = BOSCAMETileIndexAsmOperand;
-  let DecoderMethod = "decodeUImmOperand<3>";
-  let OperandType = "OPERAND_UIMM3";
-}
-
-// Operand type for AccReg index (0-7), printed with "acc" prefix in AsmString
-def BOSCAMEAccIndex : RISCVOp<i64> {
-  let ParserMatchClass = BOSCAMEAccIndexAsmOperand;
-  let DecoderMethod = "decodeUImmOperand<3>";
-  let OperandType = "OPERAND_UIMM3";
-}
-
-//===----------------------------------------------------------------------===//
 // BOSC AME 32-bit Instruction Format Base Class
 //===----------------------------------------------------------------------===//
 
 // Base class for BOSC AME 32-bit matrix multiplication instructions
-// Uses MatrixReg for inputs (ms1, ms2) and MatrixReg for output (md)
+// Matrix operands are constrained by the instruction subclasses to TileReg
+// or AccReg. Register allocation chooses the physical trN/accN register.
 class RVInstBOSCAME32<dag outs, dag ins, string opcodestr, string argstr>
     : RVInst<outs, ins, opcodestr, argstr, [], InstFormatOther> {
   bits<6> funct6;
@@ -691,11 +654,11 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
   def BOSC_AME_MOR_MM  : BOSC_AME_LOGIC_NO_WIDEN<1, 0, "mor.mm">;
   def BOSC_AME_MXOR_MM : BOSC_AME_LOGIC_NO_WIDEN<1, 1, "mxor.mm">;
 
-  def BOSC_AME_MFSQRT_MM    : BOSC_AME_SQRT_NO_WIDEN<0b100, "mfsqrt.mm">;
-  def BOSC_AME_MFSQRT_CF_MM : BOSC_AME_SQRT_NO_WIDEN<0b000, "mfsqrt.cf.mm">;
-  def BOSC_AME_MFSQRT_HF_MM : BOSC_AME_SQRT_NO_WIDEN<0b001, "mfsqrt.hf.mm">;
-  def BOSC_AME_MFSQRT_F_MM  : BOSC_AME_SQRT_NO_WIDEN<0b010, "mfsqrt.f.mm">;
-  def BOSC_AME_MFSQRT_D_MM  : BOSC_AME_SQRT_NO_WIDEN<0b011, "mfsqrt.d.mm">;
+  def BOSC_AME_MFSQRT_M     : BOSC_AME_SQRT_NO_WIDEN<0b100, "mfsqrt.m">;
+  def BOSC_AME_MFSQRT_CF_M  : BOSC_AME_SQRT_NO_WIDEN<0b000, "mfsqrt.cf.m">;
+  def BOSC_AME_MFSQRT_HF_M  : BOSC_AME_SQRT_NO_WIDEN<0b001, "mfsqrt.hf.m">;
+  def BOSC_AME_MFSQRT_F_M   : BOSC_AME_SQRT_NO_WIDEN<0b010, "mfsqrt.f.m">;
+  def BOSC_AME_MFSQRT_D_M   : BOSC_AME_SQRT_NO_WIDEN<0b011, "mfsqrt.d.m">;
 }
 
 class BOSC_AME_SHIFT_NO_WIDEN<bit sa_val, bit sn_val,
@@ -764,7 +727,7 @@ class RVInstBOSCAMEConfig32<bits<6> funct6_val, bits<3> funct3_val, string opcod
 }
 
 class RVInstBOSCAMEConfigImm32<bits<6> funct6_val, bits<3> funct3_val, string opcodestr>
-    : RVInst<(outs GPR:$rd), (ins uimm32:$imm),
+    : RVInst<(outs GPR:$rd), (ins uimm10:$imm),
                opcodestr, "$rd, $imm", [], InstFormatOther> {
   bits<5> rd;
   bits<10> imm;    // 10-bit immediate
@@ -1179,12 +1142,11 @@ class RVInstBOSCAMEMove_X_T<bits<3> eew_val, string opcodestr>
 }
 
 class RVInstBOSCAMEMove_T_X<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs TileReg:$md), (ins GPR:$rs1, GPR:$rs2),
-                        opcodestr, "$md, $rs1, $rs2"> {
-  bits<5> rs2;
-  bits<5> rs1;
+    : RVInstBOSCAMEMove<(outs TileReg:$md), (ins TileReg:$md_in, GPR:$rs1, GPR:$rs2),
+                        opcodestr, "$md, $rs1, $rs2"> {                          
   bits<5> md;
 
+  let Constraints = "$md = $md_in";
   let funct6 = 0b000101;
   let di     = 0b1;
   let eew    = eew_val;
@@ -1205,12 +1167,11 @@ class RVInstBOSCAMEMove_X_A<bits<3> eew_val, string opcodestr>
 }
 
 class RVInstBOSCAMEMove_A_X<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs AccReg:$md), (ins GPR:$rs1, GPR:$rs2),
+    : RVInstBOSCAMEMove<(outs AccReg:$md), (ins AccReg:$md_in, GPR:$rs1, GPR:$rs2),
                         opcodestr, "$md, $rs1, $rs2"> {
-  bits<5> rs2;
-  bits<5> rs1;
   bits<5> md;
 
+  let Constraints = "$md = $md_in";
   let funct6 = 0b000101;
   let di     = 0b1;
   let eew    = eew_val;
@@ -1241,8 +1202,10 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 }
 
 // Data Move Instructions between Matrix and Float-point
-class RVInstBOSCAMEFMove_F_T<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs GPR:$rd), (ins TileReg:$ms1, GPR:$rs2),
+class RVInstBOSCAMEFMove_F_T<bits<3> eew_val, string opcodestr,
+                             RegisterClass FPRC>
+    : RVInstBOSCAMEMove<(outs FPRC:$rd),
+                        (ins TileReg:$ms1, GPR:$rs2),
                         opcodestr, "$rd, $ms1, $rs2"> {
   bits<5> rs2;
   bits<5> ms1;
@@ -1254,21 +1217,26 @@ class RVInstBOSCAMEFMove_F_T<bits<3> eew_val, string opcodestr>
   let eew    = eew_val;
 }
 
-class RVInstBOSCAMEFMove_T_F<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs TileReg:$md), (ins GPR:$rs1, GPR:$rs2),
+// scalar float -> TileReg
+class RVInstBOSCAMEFMove_T_F<bits<3> eew_val, string opcodestr,
+                             RegisterClass FPRC>
+    : RVInstBOSCAMEMove<(outs TileReg:$md),
+                        (ins TileReg:$md_in, FPRC:$rs1, GPR:$rs2),
                         opcodestr, "$md, $rs1, $rs2"> {
-  bits<5> rs2;
-  bits<5> rs1;
   bits<5> md;
 
+  let Constraints = "$md = $md_in";
   let funct6 = 0b000110;
   let di     = 0b1;
   let eew    = eew_val;
   let rd     = md;
 }
 
-class RVInstBOSCAMEFMove_F_A<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs GPR:$rd), (ins AccReg:$ms1, GPR:$rs2),
+// AccReg -> scalar float
+class RVInstBOSCAMEFMove_F_A<bits<3> eew_val, string opcodestr,
+                             RegisterClass FPRC>
+    : RVInstBOSCAMEMove<(outs FPRC:$rd),
+                        (ins AccReg:$ms1, GPR:$rs2),
                         opcodestr, "$rd, $ms1, $rs2"> {
   bits<5> rs2;
   bits<5> ms1;
@@ -1280,13 +1248,15 @@ class RVInstBOSCAMEFMove_F_A<bits<3> eew_val, string opcodestr>
   let eew    = eew_val;
 }
 
-class RVInstBOSCAMEFMove_A_F<bits<3> eew_val, string opcodestr>
-    : RVInstBOSCAMEMove<(outs AccReg:$md), (ins GPR:$rs1, GPR:$rs2),
+// scalar float -> AccReg
+class RVInstBOSCAMEFMove_A_F<bits<3> eew_val, string opcodestr,
+                             RegisterClass FPRC>
+    : RVInstBOSCAMEMove<(outs AccReg:$md),
+                        (ins AccReg:$md_in, FPRC:$rs1, GPR:$rs2),
                         opcodestr, "$md, $rs1, $rs2"> {
-  bits<5> rs2;
-  bits<5> rs1;
   bits<5> md;
 
+  let Constraints = "$md = $md_in";
   let funct6 = 0b000110;
   let di     = 0b1;
   let eew    = eew_val;
@@ -1295,25 +1265,25 @@ class RVInstBOSCAMEFMove_A_F<bits<3> eew_val, string opcodestr>
 
 let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
 
-  def BOSC_AME_MFMVE8_F_T  : RVInstBOSCAMEFMove_F_T<0b000, "mfmve8.f.t">;
-  def BOSC_AME_MFMVE16_F_T : RVInstBOSCAMEFMove_F_T<0b001, "mfmve16.f.t">;
-  def BOSC_AME_MFMVE32_F_T : RVInstBOSCAMEFMove_F_T<0b010, "mfmve32.f.t">;
-  def BOSC_AME_MFMVE64_F_T : RVInstBOSCAMEFMove_F_T<0b011, "mfmve64.f.t">;
+  def BOSC_AME_MFMVE8_F_T  : RVInstBOSCAMEFMove_F_T<0b000, "mfmve8.f.t", FPR32>;
+  def BOSC_AME_MFMVE16_F_T : RVInstBOSCAMEFMove_F_T<0b001, "mfmve16.f.t", FPR16>;
+  def BOSC_AME_MFMVE32_F_T : RVInstBOSCAMEFMove_F_T<0b010, "mfmve32.f.t", FPR32>;
+  def BOSC_AME_MFMVE64_F_T : RVInstBOSCAMEFMove_F_T<0b011, "mfmve64.f.t", FPR64>;
 
-  def BOSC_AME_MFMVE8_T_F  : RVInstBOSCAMEFMove_T_F<0b000, "mfmve8.t.f">;
-  def BOSC_AME_MFMVE16_T_F : RVInstBOSCAMEFMove_T_F<0b001, "mfmve16.t.f">;
-  def BOSC_AME_MFMVE32_T_F : RVInstBOSCAMEFMove_T_F<0b010, "mfmve32.t.f">;
-  def BOSC_AME_MFMVE64_T_F : RVInstBOSCAMEFMove_T_F<0b011, "mfmve64.t.f">;
+  def BOSC_AME_MFMVE8_T_F  : RVInstBOSCAMEFMove_T_F<0b000, "mfmve8.t.f", FPR32>;
+  def BOSC_AME_MFMVE16_T_F : RVInstBOSCAMEFMove_T_F<0b001, "mfmve16.t.f", FPR16>;
+  def BOSC_AME_MFMVE32_T_F : RVInstBOSCAMEFMove_T_F<0b010, "mfmve32.t.f", FPR32>;
+  def BOSC_AME_MFMVE64_T_F : RVInstBOSCAMEFMove_T_F<0b011, "mfmve64.t.f", FPR64>;
 
-  def BOSC_AME_MFMVE8_F_A  : RVInstBOSCAMEFMove_F_A<0b100, "mfmve8.f.a">;
-  def BOSC_AME_MFMVE16_F_A : RVInstBOSCAMEFMove_F_A<0b101, "mfmve16.f.a">;
-  def BOSC_AME_MFMVE32_F_A : RVInstBOSCAMEFMove_F_A<0b110, "mfmve32.f.a">;
-  def BOSC_AME_MFMVE64_F_A : RVInstBOSCAMEFMove_F_A<0b111, "mfmve64.f.a">;
+  def BOSC_AME_MFMVE8_F_A  : RVInstBOSCAMEFMove_F_A<0b100, "mfmve8.f.a", FPR32>;
+  def BOSC_AME_MFMVE16_F_A : RVInstBOSCAMEFMove_F_A<0b101, "mfmve16.f.a", FPR16>;
+  def BOSC_AME_MFMVE32_F_A : RVInstBOSCAMEFMove_F_A<0b110, "mfmve32.f.a", FPR32>;
+  def BOSC_AME_MFMVE64_F_A : RVInstBOSCAMEFMove_F_A<0b111, "mfmve64.f.a", FPR64>;
 
-  def BOSC_AME_MFMVE8_A_F  : RVInstBOSCAMEFMove_A_F<0b100, "mfmve8.a.f">;
-  def BOSC_AME_MFMVE16_A_F : RVInstBOSCAMEFMove_A_F<0b101, "mfmve16.a.f">;
-  def BOSC_AME_MFMVE32_A_F : RVInstBOSCAMEFMove_A_F<0b110, "mfmve32.a.f">;
-  def BOSC_AME_MFMVE64_A_F : RVInstBOSCAMEFMove_A_F<0b111, "mfmve64.a.f">;
+  def BOSC_AME_MFMVE8_A_F  : RVInstBOSCAMEFMove_A_F<0b100, "mfmve8.a.f", FPR32>;
+  def BOSC_AME_MFMVE16_A_F : RVInstBOSCAMEFMove_A_F<0b101, "mfmve16.a.f", FPR16>;
+  def BOSC_AME_MFMVE32_A_F : RVInstBOSCAMEFMove_A_F<0b110, "mfmve32.a.f", FPR32>;
+  def BOSC_AME_MFMVE64_A_F : RVInstBOSCAMEFMove_A_F<0b111, "mfmve64.a.f", FPR64>;
 }
 
 // Data Broadcast Instructions
@@ -1434,1868 +1404,471 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
 }
 
 //===----------------------------------------------------------------------===//
-// Pseudo Instructions for Index-Based Operations
-//===----------------------------------------------------------------------===//
-// These pseudo instructions accept i64 indices and have AsmString for direct
-// assembly output. This allows the pseudo instructions to be printed directly
-// without needing complex expansion logic.
+// Direct SelectionDAG patterns for BOSC AME real instructions.
 //
-// For load/store/mma instructions, the AsmString hardcodes "acc" and "tr"
-// prefixes so that indices 0-7 are printed as acc0-acc7 and tr0-tr7.
+// Replace the old "Pseudo Instructions for Index-Based Operations" section
+// and the old pattern section with this content. No RHS below may name a
+// *_PSEUDO instruction or use timm/BOSCAMETileIndex/BOSCAMEAccIndex.
+//
+// Preconditions:
+//   * TileReg and AccReg are registered in RISCVRegisterInfo.td.
+//   * The intrinsics use SSA matrix operands/results, not i64 register IDs.
+//   * nxv128i8/nxv64i16/nxv32i32/nxv16i64 and the floating MVTs below are
+//     registered with TileReg in RISCVISelLowering.cpp.
+//   * The mfmve real instruction definitions use FPR16/FPR32/FPR64 rather
+//     than GPR for their scalar floating operands/results.
 //===----------------------------------------------------------------------===//
 
-// Pseudo configuration instruction
-let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, mayLoad = 0, mayStore = 0,
-    isCodeGenOnly = 1 in {
-  // Register configuration instructions
-  def BOSC_AME_MSETTYPE_PSEUDO : Pseudo<(outs GPR:$rd), (ins GPR:$rs1), []> {
-    let AsmString = "msettype\t$rd, $rs1";
-  }
-  def BOSC_AME_MSETTILEM_PSEUDO : Pseudo<(outs GPR:$rd), (ins GPR:$rs1), []> {
-    let AsmString = "msettilem\t$rd, $rs1";
-  }
-  def BOSC_AME_MSETTILEN_PSEUDO : Pseudo<(outs GPR:$rd), (ins GPR:$rs1), []> {
-    let AsmString = "msettilen\t$rd, $rs1";
-  }
-  def BOSC_AME_MSETTILEK_PSEUDO : Pseudo<(outs GPR:$rd), (ins GPR:$rs1), []> {
-    let AsmString = "msettilek\t$rd, $rs1";
-  }
-  // Immediate configuration instructions
-  def BOSC_AME_MSETTYPEI_PSEUDO : Pseudo<(outs GPR:$rd), (ins i64imm:$imm), []> {
-    let AsmString = "msettypei\t$rd, $imm";
-  }
-  def BOSC_AME_MSETTYPEHI_PSEUDO : Pseudo<(outs GPR:$rd), (ins i64imm:$imm), []> {
-    let AsmString = "msettypehi\t$rd, $imm";
-  }
-  def BOSC_AME_MSETTILEMI_PSEUDO : Pseudo<(outs GPR:$rd), (ins i64imm:$imm), []> {
-    let AsmString = "msettilemi\t$rd, $imm";
-  }
-  def BOSC_AME_MSETTILENI_PSEUDO : Pseudo<(outs GPR:$rd), (ins i64imm:$imm), []> {
-    let AsmString = "msettileni\t$rd, $imm";
-  }
-  def BOSC_AME_MSETTILEKI_PSEUDO : Pseudo<(outs GPR:$rd), (ins i64imm:$imm), []> {
-    let AsmString = "msettileki\t$rd, $imm";
-  }
+class BOSCAMETypeInfo<ValueType MatrixType, string NumberValue,
+                      string SuffixValue, ValueType ScalarType = XLenVT,
+                      RegisterClass ScalarReg = GPR> {
+  ValueType Matrix = MatrixType;
+  string Number = NumberValue;
+  string Suffix = SuffixValue;
+  ValueType Scalar = ScalarType;
+  RegisterClass ScalarRC = ScalarReg;
 }
 
-// Pseudo load instructions
-let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, mayLoad = 1, mayStore = 0,
-    isCodeGenOnly = 1 in {
-  def BOSC_AME_MLAE8_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlae8.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLAE16_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlae16.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLAE32_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlae32.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLAE64_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlae64.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLATE8_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlate8.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLATE16_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlate16.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLATE32_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlate32.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLATE64_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlate64.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLTRE8_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mltre8.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLTRE16_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mltre16.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLTRE32_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mltre32.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLTRE64_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mltre64.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLBE8_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlbe8.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLBE16_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlbe16.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLBE32_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlbe32.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLBE64_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlbe64.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLBTE8_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlbte8.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLBTE16_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlbte16.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLBTE32_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlbte32.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLBTE64_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlbte64.m\ttr$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLCE8_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlce8.m\tacc$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLCE16_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlce16.m\tacc$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLCE32_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlce32.m\tacc$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLCE64_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlce64.m\tacc$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLCTE8_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlcte8.m\tacc$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLCTE16_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlcte16.m\tacc$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLCTE32_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlcte32.m\tacc$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLCTE64_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlcte64.m\tacc$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLACCE8_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlacce8.m\tacc$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLACCE16_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlacce16.m\tacc$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLACCE32_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlacce32.m\tacc$md, ($rs1), $rs2";
-  }
-  def BOSC_AME_MLACCE64_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mlacce64.m\tacc$md, ($rs1), $rs2";
-  }
+def BOSCAME_I8  : BOSCAMETypeInfo<nxv128i8,  "8",  "B">;
+def BOSCAME_I16 : BOSCAMETypeInfo<nxv64i16,  "16", "H">;
+def BOSCAME_I32 : BOSCAMETypeInfo<nxv32i32,  "32", "W">;
+def BOSCAME_I64 : BOSCAMETypeInfo<nxv16i64,  "64", "DW">;
+
+def BOSCAME_F16 : BOSCAMETypeInfo<nxv64f16, "16", "HF", f16, FPR16>;
+def BOSCAME_F32 : BOSCAMETypeInfo<nxv32f32, "32", "F",  f32, FPR32>;
+def BOSCAME_F64 : BOSCAMETypeInfo<nxv16f64, "64", "D",  f64, FPR64>;
+
+class BOSCAMEWidenInfo<BOSCAMETypeInfo DstType,
+                       BOSCAMETypeInfo SrcType, string SuffixValue> {
+  BOSCAMETypeInfo Dst = DstType;
+  BOSCAMETypeInfo Src = SrcType;
+  string Suffix = SuffixValue;
 }
 
-// Pseudo store instructions
-let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, mayLoad = 0, mayStore = 1,
-    isCodeGenOnly = 1 in {
-  def BOSC_AME_MSAE8_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msae8.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSAE16_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msae16.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSAE32_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msae32.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSAE64_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msae64.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSATE8_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msate8.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSATE16_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msate16.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSATE32_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msate32.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSATE64_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msate64.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSTRE8_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mstre8.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSTRE16_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mstre16.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSTRE32_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mstre32.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSTRE64_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mstre64.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSBE8_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msbe8.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSBE16_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msbe16.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSBE32_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msbe32.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSBE64_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msbe64.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSBTE8_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msbte8.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSBTE16_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msbte16.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSBTE32_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msbte32.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSBTE64_M_PSEUDO : Pseudo<(outs), (ins BOSCAMETileIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msbte64.m\ttr$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSCE8_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msce8.m\tacc$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSCE16_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msce16.m\tacc$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSCE32_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msce32.m\tacc$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSCE64_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msce64.m\tacc$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSCTE8_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mscte8.m\tacc$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSCTE16_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mscte16.m\tacc$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSCTE32_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mscte32.m\tacc$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSCTE64_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "mscte64.m\tacc$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSACCE8_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msacce8.m\tacc$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSACCE16_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msacce16.m\tacc$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSACCE32_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msacce32.m\tacc$ms3, ($rs1), $rs2";
-  }
-  def BOSC_AME_MSACCE64_M_PSEUDO : Pseudo<(outs), (ins BOSCAMEAccIndex:$ms3, GPR:$rs1, GPR:$rs2), []> {
-    let AsmString = "msacce64.m\tacc$ms3, ($rs1), $rs2";
-  }
-}
-
-// Pseudo data move instructions
-// Matrix to Matrix (Pure)
-class RVInstBOSCAMEMove_T_T_Pseudo<string opcodestr>
-    : Pseudo<(outs), (ins BOSCAMETileIndex:$md, BOSCAMETileIndex:$ms1), []> {
-  let AsmString = opcodestr # "\ttr$md, tr$ms1";
-}
-class RVInstBOSCAMEMove_A_A_Pseudo<string opcodestr>
-    : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, BOSCAMEAccIndex:$ms1), []> {
-  let AsmString = opcodestr # "\tacc$md, acc$ms1";
-}
-
-// Matrix to Matrix (with GPR index)
-class RVInstBOSCAMEMove_A_T_Pseudo<string opcodestr>
-    : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, BOSCAMETileIndex:$ms1, GPR:$rs2), []> {
-  let AsmString = opcodestr # "\tacc$md, tr$ms1, $rs2";
-}
-class RVInstBOSCAMEMove_T_A_Pseudo<string opcodestr>
-    : Pseudo<(outs), (ins BOSCAMETileIndex:$md, BOSCAMEAccIndex:$ms1, GPR:$rs2), []> {
-  let AsmString = opcodestr # "\ttr$md, acc$ms1, $rs2";
-}
-
-// Matrix to Matrix (with Immediate index)
-class RVInstBOSCAMEMoveImm_A_T_Pseudo<string opcodestr>
-    : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, BOSCAMETileIndex:$ms1, uimm5:$imm), []> {
-  let AsmString = opcodestr # "\tacc$md, tr$ms1, $imm";
-}
-class RVInstBOSCAMEMoveImm_T_A_Pseudo<string opcodestr>
-    : Pseudo<(outs), (ins BOSCAMETileIndex:$md, BOSCAMEAccIndex:$ms1, uimm5:$imm), []> {
-  let AsmString = opcodestr # "\ttr$md, acc$ms1, $imm";
-}
-
-// Matrix to Scalar GPR (Notice: rd is a real output GPR)
-class RVInstBOSCAMEMove_X_T_Pseudo<string opcodestr>
-    : Pseudo<(outs GPR:$rd), (ins BOSCAMETileIndex:$ms1, GPR:$rs2), []> {
-  let AsmString = opcodestr # "\t$rd, tr$ms1, $rs2";
-}
-class RVInstBOSCAMEMove_X_A_Pseudo<string opcodestr>
-    : Pseudo<(outs GPR:$rd), (ins BOSCAMEAccIndex:$ms1, GPR:$rs2), []> {
-  let AsmString = opcodestr # "\t$rd, acc$ms1, $rs2";
-}
-
-// Scalar GPR to Matrix
-class RVInstBOSCAMEMove_T_X_Pseudo<string opcodestr>
-    : Pseudo<(outs), (ins BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-  let AsmString = opcodestr # "\ttr$md, $rs1, $rs2";
-}
-class RVInstBOSCAMEMove_A_X_Pseudo<string opcodestr>
-    : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-  let AsmString = opcodestr # "\tacc$md, $rs1, $rs2";
-}
-
-// Pseudo classes for Float-point Matrix moves
-class RVInstBOSCAMEMove_F_T_Pseudo<string opcodestr>
-    : Pseudo<(outs GPR:$rd), (ins BOSCAMETileIndex:$ms1, GPR:$rs2), []> {
-  let AsmString = opcodestr # "\t$rd, tr$ms1, $rs2";
-}
-
-class RVInstBOSCAMEMove_T_F_Pseudo<string opcodestr>
-    : Pseudo<(outs), (ins  BOSCAMETileIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-  let AsmString = opcodestr # "\ttr$md, $rs1, $rs2";
-}
-
-class RVInstBOSCAMEMove_F_A_Pseudo<string opcodestr>
-    : Pseudo<(outs GPR:$rd), (ins BOSCAMEAccIndex:$ms1, GPR:$rs2), []> {
-  let AsmString = opcodestr # "\t$rd, acc$ms1, $rs2";
-}
-
-class RVInstBOSCAMEMove_A_F_Pseudo<string opcodestr>
-    : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, GPR:$rs1, GPR:$rs2), []> {
-  let AsmString = opcodestr # "\tacc$md, $rs1, $rs2";
-}
-
-class RVInstBOSCAMEBroadcastTile_Pseudo<string opcodestr>
-      : RVInstBOSCAMEMove_T_T_Pseudo<opcodestr>;
-class RVInstBOSCAMEBroadcastAcc_Pseudo<string opcodestr>
-      : RVInstBOSCAMEMove_A_A_Pseudo<opcodestr>;
-class RVInstBOSCAMETransposeTile_Pseudo<string opcodestr>
-      : RVInstBOSCAMEMove_T_T_Pseudo<opcodestr>;
-class RVInstBOSCAMETransposeAcc_Pseudo<string opcodestr>
-      : RVInstBOSCAMEMove_A_A_Pseudo<opcodestr>;
-
-let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, isCodeGenOnly = 1 in {
-  //----------------------------------------------------------------------
-  // Matrix-Matrix Move Pseudos
-  //----------------------------------------------------------------------
-  def BOSC_AME_MMVE8_T_T_PSEUDO  : RVInstBOSCAMEMove_T_T_Pseudo<"mmve8.t.t">;
-  def BOSC_AME_MMVE16_T_T_PSEUDO : RVInstBOSCAMEMove_T_T_Pseudo<"mmve16.t.t">;
-  def BOSC_AME_MMVE32_T_T_PSEUDO : RVInstBOSCAMEMove_T_T_Pseudo<"mmve32.t.t">;
-  def BOSC_AME_MMVE64_T_T_PSEUDO : RVInstBOSCAMEMove_T_T_Pseudo<"mmve64.t.t">;
-
-  def BOSC_AME_MMVE8_A_A_PSEUDO  : RVInstBOSCAMEMove_A_A_Pseudo<"mmve8.a.a">;
-  def BOSC_AME_MMVE16_A_A_PSEUDO : RVInstBOSCAMEMove_A_A_Pseudo<"mmve16.a.a">;
-  def BOSC_AME_MMVE32_A_A_PSEUDO : RVInstBOSCAMEMove_A_A_Pseudo<"mmve32.a.a">;
-  def BOSC_AME_MMVE64_A_A_PSEUDO : RVInstBOSCAMEMove_A_A_Pseudo<"mmve64.a.a">;
-
-  def BOSC_AME_MMVE8_A_T_PSEUDO  : RVInstBOSCAMEMove_A_T_Pseudo<"mmve8.a.t">;
-  def BOSC_AME_MMVE16_A_T_PSEUDO : RVInstBOSCAMEMove_A_T_Pseudo<"mmve16.a.t">;
-  def BOSC_AME_MMVE32_A_T_PSEUDO : RVInstBOSCAMEMove_A_T_Pseudo<"mmve32.a.t">;
-  def BOSC_AME_MMVE64_A_T_PSEUDO : RVInstBOSCAMEMove_A_T_Pseudo<"mmve64.a.t">;
-
-  def BOSC_AME_MMVE8_T_A_PSEUDO  : RVInstBOSCAMEMove_T_A_Pseudo<"mmve8.t.a">;
-  def BOSC_AME_MMVE16_T_A_PSEUDO : RVInstBOSCAMEMove_T_A_Pseudo<"mmve16.t.a">;
-  def BOSC_AME_MMVE32_T_A_PSEUDO : RVInstBOSCAMEMove_T_A_Pseudo<"mmve32.t.a">;
-  def BOSC_AME_MMVE64_T_A_PSEUDO : RVInstBOSCAMEMove_T_A_Pseudo<"mmve64.t.a">;
-
-  def BOSC_AME_MMVIE8_A_T_PSEUDO  : RVInstBOSCAMEMoveImm_A_T_Pseudo<"mmvie8.a.t">;
-  def BOSC_AME_MMVIE16_A_T_PSEUDO : RVInstBOSCAMEMoveImm_A_T_Pseudo<"mmvie16.a.t">;
-  def BOSC_AME_MMVIE32_A_T_PSEUDO : RVInstBOSCAMEMoveImm_A_T_Pseudo<"mmvie32.a.t">;
-  def BOSC_AME_MMVIE64_A_T_PSEUDO : RVInstBOSCAMEMoveImm_A_T_Pseudo<"mmvie64.a.t">;
-
-  def BOSC_AME_MMVIE8_T_A_PSEUDO  : RVInstBOSCAMEMoveImm_T_A_Pseudo<"mmvie8.t.a">;
-  def BOSC_AME_MMVIE16_T_A_PSEUDO : RVInstBOSCAMEMoveImm_T_A_Pseudo<"mmvie16.t.a">;
-  def BOSC_AME_MMVIE32_T_A_PSEUDO : RVInstBOSCAMEMoveImm_T_A_Pseudo<"mmvie32.t.a">;
-  def BOSC_AME_MMVIE64_T_A_PSEUDO : RVInstBOSCAMEMoveImm_T_A_Pseudo<"mmvie64.t.a">;
-  //----------------------------------------------------------------------
-  // Int / Float Matrix-Scalar Move Pseudos
-  //----------------------------------------------------------------------
-  def BOSC_AME_MMVE8_X_T_PSEUDO  : RVInstBOSCAMEMove_X_T_Pseudo<"mmve8.x.t">;
-  def BOSC_AME_MMVE16_X_T_PSEUDO : RVInstBOSCAMEMove_X_T_Pseudo<"mmve16.x.t">;
-  def BOSC_AME_MMVE32_X_T_PSEUDO : RVInstBOSCAMEMove_X_T_Pseudo<"mmve32.x.t">;
-  def BOSC_AME_MMVE64_X_T_PSEUDO : RVInstBOSCAMEMove_X_T_Pseudo<"mmve64.x.t">;
-
-  def BOSC_AME_MMVE8_T_X_PSEUDO  : RVInstBOSCAMEMove_T_X_Pseudo<"mmve8.t.x">;
-  def BOSC_AME_MMVE16_T_X_PSEUDO : RVInstBOSCAMEMove_T_X_Pseudo<"mmve16.t.x">;
-  def BOSC_AME_MMVE32_T_X_PSEUDO : RVInstBOSCAMEMove_T_X_Pseudo<"mmve32.t.x">;
-  def BOSC_AME_MMVE64_T_X_PSEUDO : RVInstBOSCAMEMove_T_X_Pseudo<"mmve64.t.x">;
-
-  def BOSC_AME_MMVE8_X_A_PSEUDO  : RVInstBOSCAMEMove_X_A_Pseudo<"mmve8.x.a">;
-  def BOSC_AME_MMVE16_X_A_PSEUDO : RVInstBOSCAMEMove_X_A_Pseudo<"mmve16.x.a">;
-  def BOSC_AME_MMVE32_X_A_PSEUDO : RVInstBOSCAMEMove_X_A_Pseudo<"mmve32.x.a">;
-  def BOSC_AME_MMVE64_X_A_PSEUDO : RVInstBOSCAMEMove_X_A_Pseudo<"mmve64.x.a">;
-
-  def BOSC_AME_MMVE8_A_X_PSEUDO  : RVInstBOSCAMEMove_A_X_Pseudo<"mmve8.a.x">;
-  def BOSC_AME_MMVE16_A_X_PSEUDO : RVInstBOSCAMEMove_A_X_Pseudo<"mmve16.a.x">;
-  def BOSC_AME_MMVE32_A_X_PSEUDO : RVInstBOSCAMEMove_A_X_Pseudo<"mmve32.a.x">;
-  def BOSC_AME_MMVE64_A_X_PSEUDO : RVInstBOSCAMEMove_A_X_Pseudo<"mmve64.a.x">;
-
-  def BOSC_AME_MFMVE8_F_T_PSEUDO  : RVInstBOSCAMEMove_F_T_Pseudo<"mfmve8.f.t">;
-  def BOSC_AME_MFMVE16_F_T_PSEUDO : RVInstBOSCAMEMove_F_T_Pseudo<"mfmve16.f.t">;
-  def BOSC_AME_MFMVE32_F_T_PSEUDO : RVInstBOSCAMEMove_F_T_Pseudo<"mfmve32.f.t">;
-  def BOSC_AME_MFMVE64_F_T_PSEUDO : RVInstBOSCAMEMove_F_T_Pseudo<"mfmve64.f.t">;
-
-  def BOSC_AME_MFMVE8_T_F_PSEUDO  : RVInstBOSCAMEMove_T_F_Pseudo<"mfmve8.t.f">;
-  def BOSC_AME_MFMVE16_T_F_PSEUDO : RVInstBOSCAMEMove_T_F_Pseudo<"mfmve16.t.f">;
-  def BOSC_AME_MFMVE32_T_F_PSEUDO : RVInstBOSCAMEMove_T_F_Pseudo<"mfmve32.t.f">;
-  def BOSC_AME_MFMVE64_T_F_PSEUDO : RVInstBOSCAMEMove_T_F_Pseudo<"mfmve64.t.f">;
-
-  def BOSC_AME_MFMVE8_F_A_PSEUDO  : RVInstBOSCAMEMove_F_A_Pseudo<"mfmve8.f.a">;
-  def BOSC_AME_MFMVE16_F_A_PSEUDO : RVInstBOSCAMEMove_F_A_Pseudo<"mfmve16.f.a">;
-  def BOSC_AME_MFMVE32_F_A_PSEUDO : RVInstBOSCAMEMove_F_A_Pseudo<"mfmve32.f.a">;
-  def BOSC_AME_MFMVE64_F_A_PSEUDO : RVInstBOSCAMEMove_F_A_Pseudo<"mfmve64.f.a">;
-
-  def BOSC_AME_MFMVE8_A_F_PSEUDO  : RVInstBOSCAMEMove_A_F_Pseudo<"mfmve8.a.f">;
-  def BOSC_AME_MFMVE16_A_F_PSEUDO : RVInstBOSCAMEMove_A_F_Pseudo<"mfmve16.a.f">;
-  def BOSC_AME_MFMVE32_A_F_PSEUDO : RVInstBOSCAMEMove_A_F_Pseudo<"mfmve32.a.f">;
-  def BOSC_AME_MFMVE64_A_F_PSEUDO : RVInstBOSCAMEMove_A_F_Pseudo<"mfmve64.a.f">;
-  //----------------------------------------------------------------------
-  // Broadcast Pseudos
-  //----------------------------------------------------------------------
-  def BOSC_AME_MBCAR_M_PSEUDO : RVInstBOSCAMEBroadcastTile_Pseudo<"mbcar.m">;
-  def BOSC_AME_MBCBR_M_PSEUDO : RVInstBOSCAMEBroadcastTile_Pseudo<"mbcbr.m">;
-  def BOSC_AME_MBCCR_M_PSEUDO : RVInstBOSCAMEBroadcastAcc_Pseudo<"mbccr.m">;
-
-  def BOSC_AME_MBCACE8_M_PSEUDO  : RVInstBOSCAMEBroadcastTile_Pseudo<"mbcace8.m">;
-  def BOSC_AME_MBCACE16_M_PSEUDO : RVInstBOSCAMEBroadcastTile_Pseudo<"mbcace16.m">;
-  def BOSC_AME_MBCACE32_M_PSEUDO : RVInstBOSCAMEBroadcastTile_Pseudo<"mbcace32.m">;
-  def BOSC_AME_MBCACE64_M_PSEUDO : RVInstBOSCAMEBroadcastTile_Pseudo<"mbcace64.m">;
-
-  def BOSC_AME_MBCBCE8_M_PSEUDO  : RVInstBOSCAMEBroadcastTile_Pseudo<"mbcbce8.m">;
-  def BOSC_AME_MBCBCE16_M_PSEUDO : RVInstBOSCAMEBroadcastTile_Pseudo<"mbcbce16.m">;
-  def BOSC_AME_MBCBCE32_M_PSEUDO : RVInstBOSCAMEBroadcastTile_Pseudo<"mbcbce32.m">;
-  def BOSC_AME_MBCBCE64_M_PSEUDO : RVInstBOSCAMEBroadcastTile_Pseudo<"mbcbce64.m">;
-
-  def BOSC_AME_MBCCCE8_M_PSEUDO  : RVInstBOSCAMEBroadcastAcc_Pseudo<"mbccce8.m">;
-  def BOSC_AME_MBCCCE16_M_PSEUDO : RVInstBOSCAMEBroadcastAcc_Pseudo<"mbccce16.m">;
-  def BOSC_AME_MBCCCE32_M_PSEUDO : RVInstBOSCAMEBroadcastAcc_Pseudo<"mbccce32.m">;
-  def BOSC_AME_MBCCCE64_M_PSEUDO : RVInstBOSCAMEBroadcastAcc_Pseudo<"mbccce64.m">;
-
-  def BOSC_AME_MBCAEE8_M_PSEUDO  : RVInstBOSCAMEBroadcastTile_Pseudo<"mbcaee8.m">;
-  def BOSC_AME_MBCAEE16_M_PSEUDO : RVInstBOSCAMEBroadcastTile_Pseudo<"mbcaee16.m">;
-  def BOSC_AME_MBCAEE32_M_PSEUDO : RVInstBOSCAMEBroadcastTile_Pseudo<"mbcaee32.m">;
-  def BOSC_AME_MBCAEE64_M_PSEUDO : RVInstBOSCAMEBroadcastTile_Pseudo<"mbcaee64.m">;
-
-  def BOSC_AME_MBCBEE8_M_PSEUDO  : RVInstBOSCAMEBroadcastTile_Pseudo<"mbcbee8.m">;
-  def BOSC_AME_MBCBEE16_M_PSEUDO : RVInstBOSCAMEBroadcastTile_Pseudo<"mbcbee16.m">;
-  def BOSC_AME_MBCBEE32_M_PSEUDO : RVInstBOSCAMEBroadcastTile_Pseudo<"mbcbee32.m">;
-  def BOSC_AME_MBCBEE64_M_PSEUDO : RVInstBOSCAMEBroadcastTile_Pseudo<"mbcbee64.m">;
-
-  def BOSC_AME_MBCCEE8_M_PSEUDO  : RVInstBOSCAMEBroadcastAcc_Pseudo<"mbccee8.m">;
-  def BOSC_AME_MBCCEE16_M_PSEUDO : RVInstBOSCAMEBroadcastAcc_Pseudo<"mbccee16.m">;
-  def BOSC_AME_MBCCEE32_M_PSEUDO : RVInstBOSCAMEBroadcastAcc_Pseudo<"mbccee32.m">;
-  def BOSC_AME_MBCCEE64_M_PSEUDO : RVInstBOSCAMEBroadcastAcc_Pseudo<"mbccee64.m">;
-  //----------------------------------------------------------------------
-  // Transpose Pseudos
-  //----------------------------------------------------------------------
-  def BOSC_AME_MTAE8_M_PSEUDO  : RVInstBOSCAMETransposeTile_Pseudo<"mtae8.m">;
-  def BOSC_AME_MTAE16_M_PSEUDO : RVInstBOSCAMETransposeTile_Pseudo<"mtae16.m">;
-  def BOSC_AME_MTAE32_M_PSEUDO : RVInstBOSCAMETransposeTile_Pseudo<"mtae32.m">;
-  def BOSC_AME_MTAE64_M_PSEUDO : RVInstBOSCAMETransposeTile_Pseudo<"mtae64.m">;
-
-  def BOSC_AME_MTBE8_M_PSEUDO  : RVInstBOSCAMETransposeTile_Pseudo<"mtbe8.m">;
-  def BOSC_AME_MTBE16_M_PSEUDO : RVInstBOSCAMETransposeTile_Pseudo<"mtbe16.m">;
-  def BOSC_AME_MTBE32_M_PSEUDO : RVInstBOSCAMETransposeTile_Pseudo<"mtbe32.m">;
-  def BOSC_AME_MTBE64_M_PSEUDO : RVInstBOSCAMETransposeTile_Pseudo<"mtbe64.m">;
-
-  def BOSC_AME_MTCE8_M_PSEUDO  : RVInstBOSCAMETransposeAcc_Pseudo<"mtce8.m">;
-  def BOSC_AME_MTCE16_M_PSEUDO : RVInstBOSCAMETransposeAcc_Pseudo<"mtce16.m">;
-  def BOSC_AME_MTCE32_M_PSEUDO : RVInstBOSCAMETransposeAcc_Pseudo<"mtce32.m">;
-  def BOSC_AME_MTCE64_M_PSEUDO : RVInstBOSCAMETransposeAcc_Pseudo<"mtce64.m">;
-}
-
-// Pseudo element-wise instruction
-// Base Pseudo class for 3-operand element-wise instructions (e.g., md, ms1, ms2)
-class RVInstBOSCAMEEleWise3_Pseudo<string opcodestr>
-    : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, BOSCAMEAccIndex:$ms1, BOSCAMEAccIndex:$ms2), []> {
-  let AsmString = opcodestr # "\tacc$md, acc$ms1, acc$ms2";
-}
-
-// Base Pseudo class for 2-operand element-wise instructions (e.g., md, ms1 for sqrt)
-class RVInstBOSCAMEEleWise2_Pseudo<string opcodestr>
-    : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, BOSCAMEAccIndex:$ms1), []> {
-  let AsmString = opcodestr # "\tacc$md, acc$ms1";
-}
-
-let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, isCodeGenOnly = 1 in {
-  //===--------------------------------------------------------------------===//
-  // 1. ADD / SUB - No Widen
-  //===--------------------------------------------------------------------===//
-  def BOSC_AME_MADDU_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"maddu.mm">;
-  def BOSC_AME_MADDU_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"maddu.hb.mm">;
-  def BOSC_AME_MADDU_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"maddu.b.mm">;
-  def BOSC_AME_MADDU_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"maddu.h.mm">;
-  def BOSC_AME_MADDU_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"maddu.w.mm">;
-  def BOSC_AME_MADDU_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"maddu.dw.mm">;
-
-  def BOSC_AME_MSADDU_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"msaddu.mm">;
-  def BOSC_AME_MSADDU_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msaddu.hb.mm">;
-  def BOSC_AME_MSADDU_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msaddu.b.mm">;
-  def BOSC_AME_MSADDU_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msaddu.h.mm">;
-  def BOSC_AME_MSADDU_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msaddu.w.mm">;
-  def BOSC_AME_MSADDU_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msaddu.dw.mm">;
-
-  def BOSC_AME_MADD_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"madd.mm">;
-  def BOSC_AME_MADD_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"madd.hb.mm">;
-  def BOSC_AME_MADD_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"madd.b.mm">;
-  def BOSC_AME_MADD_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"madd.h.mm">;
-  def BOSC_AME_MADD_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"madd.w.mm">;
-  def BOSC_AME_MADD_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"madd.dw.mm">;
-
-  def BOSC_AME_MSADD_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"msadd.mm">;
-  def BOSC_AME_MSADD_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msadd.hb.mm">;
-  def BOSC_AME_MSADD_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msadd.b.mm">;
-  def BOSC_AME_MSADD_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msadd.h.mm">;
-  def BOSC_AME_MSADD_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msadd.w.mm">;
-  def BOSC_AME_MSADD_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msadd.dw.mm">;
-
-  def BOSC_AME_MFADD_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mfadd.mm">;
-  def BOSC_AME_MFADD_CF_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mfadd.cf.mm">;
-  def BOSC_AME_MFADD_HF_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mfadd.hf.mm">;
-  def BOSC_AME_MFADD_F_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mfadd.f.mm">;
-  def BOSC_AME_MFADD_D_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mfadd.d.mm">;
-
-  def BOSC_AME_MSUBU_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"msubu.mm">;
-  def BOSC_AME_MSUBU_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msubu.hb.mm">;
-  def BOSC_AME_MSUBU_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msubu.b.mm">;
-  def BOSC_AME_MSUBU_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msubu.h.mm">;
-  def BOSC_AME_MSUBU_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msubu.w.mm">;
-  def BOSC_AME_MSUBU_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msubu.dw.mm">;
-
-  def BOSC_AME_MSSUBU_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mssubu.mm">;
-  def BOSC_AME_MSSUBU_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mssubu.hb.mm">;
-  def BOSC_AME_MSSUBU_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mssubu.b.mm">;
-  def BOSC_AME_MSSUBU_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mssubu.h.mm">;
-  def BOSC_AME_MSSUBU_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mssubu.w.mm">;
-  def BOSC_AME_MSSUBU_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mssubu.dw.mm">;
-
-  def BOSC_AME_MSUB_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"msub.mm">;
-  def BOSC_AME_MSUB_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msub.hb.mm">;
-  def BOSC_AME_MSUB_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msub.b.mm">;
-  def BOSC_AME_MSUB_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msub.h.mm">;
-  def BOSC_AME_MSUB_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msub.w.mm">;
-  def BOSC_AME_MSUB_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msub.dw.mm">;
-
-  def BOSC_AME_MSSUB_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mssub.mm">;
-  def BOSC_AME_MSSUB_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mssub.hb.mm">;
-  def BOSC_AME_MSSUB_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mssub.b.mm">;
-  def BOSC_AME_MSSUB_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mssub.h.mm">;
-  def BOSC_AME_MSSUB_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mssub.w.mm">;
-  def BOSC_AME_MSSUB_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mssub.dw.mm">;
-
-  def BOSC_AME_MFSUB_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mfsub.mm">;
-  def BOSC_AME_MFSUB_CF_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mfsub.cf.mm">;
-  def BOSC_AME_MFSUB_HF_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mfsub.hf.mm">;
-  def BOSC_AME_MFSUB_F_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mfsub.f.mm">;
-  def BOSC_AME_MFSUB_D_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mfsub.d.mm">;
-  //===--------------------------------------------------------------------===//
-  // 2. ADD / SUB - Double Widen
-  //===--------------------------------------------------------------------===//
-  def BOSC_AME_MWADDU_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mwaddu.mm">;
-  def BOSC_AME_MWADDU_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mwaddu.hb.mm">;
-  def BOSC_AME_MWADDU_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwaddu.b.mm">;
-  def BOSC_AME_MWADDU_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwaddu.h.mm">;
-  def BOSC_AME_MWADDU_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwaddu.w.mm">;
-
-  def BOSC_AME_MWADD_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mwadd.mm">;
-  def BOSC_AME_MWADD_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mwadd.hb.mm">;
-  def BOSC_AME_MWADD_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwadd.b.mm">;
-  def BOSC_AME_MWADD_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwadd.h.mm">;
-  def BOSC_AME_MWADD_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwadd.w.mm">;
-
-  def BOSC_AME_MFWADD_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mfwadd.mm">;
-  def BOSC_AME_MFWADD_CF_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mfwadd.cf.mm">;
-  def BOSC_AME_MFWADD_HF_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mfwadd.hf.mm">;
-  def BOSC_AME_MFWADD_F_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mfwadd.f.mm">;
-
-  def BOSC_AME_MWSUBU_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mwsubu.mm">;
-  def BOSC_AME_MWSUBU_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mwsubu.hb.mm">;
-  def BOSC_AME_MWSUBU_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwsubu.b.mm">;
-  def BOSC_AME_MWSUBU_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwsubu.h.mm">;
-  def BOSC_AME_MWSUBU_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwsubu.w.mm">;
-
-  def BOSC_AME_MWSUB_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mwsub.mm">;
-  def BOSC_AME_MWSUB_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mwsub.hb.mm">;
-  def BOSC_AME_MWSUB_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwsub.b.mm">;
-  def BOSC_AME_MWSUB_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwsub.h.mm">;
-  def BOSC_AME_MWSUB_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwsub.w.mm">;
-
-  def BOSC_AME_MFWSUB_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mfwsub.mm">;
-  def BOSC_AME_MFWSUB_CF_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mfwsub.cf.mm">;
-  def BOSC_AME_MFWSUB_HF_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mfwsub.hf.mm">;
-  def BOSC_AME_MFWSUB_F_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mfwsub.f.mm">;
-  //===--------------------------------------------------------------------===//
-  // 3. MIN / MAX - No Widen
-  //===--------------------------------------------------------------------===//
-  def BOSC_AME_MMINU_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mminu.mm">;
-  def BOSC_AME_MMINU_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mminu.hb.mm">;
-  def BOSC_AME_MMINU_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mminu.b.mm">;
-  def BOSC_AME_MMINU_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mminu.h.mm">;
-  def BOSC_AME_MMINU_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mminu.w.mm">;
-  def BOSC_AME_MMINU_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mminu.dw.mm">;
-
-  def BOSC_AME_MMAXU_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mmaxu.mm">;
-  def BOSC_AME_MMAXU_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mmaxu.hb.mm">;
-  def BOSC_AME_MMAXU_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmaxu.b.mm">;
-  def BOSC_AME_MMAXU_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmaxu.h.mm">;
-  def BOSC_AME_MMAXU_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmaxu.w.mm">;
-  def BOSC_AME_MMAXU_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mmaxu.dw.mm">;
-
-  def BOSC_AME_MMIN_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mmin.mm">;
-  def BOSC_AME_MMIN_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mmin.hb.mm">;
-  def BOSC_AME_MMIN_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmin.b.mm">;
-  def BOSC_AME_MMIN_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmin.h.mm">;
-  def BOSC_AME_MMIN_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmin.w.mm">;
-  def BOSC_AME_MMIN_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mmin.dw.mm">;
-
-  def BOSC_AME_MMAX_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mmax.mm">;
-  def BOSC_AME_MMAX_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mmax.hb.mm">;
-  def BOSC_AME_MMAX_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmax.b.mm">;
-  def BOSC_AME_MMAX_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmax.h.mm">;
-  def BOSC_AME_MMAX_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmax.w.mm">;
-  def BOSC_AME_MMAX_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mmax.dw.mm">;
-
-  def BOSC_AME_MFMIN_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mfmin.mm">;
-  def BOSC_AME_MFMIN_CF_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mfmin.cf.mm">;
-  def BOSC_AME_MFMIN_HF_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mfmin.hf.mm">;
-  def BOSC_AME_MFMIN_F_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mfmin.f.mm">;
-  def BOSC_AME_MFMIN_D_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mfmin.d.mm">;
-
-  def BOSC_AME_MFMAX_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mfmax.mm">;
-  def BOSC_AME_MFMAX_CF_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mfmax.cf.mm">;
-  def BOSC_AME_MFMAX_HF_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mfmax.hf.mm">;
-  def BOSC_AME_MFMAX_F_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mfmax.f.mm">;
-  def BOSC_AME_MFMAX_D_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mfmax.d.mm">;
-  //===--------------------------------------------------------------------===//
-  // 4. MUL / MULH / DIV - No Widen
-  //===--------------------------------------------------------------------===//
-  def BOSC_AME_MSMULU_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"msmulu.mm">;
-  def BOSC_AME_MSMULU_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msmulu.hb.mm">;
-  def BOSC_AME_MSMULU_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msmulu.b.mm">;
-  def BOSC_AME_MSMULU_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msmulu.h.mm">;
-  def BOSC_AME_MSMULU_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msmulu.w.mm">;
-  def BOSC_AME_MSMULU_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msmulu.dw.mm">;
-
-  def BOSC_AME_MMUL_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mmul.mm">;
-  def BOSC_AME_MMUL_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mmul.hb.mm">;
-  def BOSC_AME_MMUL_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmul.b.mm">;
-  def BOSC_AME_MMUL_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmul.h.mm">;
-  def BOSC_AME_MMUL_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmul.w.mm">;
-  def BOSC_AME_MMUL_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mmul.dw.mm">;
-
-  def BOSC_AME_MSMUL_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"msmul.mm">;
-  def BOSC_AME_MSMUL_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msmul.hb.mm">;
-  def BOSC_AME_MSMUL_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msmul.b.mm">;
-  def BOSC_AME_MSMUL_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msmul.h.mm">;
-  def BOSC_AME_MSMUL_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msmul.w.mm">;
-  def BOSC_AME_MSMUL_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msmul.dw.mm">;
-
-  def BOSC_AME_MFMUL_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mfmul.mm">;
-  def BOSC_AME_MFMUL_CF_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mfmul.cf.mm">;
-  def BOSC_AME_MFMUL_HF_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mfmul.hf.mm">;
-  def BOSC_AME_MFMUL_F_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mfmul.f.mm">;
-  def BOSC_AME_MFMUL_D_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mfmul.d.mm">;
-
-  def BOSC_AME_MMULHU_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mmulhu.mm">;
-  def BOSC_AME_MMULHU_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mmulhu.hb.mm">;
-  def BOSC_AME_MMULHU_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmulhu.b.mm">;
-  def BOSC_AME_MMULHU_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmulhu.h.mm">;
-  def BOSC_AME_MMULHU_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmulhu.w.mm">;
-  def BOSC_AME_MMULHU_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mmulhu.dw.mm">;
-
-  def BOSC_AME_MMULH_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mmulh.mm">;
-  def BOSC_AME_MMULH_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mmulh.hb.mm">;
-  def BOSC_AME_MMULH_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmulh.b.mm">;
-  def BOSC_AME_MMULH_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmulh.h.mm">;
-  def BOSC_AME_MMULH_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmulh.w.mm">;
-  def BOSC_AME_MMULH_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mmulh.dw.mm">;
-
-  def BOSC_AME_MMULHSU_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mmulhsu.mm">;
-  def BOSC_AME_MMULHSU_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mmulhsu.hb.mm">;
-  def BOSC_AME_MMULHSU_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmulhsu.b.mm">;
-  def BOSC_AME_MMULHSU_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmulhsu.h.mm">;
-  def BOSC_AME_MMULHSU_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mmulhsu.w.mm">;
-  def BOSC_AME_MMULHSU_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mmulhsu.dw.mm">;
-
-  def BOSC_AME_MSMULSU_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"msmulsu.mm">;
-  def BOSC_AME_MSMULSU_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msmulsu.hb.mm">;
-  def BOSC_AME_MSMULSU_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msmulsu.b.mm">;
-  def BOSC_AME_MSMULSU_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msmulsu.h.mm">;
-  def BOSC_AME_MSMULSU_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msmulsu.w.mm">;
-  def BOSC_AME_MSMULSU_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msmulsu.dw.mm">;
-
-  def BOSC_AME_MFDIV_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mfdiv.mm">;
-  def BOSC_AME_MFDIV_CF_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mfdiv.cf.mm">;
-  def BOSC_AME_MFDIV_HF_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mfdiv.hf.mm">;
-  def BOSC_AME_MFDIV_F_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mfdiv.f.mm">;
-  def BOSC_AME_MFDIV_D_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mfdiv.d.mm">;
-  //===--------------------------------------------------------------------===//
-  // 5. MUL - Double Widen
-  //===--------------------------------------------------------------------===//
-  def BOSC_AME_MWMULU_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mwmulu.mm">;
-  def BOSC_AME_MWMULU_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mwmulu.hb.mm">;
-  def BOSC_AME_MWMULU_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwmulu.b.mm">;
-  def BOSC_AME_MWMULU_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwmulu.h.mm">;
-  def BOSC_AME_MWMULU_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwmulu.w.mm">;
-
-  def BOSC_AME_MWMUL_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mwmul.mm">;
-  def BOSC_AME_MWMUL_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mwmul.hb.mm">;
-  def BOSC_AME_MWMUL_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwmul.b.mm">;
-  def BOSC_AME_MWMUL_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwmul.h.mm">;
-  def BOSC_AME_MWMUL_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwmul.w.mm">;
-
-  def BOSC_AME_MWMULSU_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mwmulsu.mm">;
-  def BOSC_AME_MWMULSU_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mwmulsu.hb.mm">;
-  def BOSC_AME_MWMULSU_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwmulsu.b.mm">;
-  def BOSC_AME_MWMULSU_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwmulsu.h.mm">;
-  def BOSC_AME_MWMULSU_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mwmulsu.w.mm">;
-
-  def BOSC_AME_MFWMUL_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"mfwmul.mm">;
-  def BOSC_AME_MFWMUL_CF_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mfwmul.cf.mm">;
-  def BOSC_AME_MFWMUL_HF_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mfwmul.hf.mm">;
-  def BOSC_AME_MFWMUL_F_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mfwmul.f.mm">;
-  //===--------------------------------------------------------------------===//
-  // 6. LOGIC & SHIFT - No Widen
-  //===--------------------------------------------------------------------===//
-  def BOSC_AME_MAND_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mand.mm">;
-  def BOSC_AME_MOR_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"mor.mm">;
-  def BOSC_AME_MXOR_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"mxor.mm">;
-
-  def BOSC_AME_MSLL_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"msll.mm">;
-  def BOSC_AME_MSLL_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msll.hb.mm">;
-  def BOSC_AME_MSLL_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msll.b.mm">;
-  def BOSC_AME_MSLL_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msll.h.mm">;
-  def BOSC_AME_MSLL_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msll.w.mm">;
-  def BOSC_AME_MSLL_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msll.dw.mm">;
-
-  def BOSC_AME_MSRL_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"msrl.mm">;
-  def BOSC_AME_MSRL_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msrl.hb.mm">;
-  def BOSC_AME_MSRL_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msrl.b.mm">;
-  def BOSC_AME_MSRL_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msrl.h.mm">;
-  def BOSC_AME_MSRL_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msrl.w.mm">;
-  def BOSC_AME_MSRL_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msrl.dw.mm">;
-
-  def BOSC_AME_MSRA_MM_PSEUDO    : RVInstBOSCAMEEleWise3_Pseudo<"msra.mm">;
-  def BOSC_AME_MSRA_HB_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msra.hb.mm">;
-  def BOSC_AME_MSRA_B_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msra.b.mm">;
-  def BOSC_AME_MSRA_H_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msra.h.mm">;
-  def BOSC_AME_MSRA_W_MM_PSEUDO  : RVInstBOSCAMEEleWise3_Pseudo<"msra.w.mm">;
-  def BOSC_AME_MSRA_DW_MM_PSEUDO : RVInstBOSCAMEEleWise3_Pseudo<"msra.dw.mm">;
-  //===--------------------------------------------------------------------===//
-  // 7. SQRT - No Widen (Unary, 2-Operand)
-  //===--------------------------------------------------------------------===//
-  def BOSC_AME_MFSQRT_MM_PSEUDO    : RVInstBOSCAMEEleWise2_Pseudo<"mfsqrt.mm">;
-  def BOSC_AME_MFSQRT_CF_MM_PSEUDO : RVInstBOSCAMEEleWise2_Pseudo<"mfsqrt.cf.mm">;
-  def BOSC_AME_MFSQRT_HF_MM_PSEUDO : RVInstBOSCAMEEleWise2_Pseudo<"mfsqrt.hf.mm">;
-  def BOSC_AME_MFSQRT_F_MM_PSEUDO  : RVInstBOSCAMEEleWise2_Pseudo<"mfsqrt.f.mm">;
-  def BOSC_AME_MFSQRT_D_MM_PSEUDO  : RVInstBOSCAMEEleWise2_Pseudo<"mfsqrt.d.mm">;
-}
-
-// Pseudo matrix multiply instruction
-// md: AccReg index (0-7), ms1/ms2: TileReg indices (0-7)
-// Base Pseudo class for all MMA instructions
-class RVInstBOSCAMEMMA_Pseudo<string opcodestr>
-    : Pseudo<(outs), (ins BOSCAMEAccIndex:$md, BOSCAMETileIndex:$ms1, BOSCAMETileIndex:$ms2), []> {
-  let AsmString = opcodestr # "\tacc$md, tr$ms1, tr$ms2";
-}
-
-let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, isCodeGenOnly = 1 in {
-  //===--------------------------------------------------------------------===//
-  // 1. No-widen matrix multiply-accumulate
-  //===--------------------------------------------------------------------===//
-  // int
-  def BOSC_AME_MMA_MM_PSEUDO      : RVInstBOSCAMEMMA_Pseudo<"mma.mm">;
-  def BOSC_AME_MMA_H_MM_PSEUDO    : RVInstBOSCAMEMMA_Pseudo<"mma.h.mm">;
-  def BOSC_AME_MMA_W_MM_PSEUDO    : RVInstBOSCAMEMMA_Pseudo<"mma.w.mm">;
-  def BOSC_AME_MMA_DW_MM_PSEUDO   : RVInstBOSCAMEMMA_Pseudo<"mma.dw.mm">;
-  // int, saturated
-  def BOSC_AME_MSMA_MM_PSEUDO     : RVInstBOSCAMEMMA_Pseudo<"msma.mm">;
-  def BOSC_AME_MSMA_H_MM_PSEUDO   : RVInstBOSCAMEMMA_Pseudo<"msma.h.mm">;
-  def BOSC_AME_MSMA_W_MM_PSEUDO   : RVInstBOSCAMEMMA_Pseudo<"msma.w.mm">;
-  def BOSC_AME_MSMA_DW_MM_PSEUDO  : RVInstBOSCAMEMMA_Pseudo<"msma.dw.mm">;
-  // uint
-  def BOSC_AME_MMAU_MM_PSEUDO     : RVInstBOSCAMEMMA_Pseudo<"mmau.mm">;
-  def BOSC_AME_MMAU_H_MM_PSEUDO   : RVInstBOSCAMEMMA_Pseudo<"mmau.h.mm">;
-  def BOSC_AME_MMAU_W_MM_PSEUDO   : RVInstBOSCAMEMMA_Pseudo<"mmau.w.mm">;
-  def BOSC_AME_MMAU_DW_MM_PSEUDO  : RVInstBOSCAMEMMA_Pseudo<"mmau.dw.mm">;
-  // uint, saturated
-  def BOSC_AME_MSMAU_MM_PSEUDO    : RVInstBOSCAMEMMA_Pseudo<"msmau.mm">;
-  def BOSC_AME_MSMAU_H_MM_PSEUDO  : RVInstBOSCAMEMMA_Pseudo<"msmau.h.mm">;
-  def BOSC_AME_MSMAU_W_MM_PSEUDO  : RVInstBOSCAMEMMA_Pseudo<"msmau.w.mm">;
-  def BOSC_AME_MSMAU_DW_MM_PSEUDO : RVInstBOSCAMEMMA_Pseudo<"msmau.dw.mm">;
-  // float point
-  def BOSC_AME_MFMA_MM_PSEUDO     : RVInstBOSCAMEMMA_Pseudo<"mfma.mm">;
-  def BOSC_AME_MFMA_HF_MM_PSEUDO  : RVInstBOSCAMEMMA_Pseudo<"mfma.hf.mm">;
-  def BOSC_AME_MFMA_F_MM_PSEUDO   : RVInstBOSCAMEMMA_Pseudo<"mfma.f.mm">;
-  def BOSC_AME_MFMA_D_MM_PSEUDO   : RVInstBOSCAMEMMA_Pseudo<"mfma.d.mm">;
-  //===--------------------------------------------------------------------===//
-  // 2. Double-widen matrix multiply-accumulate
-  //===--------------------------------------------------------------------===//
-  // uint
-  def BOSC_AME_MWMAU_MM_PSEUDO    : RVInstBOSCAMEMMA_Pseudo<"mwmau.mm">;
-  def BOSC_AME_MWMAU_H_MM_PSEUDO  : RVInstBOSCAMEMMA_Pseudo<"mwmau.h.mm">;
-  def BOSC_AME_MWMAU_W_MM_PSEUDO  : RVInstBOSCAMEMMA_Pseudo<"mwmau.w.mm">;
-  // uint, saturated
-  def BOSC_AME_MSWMAU_MM_PSEUDO   : RVInstBOSCAMEMMA_Pseudo<"mswmau.mm">;
-  def BOSC_AME_MSWMAU_H_MM_PSEUDO : RVInstBOSCAMEMMA_Pseudo<"mswmau.h.mm">;
-  def BOSC_AME_MSWMAU_W_MM_PSEUDO : RVInstBOSCAMEMMA_Pseudo<"mswmau.w.mm">;
-  // int
-  def BOSC_AME_MWMA_MM_PSEUDO     : RVInstBOSCAMEMMA_Pseudo<"mwma.mm">;
-  def BOSC_AME_MWMA_H_MM_PSEUDO   : RVInstBOSCAMEMMA_Pseudo<"mwma.h.mm">;
-  def BOSC_AME_MWMA_W_MM_PSEUDO   : RVInstBOSCAMEMMA_Pseudo<"mwma.w.mm">;
-  // int, saturated
-  def BOSC_AME_MSWMA_MM_PSEUDO    : RVInstBOSCAMEMMA_Pseudo<"mswma.mm">;
-  def BOSC_AME_MSWMA_H_MM_PSEUDO  : RVInstBOSCAMEMMA_Pseudo<"mswma.h.mm">;
-  def BOSC_AME_MSWMA_W_MM_PSEUDO  : RVInstBOSCAMEMMA_Pseudo<"mswma.w.mm">;
-  // float point
-  def BOSC_AME_MFWMA_MM_PSEUDO    : RVInstBOSCAMEMMA_Pseudo<"mfwma.mm">;
-  def BOSC_AME_MFWMA_CF_MM_PSEUDO : RVInstBOSCAMEMMA_Pseudo<"mfwma.cf.mm">;
-  def BOSC_AME_MFWMA_HF_MM_PSEUDO : RVInstBOSCAMEMMA_Pseudo<"mfwma.hf.mm">;
-  def BOSC_AME_MFWMA_F_MM_PSEUDO  : RVInstBOSCAMEMMA_Pseudo<"mfwma.f.mm">;
-  //===--------------------------------------------------------------------===//
-  // 3. Quad-widen matrix multiply-accumulate
-  //===--------------------------------------------------------------------===//
-  // uint
-  def BOSC_AME_MQMAU_MM_PSEUDO    : RVInstBOSCAMEMMA_Pseudo<"mqmau.mm">;
-  def BOSC_AME_MQMAU_B_MM_PSEUDO  : RVInstBOSCAMEMMA_Pseudo<"mqmau.b.mm">;
-  // uint, saturated
-  def BOSC_AME_MSQMAU_MM_PSEUDO   : RVInstBOSCAMEMMA_Pseudo<"msqmau.mm">;
-  def BOSC_AME_MSQMAU_B_MM_PSEUDO : RVInstBOSCAMEMMA_Pseudo<"msqmau.b.mm">;
-  // int
-  def BOSC_AME_MQMA_MM_PSEUDO     : RVInstBOSCAMEMMA_Pseudo<"mqma.mm">;
-  def BOSC_AME_MQMA_B_MM_PSEUDO   : RVInstBOSCAMEMMA_Pseudo<"mqma.b.mm">;
-  // int, saturated
-  def BOSC_AME_MSQMA_MM_PSEUDO    : RVInstBOSCAMEMMA_Pseudo<"msqma.mm">;
-  def BOSC_AME_MSQMA_B_MM_PSEUDO  : RVInstBOSCAMEMMA_Pseudo<"msqma.b.mm">;
-  // float point
-  def BOSC_AME_MFQMA_MM_PSEUDO    : RVInstBOSCAMEMMA_Pseudo<"mfqma.mm">;
-  def BOSC_AME_MFQMA_CF_MM_PSEUDO : RVInstBOSCAMEMMA_Pseudo<"mfqma.cf.mm">;
-  //===--------------------------------------------------------------------===//
-  // 4. Oct-widen matrix multiply-accumulate
-  //===--------------------------------------------------------------------===//
-  // uint
-  def BOSC_AME_MOMAU_MM_PSEUDO    : RVInstBOSCAMEMMA_Pseudo<"momau.mm">;
-  def BOSC_AME_MOMAU_HB_MM_PSEUDO : RVInstBOSCAMEMMA_Pseudo<"momau.hb.mm">;
-  // uint, saturated
-  def BOSC_AME_MSOMAU_MM_PSEUDO   : RVInstBOSCAMEMMA_Pseudo<"msomau.mm">;
-  def BOSC_AME_MSOMAU_HB_MM_PSEUDO: RVInstBOSCAMEMMA_Pseudo<"msomau.hb.mm">;
-  // int
-  def BOSC_AME_MOMA_MM_PSEUDO     : RVInstBOSCAMEMMA_Pseudo<"moma.mm">;
-  def BOSC_AME_MOMA_HB_MM_PSEUDO  : RVInstBOSCAMEMMA_Pseudo<"moma.hb.mm">;
-  // int, saturated
-  def BOSC_AME_MSOMA_MM_PSEUDO    : RVInstBOSCAMEMMA_Pseudo<"msoma.mm">;
-  def BOSC_AME_MSOMA_HB_MM_PSEUDO : RVInstBOSCAMEMMA_Pseudo<"msoma.hb.mm">;
-}
-
-//===----------------------------------------------------------------------===//
-// Pattern Matching for 32-bit New Instructions
-//===----------------------------------------------------------------------===//
+// Integer element-wise widen: B->H, H->W, W->DW.
+def BOSCAME_I8_TO_I16  : BOSCAMEWidenInfo<BOSCAME_I16, BOSCAME_I8,  "B">;
+def BOSCAME_I16_TO_I32 : BOSCAMEWidenInfo<BOSCAME_I32, BOSCAME_I16, "H">;
+def BOSCAME_I32_TO_I64 : BOSCAMEWidenInfo<BOSCAME_I64, BOSCAME_I32, "W">;
+
+// Integer widening MMA: H->W and W->DW.
+def BOSCAME_I16_TO_I32_MMA : BOSCAMEWidenInfo<BOSCAME_I32, BOSCAME_I16, "H">;
+def BOSCAME_I32_TO_I64_MMA : BOSCAMEWidenInfo<BOSCAME_I64, BOSCAME_I32, "W">;
+
+// Floating widen: hf->f and f->d. f8/cf requires a separate LLVM MVT.
+def BOSCAME_F16_TO_F32 : BOSCAMEWidenInfo<BOSCAME_F32, BOSCAME_F16, "HF">;
+def BOSCAME_F32_TO_F64 : BOSCAMEWidenInfo<BOSCAME_F64, BOSCAME_F32, "F">;
+
+// Immediate operands marked ImmArg in the LLVM intrinsic are lowered to
+// TargetConstant nodes.  Use TImmLeaf for the DAG pattern so the matcher
+// accepts those target constants (uimm10 is an ImmLeaf used by asm operands).
+def boscame_tuimm10 : TImmLeaf<XLenVT, [{return isUInt<10>(Imm);}]>;
+
+class BOSCAMEPatConfigImm<SDPatternOperator OpNode, RVInst Inst>
+    : Pat<(XLenVT (OpNode boscame_tuimm10:$imm)),
+          (Inst boscame_tuimm10:$imm)>;
+
+class BOSCAMEPatLoad<SDPatternOperator OpNode, Instruction Inst,
+                     ValueType MatrixType>
+    : Pat<(MatrixType (OpNode iPTR:$base, (XLenVT GPR:$stride))),
+          (MatrixType (Inst iPTR:$base, (XLenVT GPR:$stride)))>;
+
+class BOSCAMEPatStore<SDPatternOperator OpNode, Instruction Inst,
+                      ValueType MatrixType, RegisterClass MatrixRC>
+    : Pat<(OpNode (MatrixType MatrixRC:$matrix), iPTR:$base,
+                  (XLenVT GPR:$stride)),
+          (Inst (MatrixType MatrixRC:$matrix), iPTR:$base,
+                (XLenVT GPR:$stride))>;
+
+class BOSCAMEPatUnaryMatrix<SDPatternOperator OpNode, Instruction Inst,
+                            ValueType DstType, RegisterClass DstRC,
+                            ValueType SrcType, RegisterClass SrcRC>
+    : Pat<(DstType (OpNode (SrcType SrcRC:$src))),
+          (DstType (Inst (SrcType SrcRC:$src)))>;
+
+class BOSCAMEPatMatrixGPR<SDPatternOperator OpNode, Instruction Inst,
+                          ValueType DstType, RegisterClass DstRC,
+                          ValueType SrcType, RegisterClass SrcRC>
+    : Pat<(DstType (OpNode (SrcType SrcRC:$src), (XLenVT GPR:$index))),
+          (DstType (Inst (SrcType SrcRC:$src), (XLenVT GPR:$index)))>;
+
+class BOSCAMEPatMatrixImm<SDPatternOperator OpNode, Instruction Inst,
+                          ValueType DstType, RegisterClass DstRC,
+                          ValueType SrcType, RegisterClass SrcRC>
+    : Pat<(DstType (OpNode (SrcType SrcRC:$src), uimm5:$index)),
+          (DstType (Inst (SrcType SrcRC:$src), uimm5:$index))>;
+
+class BOSCAMEPatMatrixToScalar<SDPatternOperator OpNode, Instruction Inst,
+                               ValueType MatrixType, RegisterClass MatrixRC,
+                               ValueType ScalarType, RegisterClass ScalarRC>
+    : Pat<(ScalarType
+            (OpNode (MatrixType MatrixRC:$matrix), (XLenVT GPR:$index))),
+          (ScalarType
+            (Inst (MatrixType MatrixRC:$matrix), (XLenVT GPR:$index)))>;
+
+class BOSCAMEPatScalarToMatrix<SDPatternOperator OpNode, Instruction Inst,
+                               ValueType MatrixType, RegisterClass MatrixRC,
+                               ValueType ScalarType, RegisterClass ScalarRC>
+    : Pat<(MatrixType
+             (OpNode (MatrixType MatrixRC:$md_in),
+                     (ScalarType ScalarRC:$value),
+                     (XLenVT GPR:$index))),
+          (MatrixType
+             (Inst (MatrixType MatrixRC:$md_in),
+                   (ScalarType ScalarRC:$value),
+                   (XLenVT GPR:$index)))>;
+
+class BOSCAMEPatAccBinary<SDPatternOperator OpNode, Instruction Inst,
+                          ValueType MatrixType>
+    : Pat<(MatrixType
+            (OpNode (MatrixType AccReg:$lhs), (MatrixType AccReg:$rhs))),
+          (MatrixType
+            (Inst (MatrixType AccReg:$lhs), (MatrixType AccReg:$rhs)))>;
+
+class BOSCAMEPatAccBinaryWiden<SDPatternOperator OpNode, Instruction Inst,
+                               ValueType DstType, ValueType SrcType>
+    : Pat<(DstType
+            (OpNode (SrcType AccReg:$lhs), (SrcType AccReg:$rhs))),
+          (DstType
+            (Inst (SrcType AccReg:$lhs), (SrcType AccReg:$rhs)))>;
+
+class BOSCAMEPatAccUnary<SDPatternOperator OpNode, Instruction Inst,
+                         ValueType MatrixType>
+    : Pat<(MatrixType (OpNode (MatrixType AccReg:$src))),
+          (MatrixType (Inst (MatrixType AccReg:$src)))>;
+
+// The first intrinsic operand is the old accumulator. It selects the tied
+// md_in operand; the instruction's "$md = $md_in" constraint ties it to md.
+class BOSCAMEPatMMA<SDPatternOperator OpNode, Instruction Inst,
+                    ValueType TileType, ValueType AccType>
+    : Pat<(AccType
+            (OpNode (AccType AccReg:$acc),
+                    (TileType TileReg:$lhs),
+                    (TileType TileReg:$rhs))),
+          (AccType
+            (Inst (AccType AccReg:$acc),
+                  (TileType TileReg:$lhs),
+                  (TileType TileReg:$rhs)))>;
+
+class BOSCAMEPatWidenMMA<SDPatternOperator OpNode, Instruction Inst,
+                         ValueType TileType, ValueType AccType>
+    : Pat<(AccType
+            (OpNode (AccType AccReg:$acc),
+                    (TileType TileReg:$lhs),
+                    (TileType TileReg:$rhs))),
+          (AccType
+            (Inst (AccType AccReg:$acc),
+                  (TileType TileReg:$lhs),
+                  (TileType TileReg:$rhs)))>;
 
 let Predicates = [HasVendorXBOSCAME] in {
-  // Configuration immediate instructions
-  def : Pat<(i64 (int_riscv_bosc_msettypei timm:$imm)),
-            (BOSC_AME_MSETTYPEI_PSEUDO timm:$imm)>;
-  def : Pat<(i64 (int_riscv_bosc_msettypehi timm:$imm)),
-            (BOSC_AME_MSETTYPEHI_PSEUDO timm:$imm)>;
-  def : Pat<(i64 (int_riscv_bosc_msettilemi timm:$imm)),
-            (BOSC_AME_MSETTILEMI_PSEUDO timm:$imm)>;
-  def : Pat<(i64 (int_riscv_bosc_msettileni timm:$imm)),
-            (BOSC_AME_MSETTILENI_PSEUDO timm:$imm)>;
-  def : Pat<(i64 (int_riscv_bosc_msettileki timm:$imm)),
-            (BOSC_AME_MSETTILEKI_PSEUDO timm:$imm)>;
-  // Register versions
-  def : Pat<(i64 (int_riscv_bosc_msettype  GPR:$rs1)),
-            (BOSC_AME_MSETTYPE_PSEUDO  GPR:$rs1)>;
-  def : Pat<(i64 (int_riscv_bosc_msettilem GPR:$rs1)),
-            (BOSC_AME_MSETTILEM_PSEUDO GPR:$rs1)>;
-  def : Pat<(i64 (int_riscv_bosc_msettilen GPR:$rs1)),
-            (BOSC_AME_MSETTILEN_PSEUDO GPR:$rs1)>;
-  def : Pat<(i64 (int_riscv_bosc_msettilek GPR:$rs1)),
-            (BOSC_AME_MSETTILEK_PSEUDO GPR:$rs1)>;
+  // Configuration instructions.
+  def : PatGpr<int_riscv_bosc_msettype,  BOSC_AME_MSETTYPE>;
+  def : PatGpr<int_riscv_bosc_msettilem, BOSC_AME_MSETTILEM>;
+  def : PatGpr<int_riscv_bosc_msettilen, BOSC_AME_MSETTILEN>;
+  def : PatGpr<int_riscv_bosc_msettilek, BOSC_AME_MSETTILEK>;
 
-  // Load instructions
-  // Matrix A
-  def : Pat<(int_riscv_bosc_mlae8_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLAE8_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlae16_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLAE16_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlae32_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLAE32_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlae64_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLAE64_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlate8_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLATE8_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlate16_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLATE16_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlate32_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLATE32_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlate64_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLATE64_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mltre8_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLTRE8_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mltre16_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLTRE16_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mltre32_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLTRE32_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mltre64_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLTRE64_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  // Matrix B
-  def : Pat<(int_riscv_bosc_mlbe8_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLBE8_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlbe16_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLBE16_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlbe32_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLBE32_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlbe64_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLBE64_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlbte8_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLBTE8_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlbte16_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLBTE16_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlbte32_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLBTE32_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlbte64_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLBTE64_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  // Matrix C (Accumulator)
-  def : Pat<(int_riscv_bosc_mlce8_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLCE8_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlce16_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLCE16_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlce32_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLCE32_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlce64_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLCE64_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlcte8_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLCTE8_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlcte16_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLCTE16_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlcte32_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLCTE32_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlcte64_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLCTE64_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlacce8_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLACCE8_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlacce16_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLACCE16_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlacce32_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLACCE32_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mlacce64_m timm:$md, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MLACCE64_M_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
+  def : BOSCAMEPatConfigImm<int_riscv_bosc_msettypei,  BOSC_AME_MSETTYPEI>;
+  def : BOSCAMEPatConfigImm<int_riscv_bosc_msettypehi, BOSC_AME_MSETTYPEHI>;
+  def : BOSCAMEPatConfigImm<int_riscv_bosc_msettilemi, BOSC_AME_MSETTILEMI>;
+  def : BOSCAMEPatConfigImm<int_riscv_bosc_msettileni, BOSC_AME_MSETTILENI>;
+  def : BOSCAMEPatConfigImm<int_riscv_bosc_msettileki, BOSC_AME_MSETTILEKI>;
 
-  // Store instruction
-  // Matrix A
-  def : Pat<(int_riscv_bosc_msae8_m timm:$ms1, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSAE8_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msae16_m timm:$ms1, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSAE16_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msae32_m timm:$ms1, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSAE32_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msae64_m timm:$ms1, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSAE64_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msate8_m timm:$ms1, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSATE8_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msate16_m timm:$ms1, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSATE16_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msate32_m timm:$ms1, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSATE32_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msate64_m timm:$ms1, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSATE64_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mstre8_m timm:$ms1, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSTRE8_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mstre16_m timm:$ms1, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSTRE16_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mstre32_m timm:$ms1, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSTRE32_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mstre64_m timm:$ms1, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSTRE64_M_PSEUDO timm:$ms1, GPR:$rs1, GPR:$rs2)>;
-  // Matrix B
-  def : Pat<(int_riscv_bosc_msbe8_m timm:$ms2, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSBE8_M_PSEUDO timm:$ms2, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msbe16_m timm:$ms2, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSBE16_M_PSEUDO timm:$ms2, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msbe32_m timm:$ms2, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSBE32_M_PSEUDO timm:$ms2, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msbe64_m timm:$ms2, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSBE64_M_PSEUDO timm:$ms2, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msbte8_m timm:$ms2, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSBTE8_M_PSEUDO timm:$ms2, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msbte16_m timm:$ms2, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSBTE16_M_PSEUDO timm:$ms2, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msbte32_m timm:$ms2, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSBTE32_M_PSEUDO timm:$ms2, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msbte64_m timm:$ms2, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSBTE64_M_PSEUDO timm:$ms2, GPR:$rs1, GPR:$rs2)>;
-  // Matrix C (Accumulator)
-  def : Pat<(int_riscv_bosc_msce8_m timm:$ms3, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSCE8_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msce16_m timm:$ms3, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSCE16_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msce32_m timm:$ms3, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSCE32_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msce64_m timm:$ms3, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSCE64_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mscte8_m timm:$ms3, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSCTE8_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mscte16_m timm:$ms3, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSCTE16_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mscte32_m timm:$ms3, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSCTE32_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mscte64_m timm:$ms3, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSCTE64_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msacce8_m timm:$ms3, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSACCE8_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msacce16_m timm:$ms3, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSACCE16_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msacce32_m timm:$ms3, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSACCE32_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_msacce64_m timm:$ms3, iPTR:$rs1, i64:$rs2),
-            (BOSC_AME_MSACCE64_M_PSEUDO timm:$ms3, GPR:$rs1, GPR:$rs2)>;
+  // Memory instructions. A given EEW can be used by an integer or a floating
+  // matrix type, so both type families get a pattern for the same instruction.
+  foreach T = [BOSCAME_I8, BOSCAME_I16, BOSCAME_I32, BOSCAME_I64,
+               BOSCAME_F16, BOSCAME_F32, BOSCAME_F64] in {
+    foreach Op = ["mlae", "mlate", "mltre", "mlbe", "mlbte"] in
+      def : BOSCAMEPatLoad<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#T.Number#"_m"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#T.Number#"_M"),
+        T.Matrix>;
 
-  // Data move instructions
-  //----------------------------------------------------------------------
-  // 1. Matrix-Matrix Move Pseudos (Pure Matrix)
-  //----------------------------------------------------------------------
-  def : Pat<(int_riscv_bosc_mmve8_t_t  timm:$md, timm:$ms1),
-            (BOSC_AME_MMVE8_T_T_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mmve16_t_t timm:$md, timm:$ms1),
-            (BOSC_AME_MMVE16_T_T_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mmve32_t_t timm:$md, timm:$ms1),
-            (BOSC_AME_MMVE32_T_T_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mmve64_t_t timm:$md, timm:$ms1),
-            (BOSC_AME_MMVE64_T_T_PSEUDO timm:$md, timm:$ms1)>;
+    foreach Op = ["mlce", "mlcte", "mlacce"] in
+      def : BOSCAMEPatLoad<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#T.Number#"_m"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#T.Number#"_M"),
+        T.Matrix>;
 
-  def : Pat<(int_riscv_bosc_mmve8_a_a  timm:$md, timm:$ms1),
-            (BOSC_AME_MMVE8_A_A_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mmve16_a_a timm:$md, timm:$ms1),
-            (BOSC_AME_MMVE16_A_A_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mmve32_a_a timm:$md, timm:$ms1),
-            (BOSC_AME_MMVE32_A_A_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mmve64_a_a timm:$md, timm:$ms1),
-            (BOSC_AME_MMVE64_A_A_PSEUDO timm:$md, timm:$ms1)>;
-  //----------------------------------------------------------------------
-  // 2. Matrix-Matrix Move (with GPR Index)
-  //----------------------------------------------------------------------
-  def : Pat<(int_riscv_bosc_mmve8_a_t  timm:$md, timm:$ms1, i64:$rs2),
-            (BOSC_AME_MMVE8_A_T_PSEUDO  timm:$md, timm:$ms1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mmve16_a_t timm:$md, timm:$ms1, i64:$rs2),
-            (BOSC_AME_MMVE16_A_T_PSEUDO timm:$md, timm:$ms1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mmve32_a_t timm:$md, timm:$ms1, i64:$rs2),
-            (BOSC_AME_MMVE32_A_T_PSEUDO timm:$md, timm:$ms1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mmve64_a_t timm:$md, timm:$ms1, i64:$rs2),
-            (BOSC_AME_MMVE64_A_T_PSEUDO timm:$md, timm:$ms1, GPR:$rs2)>;
+    foreach Op = ["msae", "msate", "mstre", "msbe", "msbte"] in
+      def : BOSCAMEPatStore<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#T.Number#"_m"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#T.Number#"_M"),
+        T.Matrix, TileReg>;
 
-  def : Pat<(int_riscv_bosc_mmve8_t_a  timm:$md, timm:$ms1, i64:$rs2),
-            (BOSC_AME_MMVE8_T_A_PSEUDO  timm:$md, timm:$ms1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mmve16_t_a timm:$md, timm:$ms1, i64:$rs2),
-            (BOSC_AME_MMVE16_T_A_PSEUDO timm:$md, timm:$ms1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mmve32_t_a timm:$md, timm:$ms1, i64:$rs2),
-            (BOSC_AME_MMVE32_T_A_PSEUDO timm:$md, timm:$ms1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mmve64_t_a timm:$md, timm:$ms1, i64:$rs2),
-            (BOSC_AME_MMVE64_T_A_PSEUDO timm:$md, timm:$ms1, GPR:$rs2)>;
-  //----------------------------------------------------------------------
-  // 3. Matrix-Matrix Move (with Immediate Index)
-  //----------------------------------------------------------------------
-  def : Pat<(int_riscv_bosc_mmvie8_a_t  timm:$md, timm:$ms1, imm:$imm),
-            (BOSC_AME_MMVIE8_A_T_PSEUDO  timm:$md, timm:$ms1, imm:$imm)>;
-  def : Pat<(int_riscv_bosc_mmvie16_a_t timm:$md, timm:$ms1, imm:$imm),
-            (BOSC_AME_MMVIE16_A_T_PSEUDO timm:$md, timm:$ms1, imm:$imm)>;
-  def : Pat<(int_riscv_bosc_mmvie32_a_t timm:$md, timm:$ms1, imm:$imm),
-            (BOSC_AME_MMVIE32_A_T_PSEUDO timm:$md, timm:$ms1, imm:$imm)>;
-  def : Pat<(int_riscv_bosc_mmvie64_a_t timm:$md, timm:$ms1, imm:$imm),
-            (BOSC_AME_MMVIE64_A_T_PSEUDO timm:$md, timm:$ms1, imm:$imm)>;
+    foreach Op = ["msce", "mscte", "msacce"] in
+      def : BOSCAMEPatStore<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#T.Number#"_m"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#T.Number#"_M"),
+        T.Matrix, AccReg>;
+  }
 
-  def : Pat<(int_riscv_bosc_mmvie8_t_a  timm:$md, timm:$ms1, imm:$imm),
-            (BOSC_AME_MMVIE8_T_A_PSEUDO  timm:$md, timm:$ms1, imm:$imm)>;
-  def : Pat<(int_riscv_bosc_mmvie16_t_a timm:$md, timm:$ms1, imm:$imm),
-            (BOSC_AME_MMVIE16_T_A_PSEUDO timm:$md, timm:$ms1, imm:$imm)>;
-  def : Pat<(int_riscv_bosc_mmvie32_t_a timm:$md, timm:$ms1, imm:$imm),
-            (BOSC_AME_MMVIE32_T_A_PSEUDO timm:$md, timm:$ms1, imm:$imm)>;
-  def : Pat<(int_riscv_bosc_mmvie64_t_a timm:$md, timm:$ms1, imm:$imm),
-            (BOSC_AME_MMVIE64_T_A_PSEUDO timm:$md, timm:$ms1, imm:$imm)>;
-  //----------------------------------------------------------------------
-  // 4. Matrix to Scalar Move (Returns GPR, matches i64 in IR)
-  //----------------------------------------------------------------------
-  def : Pat<(i64 (int_riscv_bosc_mmve8_x_t  timm:$ms1, i64:$rs2)),
-            (BOSC_AME_MMVE8_X_T_PSEUDO  timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_bosc_mmve16_x_t timm:$ms1, i64:$rs2)),
-            (BOSC_AME_MMVE16_X_T_PSEUDO timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_bosc_mmve32_x_t timm:$ms1, i64:$rs2)),
-            (BOSC_AME_MMVE32_X_T_PSEUDO timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_bosc_mmve64_x_t timm:$ms1, i64:$rs2)),
-            (BOSC_AME_MMVE64_X_T_PSEUDO timm:$ms1, GPR:$rs2)>;
+  // Integer matrix moves.
+  foreach T = [BOSCAME_I8, BOSCAME_I16, BOSCAME_I32, BOSCAME_I64] in {
+    def : BOSCAMEPatUnaryMatrix<
+      !cast<SDPatternOperator>("int_riscv_bosc_mmve"#T.Number#"_t_t"),
+      !cast<Instruction>("BOSC_AME_MMVE"#T.Number#"_T_T"),
+      T.Matrix, TileReg, T.Matrix, TileReg>;
+    def : BOSCAMEPatUnaryMatrix<
+      !cast<SDPatternOperator>("int_riscv_bosc_mmve"#T.Number#"_a_a"),
+      !cast<Instruction>("BOSC_AME_MMVE"#T.Number#"_A_A"),
+      T.Matrix, AccReg, T.Matrix, AccReg>;
 
-  def : Pat<(i64 (int_riscv_bosc_mmve8_x_a  timm:$ms1, i64:$rs2)),
-            (BOSC_AME_MMVE8_X_A_PSEUDO  timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_bosc_mmve16_x_a timm:$ms1, i64:$rs2)),
-            (BOSC_AME_MMVE16_X_A_PSEUDO timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_bosc_mmve32_x_a timm:$ms1, i64:$rs2)),
-            (BOSC_AME_MMVE32_X_A_PSEUDO timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_bosc_mmve64_x_a timm:$ms1, i64:$rs2)),
-            (BOSC_AME_MMVE64_X_A_PSEUDO timm:$ms1, GPR:$rs2)>;
+    def : BOSCAMEPatMatrixGPR<
+      !cast<SDPatternOperator>("int_riscv_bosc_mmve"#T.Number#"_a_t"),
+      !cast<Instruction>("BOSC_AME_MMVE"#T.Number#"_A_T"),
+      T.Matrix, AccReg, T.Matrix, TileReg>;
+    def : BOSCAMEPatMatrixGPR<
+      !cast<SDPatternOperator>("int_riscv_bosc_mmve"#T.Number#"_t_a"),
+      !cast<Instruction>("BOSC_AME_MMVE"#T.Number#"_T_A"),
+      T.Matrix, TileReg, T.Matrix, AccReg>;
 
-  def : Pat<(i64 (int_riscv_bosc_mfmve8_f_t  timm:$ms1, i64:$rs2)),
-            (BOSC_AME_MFMVE8_F_T_PSEUDO  timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_bosc_mfmve16_f_t timm:$ms1, i64:$rs2)),
-            (BOSC_AME_MFMVE16_F_T_PSEUDO timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_bosc_mfmve32_f_t timm:$ms1, i64:$rs2)),
-            (BOSC_AME_MFMVE32_F_T_PSEUDO timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_bosc_mfmve64_f_t timm:$ms1, i64:$rs2)),
-            (BOSC_AME_MFMVE64_F_T_PSEUDO timm:$ms1, GPR:$rs2)>;
+    def : BOSCAMEPatMatrixImm<
+      !cast<SDPatternOperator>("int_riscv_bosc_mmvie"#T.Number#"_a_t"),
+      !cast<Instruction>("BOSC_AME_MMVIE"#T.Number#"_A_T"),
+      T.Matrix, AccReg, T.Matrix, TileReg>;
+    def : BOSCAMEPatMatrixImm<
+      !cast<SDPatternOperator>("int_riscv_bosc_mmvie"#T.Number#"_t_a"),
+      !cast<Instruction>("BOSC_AME_MMVIE"#T.Number#"_T_A"),
+      T.Matrix, TileReg, T.Matrix, AccReg>;
 
-  def : Pat<(i64 (int_riscv_bosc_mfmve8_f_a  timm:$ms1, i64:$rs2)),
-            (BOSC_AME_MFMVE8_F_A_PSEUDO  timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_bosc_mfmve16_f_a timm:$ms1, i64:$rs2)),
-            (BOSC_AME_MFMVE16_F_A_PSEUDO timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_bosc_mfmve32_f_a timm:$ms1, i64:$rs2)),
-            (BOSC_AME_MFMVE32_F_A_PSEUDO timm:$ms1, GPR:$rs2)>;
-  def : Pat<(i64 (int_riscv_bosc_mfmve64_f_a timm:$ms1, i64:$rs2)),
-            (BOSC_AME_MFMVE64_F_A_PSEUDO timm:$ms1, GPR:$rs2)>;
-  //----------------------------------------------------------------------
-  // 5. Scalar GPR to Matrix Move
-  //----------------------------------------------------------------------
-  def : Pat<(int_riscv_bosc_mmve8_t_x  timm:$md, i64:$rs1, i64:$rs2),
-            (BOSC_AME_MMVE8_T_X_PSEUDO  timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mmve16_t_x timm:$md, i64:$rs1, i64:$rs2),
-            (BOSC_AME_MMVE16_T_X_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mmve32_t_x timm:$md, i64:$rs1, i64:$rs2),
-            (BOSC_AME_MMVE32_T_X_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mmve64_t_x timm:$md, i64:$rs1, i64:$rs2),
-            (BOSC_AME_MMVE64_T_X_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
+    def : BOSCAMEPatMatrixToScalar<
+      !cast<SDPatternOperator>("int_riscv_bosc_mmve"#T.Number#"_x_t"),
+      !cast<Instruction>("BOSC_AME_MMVE"#T.Number#"_X_T"),
+      T.Matrix, TileReg, XLenVT, GPR>;
+    def : BOSCAMEPatMatrixToScalar<
+      !cast<SDPatternOperator>("int_riscv_bosc_mmve"#T.Number#"_x_a"),
+      !cast<Instruction>("BOSC_AME_MMVE"#T.Number#"_X_A"),
+      T.Matrix, AccReg, XLenVT, GPR>;
 
-  def : Pat<(int_riscv_bosc_mmve8_a_x  timm:$md, i64:$rs1, i64:$rs2),
-            (BOSC_AME_MMVE8_A_X_PSEUDO  timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mmve16_a_x timm:$md, i64:$rs1, i64:$rs2),
-            (BOSC_AME_MMVE16_A_X_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mmve32_a_x timm:$md, i64:$rs1, i64:$rs2),
-            (BOSC_AME_MMVE32_A_X_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mmve64_a_x timm:$md, i64:$rs1, i64:$rs2),
-            (BOSC_AME_MMVE64_A_X_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
+    def : BOSCAMEPatScalarToMatrix<
+      !cast<SDPatternOperator>("int_riscv_bosc_mmve"#T.Number#"_t_x"),
+      !cast<Instruction>("BOSC_AME_MMVE"#T.Number#"_T_X"),
+      T.Matrix, TileReg, XLenVT, GPR>;
+    def : BOSCAMEPatScalarToMatrix<
+      !cast<SDPatternOperator>("int_riscv_bosc_mmve"#T.Number#"_a_x"),
+      !cast<Instruction>("BOSC_AME_MMVE"#T.Number#"_A_X"),
+      T.Matrix, AccReg, XLenVT, GPR>;
+  }
 
-  def : Pat<(int_riscv_bosc_mfmve8_t_f  timm:$md, i64:$rs1, i64:$rs2),
-            (BOSC_AME_MFMVE8_T_F_PSEUDO  timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mfmve16_t_f timm:$md, i64:$rs1, i64:$rs2),
-            (BOSC_AME_MFMVE16_T_F_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mfmve32_t_f timm:$md, i64:$rs1, i64:$rs2),
-            (BOSC_AME_MFMVE32_T_F_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mfmve64_t_f timm:$md, i64:$rs1, i64:$rs2),
-            (BOSC_AME_MFMVE64_T_F_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
+  // Floating matrix moves. These require the corresponding real instruction
+  // classes to use T.ScalarRC, not GPR, for their scalar float operand/result.
+  foreach T = [BOSCAME_F16, BOSCAME_F32, BOSCAME_F64] in {
+    def : BOSCAMEPatMatrixToScalar<
+      !cast<SDPatternOperator>("int_riscv_bosc_mfmve"#T.Number#"_f_t"),
+      !cast<Instruction>("BOSC_AME_MFMVE"#T.Number#"_F_T"),
+      T.Matrix, TileReg, T.Scalar, T.ScalarRC>;
+    def : BOSCAMEPatMatrixToScalar<
+      !cast<SDPatternOperator>("int_riscv_bosc_mfmve"#T.Number#"_f_a"),
+      !cast<Instruction>("BOSC_AME_MFMVE"#T.Number#"_F_A"),
+      T.Matrix, AccReg, T.Scalar, T.ScalarRC>;
+    def : BOSCAMEPatScalarToMatrix<
+      !cast<SDPatternOperator>("int_riscv_bosc_mfmve"#T.Number#"_t_f"),
+      !cast<Instruction>("BOSC_AME_MFMVE"#T.Number#"_T_F"),
+      T.Matrix, TileReg, T.Scalar, T.ScalarRC>;
+    def : BOSCAMEPatScalarToMatrix<
+      !cast<SDPatternOperator>("int_riscv_bosc_mfmve"#T.Number#"_a_f"),
+      !cast<Instruction>("BOSC_AME_MFMVE"#T.Number#"_A_F"),
+      T.Matrix, AccReg, T.Scalar, T.ScalarRC>;
+  }
 
-  def : Pat<(int_riscv_bosc_mfmve8_a_f  timm:$md, i64:$rs1, i64:$rs2),
-            (BOSC_AME_MFMVE8_A_F_PSEUDO  timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mfmve16_a_f timm:$md, i64:$rs1, i64:$rs2),
-            (BOSC_AME_MFMVE16_A_F_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mfmve32_a_f timm:$md, i64:$rs1, i64:$rs2),
-            (BOSC_AME_MFMVE32_A_F_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(int_riscv_bosc_mfmve64_a_f timm:$md, i64:$rs1, i64:$rs2),
-            (BOSC_AME_MFMVE64_A_F_PSEUDO timm:$md, GPR:$rs1, GPR:$rs2)>;
-  //----------------------------------------------------------------------
-  // 6. Broadcast Pseudos
-  //----------------------------------------------------------------------
-  def : Pat<(int_riscv_bosc_mbcar_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCAR_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbcbr_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCBR_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbccr_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCCR_M_PSEUDO timm:$md, timm:$ms1)>;
+  // Broadcast and transpose. The unsuffixed row-broadcast forms are matched
+  // for every currently supported matrix MVT; the real instruction controls
+  // the fixed encoding.
+  foreach T = [BOSCAME_I8, BOSCAME_I16, BOSCAME_I32, BOSCAME_I64,
+               BOSCAME_F16, BOSCAME_F32, BOSCAME_F64] in {
+    foreach Op = ["mbcar", "mbcbr"] in
+      def : BOSCAMEPatUnaryMatrix<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_m"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_M"),
+        T.Matrix, TileReg, T.Matrix, TileReg>;
+    def : BOSCAMEPatUnaryMatrix<
+      int_riscv_bosc_mbccr_m, BOSC_AME_MBCCR_M,
+      T.Matrix, AccReg, T.Matrix, AccReg>;
 
-  def : Pat<(int_riscv_bosc_mbcace8_m  timm:$md, timm:$ms1),
-            (BOSC_AME_MBCACE8_M_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbcace16_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCACE16_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbcace32_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCACE32_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbcace64_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCACE64_M_PSEUDO timm:$md, timm:$ms1)>;
+    foreach Op = ["mbcace", "mbcbce", "mbcaee", "mbcbee", "mtae", "mtbe"] in
+      def : BOSCAMEPatUnaryMatrix<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#T.Number#"_m"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#T.Number#"_M"),
+        T.Matrix, TileReg, T.Matrix, TileReg>;
 
-  def : Pat<(int_riscv_bosc_mbcbce8_m  timm:$md, timm:$ms1),
-            (BOSC_AME_MBCBCE8_M_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbcbce16_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCBCE16_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbcbce32_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCBCE32_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbcbce64_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCBCE64_M_PSEUDO timm:$md, timm:$ms1)>;
+    foreach Op = ["mbccce", "mbccee", "mtce"] in
+      def : BOSCAMEPatUnaryMatrix<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#T.Number#"_m"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#T.Number#"_M"),
+        T.Matrix, AccReg, T.Matrix, AccReg>;
+  }
 
-  def : Pat<(int_riscv_bosc_mbccce8_m  timm:$md, timm:$ms1),
-            (BOSC_AME_MBCCCE8_M_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbccce16_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCCCE16_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbccce32_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCCCE32_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbccce64_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCCCE64_M_PSEUDO timm:$md, timm:$ms1)>;
+  // No-widen integer element-wise operations with EEW inherited from mtype.
+  foreach T = [BOSCAME_I8, BOSCAME_I16, BOSCAME_I32, BOSCAME_I64] in {
+    foreach Op = ["maddu", "msaddu", "madd", "msadd",
+                  "msubu", "mssubu", "msub", "mssub",
+                  "mminu", "mmaxu", "mmin", "mmax",
+                  "msmulu", "mmul", "msmul",
+                  "mmulhu", "mmulh", "mmulhsu", "msmulsu",
+                  "mand", "mor", "mxor", "msll", "msrl", "msra"] in
+      def : BOSCAMEPatAccBinary<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_mm"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_MM"),
+        T.Matrix>;
+  }
 
-  def : Pat<(int_riscv_bosc_mbcaee8_m  timm:$md, timm:$ms1),
-            (BOSC_AME_MBCAEE8_M_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbcaee16_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCAEE16_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbcaee32_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCAEE32_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbcaee64_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCAEE64_M_PSEUDO timm:$md, timm:$ms1)>;
+  // Explicit B/H/W/DW forms. Logic instructions intentionally do not appear:
+  // their ISA definitions only provide the mtype-controlled .mm forms.
+  foreach T = [BOSCAME_I8, BOSCAME_I16, BOSCAME_I32, BOSCAME_I64] in {
+    foreach Op = ["maddu", "msaddu", "madd", "msadd",
+                  "msubu", "mssubu", "msub", "mssub",
+                  "mminu", "mmaxu", "mmin", "mmax",
+                  "msmulu", "mmul", "msmul",
+                  "mmulhu", "mmulh", "mmulhsu", "msmulsu"] in
+      def : BOSCAMEPatAccBinary<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_"#
+                                  !tolower(T.Suffix)#"_mm"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_"#T.Suffix#"_MM"),
+        T.Matrix>;
 
-  def : Pat<(int_riscv_bosc_mbcbee8_m  timm:$md, timm:$ms1),
-            (BOSC_AME_MBCBEE8_M_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbcbee16_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCBEE16_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbcbee32_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCBEE32_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbcbee64_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCBEE64_M_PSEUDO timm:$md, timm:$ms1)>;
+    foreach Op = ["msll", "msrl", "msra"] in
+      def : BOSCAMEPatAccBinary<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_"#
+                                  !tolower(T.Suffix)#"_mm"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_"#T.Suffix#"_MM"),
+        T.Matrix>;
+  }
 
-  def : Pat<(int_riscv_bosc_mbccee8_m  timm:$md, timm:$ms1),
-            (BOSC_AME_MBCCEE8_M_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbccee16_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCCEE16_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbccee32_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCCEE32_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mbccee64_m timm:$md, timm:$ms1),
-            (BOSC_AME_MBCCEE64_M_PSEUDO timm:$md, timm:$ms1)>;
-  //----------------------------------------------------------------------
-  // 7. Transpose Pseudos
-  //----------------------------------------------------------------------
-  def : Pat<(int_riscv_bosc_mtae8_m  timm:$md, timm:$ms1),
-            (BOSC_AME_MTAE8_M_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mtae16_m timm:$md, timm:$ms1),
-            (BOSC_AME_MTAE16_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mtae32_m timm:$md, timm:$ms1),
-            (BOSC_AME_MTAE32_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mtae64_m timm:$md, timm:$ms1),
-            (BOSC_AME_MTAE64_M_PSEUDO timm:$md, timm:$ms1)>;
+  // No-widen floating element-wise operations.
+  foreach T = [BOSCAME_F16, BOSCAME_F32, BOSCAME_F64] in {
+    foreach Op = ["mfadd", "mfsub", "mfmin", "mfmax", "mfmul", "mfdiv"] in
+      def : BOSCAMEPatAccBinary<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_mm"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_MM"),
+        T.Matrix>;
 
-  def : Pat<(int_riscv_bosc_mtbe8_m  timm:$md, timm:$ms1),
-            (BOSC_AME_MTBE8_M_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mtbe16_m timm:$md, timm:$ms1),
-            (BOSC_AME_MTBE16_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mtbe32_m timm:$md, timm:$ms1),
-            (BOSC_AME_MTBE32_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mtbe64_m timm:$md, timm:$ms1),
-            (BOSC_AME_MTBE64_M_PSEUDO timm:$md, timm:$ms1)>;
+    foreach Op = ["mfadd", "mfsub", "mfmin", "mfmax", "mfmul", "mfdiv"] in
+      def : BOSCAMEPatAccBinary<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_"#
+                                  !tolower(T.Suffix)#"_mm"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_"#T.Suffix#"_MM"),
+        T.Matrix>;
 
-  def : Pat<(int_riscv_bosc_mtce8_m  timm:$md, timm:$ms1),
-            (BOSC_AME_MTCE8_M_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mtce16_m timm:$md, timm:$ms1),
-            (BOSC_AME_MTCE16_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mtce32_m timm:$md, timm:$ms1),
-            (BOSC_AME_MTCE32_M_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mtce64_m timm:$md, timm:$ms1),
-            (BOSC_AME_MTCE64_M_PSEUDO timm:$md, timm:$ms1)>;
+    def : BOSCAMEPatAccUnary<
+      !cast<SDPatternOperator>("int_riscv_bosc_mfsqrt_"#
+                                !tolower(T.Suffix)#"_m"),
+      !cast<Instruction>("BOSC_AME_MFSQRT_"#T.Suffix#"_M"),
+      T.Matrix>;
+  }
 
-  // Element-wise subtract instruction
-  //===--------------------------------------------------------------------===//
-  // 1. ADD / SUB - No Widen
-  //===--------------------------------------------------------------------===//
-  def : Pat<(int_riscv_bosc_maddu_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MADDU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_maddu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MADDU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_maddu_b_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MADDU_B_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_maddu_h_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MADDU_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_maddu_w_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MADDU_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_maddu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MADDU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
+  // The LLVM intrinsic and selected ISA instruction both use the unary `.m`
+  // suffix.
+  foreach T = [BOSCAME_F16, BOSCAME_F32, BOSCAME_F64] in
+    def : BOSCAMEPatAccUnary<int_riscv_bosc_mfsqrt_m,
+                              BOSC_AME_MFSQRT_M, T.Matrix>;
 
-  def : Pat<(int_riscv_bosc_msaddu_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSADDU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msaddu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSADDU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msaddu_b_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSADDU_B_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msaddu_h_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSADDU_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msaddu_w_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSADDU_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msaddu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSADDU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
+  // Integer element-wise widening.
+  foreach W = [BOSCAME_I8_TO_I16, BOSCAME_I16_TO_I32,
+               BOSCAME_I32_TO_I64] in {
+    foreach Op = ["mwaddu", "mwadd", "mwsubu", "mwsub",
+                  "mwmulu", "mwmul", "mwmulsu"] in {
+      def : BOSCAMEPatAccBinaryWiden<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_mm"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_MM"),
+        W.Dst.Matrix, W.Src.Matrix>;
+      def : BOSCAMEPatAccBinaryWiden<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_"#
+                                  !tolower(W.Suffix)#"_mm"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_"#W.Suffix#"_MM"),
+        W.Dst.Matrix, W.Src.Matrix>;
+    }
+  }
 
-  def : Pat<(int_riscv_bosc_madd_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MADD_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_madd_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MADD_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_madd_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MADD_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_madd_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MADD_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_madd_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MADD_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_madd_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MADD_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
+  // Floating element-wise widening. cf requires an f8 matrix MVT and is
+  // deliberately not matched by this file.
+  foreach W = [BOSCAME_F16_TO_F32, BOSCAME_F32_TO_F64] in {
+    foreach Op = ["mfwadd", "mfwsub", "mfwmul"] in {
+      def : BOSCAMEPatAccBinaryWiden<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_mm"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_MM"),
+        W.Dst.Matrix, W.Src.Matrix>;
+      def : BOSCAMEPatAccBinaryWiden<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_"#
+                                  !tolower(W.Suffix)#"_mm"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_"#W.Suffix#"_MM"),
+        W.Dst.Matrix, W.Src.Matrix>;
+    }
+  }
 
-  def : Pat<(int_riscv_bosc_msadd_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSADD_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msadd_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSADD_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msadd_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSADD_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msadd_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSADD_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msadd_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSADD_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msadd_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSADD_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
+  // No-widen integer MMA. The generic .mm form is selected once per concrete
+  // matrix MVT, including i8; explicit forms exist only for H/W/DW.
+  foreach T = [BOSCAME_I8, BOSCAME_I16, BOSCAME_I32, BOSCAME_I64] in {
+    foreach Op = ["mma", "msma", "mmau", "msmau"] in
+      def : BOSCAMEPatMMA<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_mm"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_MM"),
+        T.Matrix, T.Matrix>;
+  }
+  foreach T = [BOSCAME_I16, BOSCAME_I32, BOSCAME_I64] in
+    foreach Op = ["mma", "msma", "mmau", "msmau"] in
+      def : BOSCAMEPatMMA<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_"#
+                                  !tolower(T.Suffix)#"_mm"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_"#T.Suffix#"_MM"),
+        T.Matrix, T.Matrix>;
 
-  def : Pat<(int_riscv_bosc_mfadd_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFADD_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfadd_cf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFADD_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfadd_hf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFADD_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfadd_f_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFADD_F_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfadd_d_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFADD_D_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
+  // No-widen floating MMA.
+  foreach T = [BOSCAME_F16, BOSCAME_F32, BOSCAME_F64] in {
+    def : BOSCAMEPatMMA<int_riscv_bosc_mfma_mm, BOSC_AME_MFMA_MM,
+                          T.Matrix, T.Matrix>;
+    def : BOSCAMEPatMMA<
+      !cast<SDPatternOperator>("int_riscv_bosc_mfma_"#
+                                !tolower(T.Suffix)#"_mm"),
+      !cast<Instruction>("BOSC_AME_MFMA_"#T.Suffix#"_MM"),
+      T.Matrix, T.Matrix>;
+  }
 
-  def : Pat<(int_riscv_bosc_msubu_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSUBU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msubu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSUBU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msubu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSUBU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msubu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSUBU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msubu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSUBU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msubu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSUBU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
+  // Double-widen integer MMA.
+  foreach W = [BOSCAME_I16_TO_I32_MMA, BOSCAME_I32_TO_I64_MMA] in {
+    foreach Op = ["mwmau", "mswmau", "mwma", "mswma"] in {
+      def : BOSCAMEPatWidenMMA<
+          !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_mm"),
+          !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_MM"),
+          W.Src.Matrix, W.Dst.Matrix>;
+      def : BOSCAMEPatWidenMMA<
+          !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_"#
+                                    !tolower(W.Suffix)#"_mm"),
+          !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_"#W.Suffix#"_MM"),
+          W.Src.Matrix, W.Dst.Matrix>;
+    }
+  }
 
-  def : Pat<(int_riscv_bosc_mssubu_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSSUBU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mssubu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSSUBU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mssubu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSSUBU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mssubu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSSUBU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mssubu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSSUBU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mssubu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSSUBU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
+  // Double-widen floating MMA. cf requires f8 support.
+  foreach W = [BOSCAME_F16_TO_F32, BOSCAME_F32_TO_F64] in {
+    def : BOSCAMEPatWidenMMA<
+      int_riscv_bosc_mfwma_mm, BOSC_AME_MFWMA_MM,
+      W.Src.Matrix, W.Dst.Matrix>;
+    def : BOSCAMEPatWidenMMA<
+      !cast<SDPatternOperator>("int_riscv_bosc_mfwma_"#
+                                !tolower(W.Suffix)#"_mm"),
+      !cast<Instruction>("BOSC_AME_MFWMA_"#W.Suffix#"_MM"),
+      W.Src.Matrix, W.Dst.Matrix>;
+  }
 
-  def : Pat<(int_riscv_bosc_msub_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSUB_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msub_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSUB_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msub_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSUB_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msub_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSUB_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msub_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSUB_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msub_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSUB_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mssub_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSSUB_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mssub_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSSUB_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mssub_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSSUB_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mssub_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSSUB_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mssub_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSSUB_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mssub_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSSUB_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mfsub_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFSUB_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfsub_cf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFSUB_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfsub_hf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFSUB_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfsub_f_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFSUB_F_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfsub_d_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFSUB_D_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  //===--------------------------------------------------------------------===//
-  // 2. ADD / SUB - Double Widen
-  //===--------------------------------------------------------------------===//
-  def : Pat<(int_riscv_bosc_mwaddu_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWADDU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwaddu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWADDU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwaddu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWADDU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwaddu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWADDU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwaddu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWADDU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mwadd_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWADD_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwadd_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWADD_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwadd_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWADD_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwadd_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWADD_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwadd_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWADD_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mfwadd_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFWADD_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfwadd_cf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFWADD_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfwadd_hf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFWADD_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfwadd_f_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFWADD_F_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mwsubu_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWSUBU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwsubu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWSUBU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwsubu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWSUBU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwsubu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWSUBU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwsubu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWSUBU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mwsub_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWSUB_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwsub_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWSUB_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwsub_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWSUB_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwsub_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWSUB_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwsub_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWSUB_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mfwsub_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFWSUB_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfwsub_cf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFWSUB_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfwsub_hf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFWSUB_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfwsub_f_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFWSUB_F_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  //===--------------------------------------------------------------------===//
-  // 3. MIN / MAX - No Widen
-  //===--------------------------------------------------------------------===//
-  def : Pat<(int_riscv_bosc_mminu_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMINU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mminu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMINU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mminu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMINU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mminu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMINU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mminu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMINU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mminu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMINU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mmaxu_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMAXU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmaxu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMAXU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmaxu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMAXU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmaxu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMAXU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmaxu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMAXU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmaxu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMAXU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mmin_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMIN_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmin_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMIN_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmin_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMIN_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmin_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMIN_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmin_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMIN_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmin_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMIN_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mmax_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMAX_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmax_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMAX_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmax_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMAX_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmax_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMAX_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmax_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMAX_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmax_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMAX_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mfmin_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMIN_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfmin_cf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMIN_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfmin_hf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMIN_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfmin_f_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMIN_F_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfmin_d_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMIN_D_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mfmax_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMAX_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfmax_cf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMAX_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfmax_hf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMAX_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfmax_f_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMAX_F_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfmax_d_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMAX_D_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  //===--------------------------------------------------------------------===//
-  // 4. MUL / MULH / DIV - No Widen
-  //===--------------------------------------------------------------------===//
-  def : Pat<(int_riscv_bosc_msmulu_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMULU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msmulu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMULU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msmulu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMULU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msmulu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMULU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msmulu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMULU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msmulu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMULU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mmul_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMUL_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmul_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMUL_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmul_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMUL_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmul_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMUL_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmul_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMUL_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmul_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMUL_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_msmul_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMUL_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msmul_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMUL_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msmul_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMUL_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msmul_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMUL_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msmul_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMUL_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msmul_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMUL_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mfmul_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMUL_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfmul_cf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMUL_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfmul_hf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMUL_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfmul_f_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMUL_F_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfmul_d_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMUL_D_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mmulhu_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMULHU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmulhu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMULHU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmulhu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMULHU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmulhu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMULHU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmulhu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMULHU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmulhu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMULHU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mmulh_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMULH_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmulh_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMULH_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmulh_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMULH_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmulh_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMULH_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmulh_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMULH_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmulh_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMULH_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mmulhsu_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMULHSU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmulhsu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMULHSU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmulhsu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMULHSU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmulhsu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMULHSU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmulhsu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMULHSU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmulhsu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMULHSU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_msmulsu_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMULSU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msmulsu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMULSU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msmulsu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMULSU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msmulsu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMULSU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msmulsu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMULSU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msmulsu_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMULSU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mfdiv_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFDIV_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfdiv_cf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFDIV_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfdiv_hf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFDIV_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfdiv_f_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFDIV_F_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfdiv_d_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFDIV_D_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  //===--------------------------------------------------------------------===//
-  // 5. MUL - Double Widen
-  //===--------------------------------------------------------------------===//
-  def : Pat<(int_riscv_bosc_mwmulu_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMULU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwmulu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMULU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwmulu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMULU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwmulu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMULU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwmulu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMULU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mwmul_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMUL_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwmul_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMUL_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwmul_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMUL_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwmul_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMUL_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwmul_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMUL_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mwmulsu_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMULSU_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwmulsu_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMULSU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwmulsu_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMULSU_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwmulsu_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMULSU_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwmulsu_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMULSU_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_mfwmul_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFWMUL_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfwmul_cf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFWMUL_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfwmul_hf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFWMUL_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfwmul_f_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFWMUL_F_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  //===--------------------------------------------------------------------===//
-  // 6. LOGIC & SHIFT - No Widen
-  //===--------------------------------------------------------------------===//
-  def : Pat<(int_riscv_bosc_mand_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MAND_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mor_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MOR_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mxor_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MXOR_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_msll_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSLL_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msll_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSLL_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msll_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSLL_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msll_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSLL_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msll_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSLL_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msll_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSLL_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_msrl_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSRL_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msrl_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSRL_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msrl_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSRL_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msrl_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSRL_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msrl_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSRL_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msrl_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSRL_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-
-  def : Pat<(int_riscv_bosc_msra_mm    timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSRA_MM_PSEUDO    timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msra_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSRA_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msra_b_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSRA_B_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msra_h_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSRA_H_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msra_w_mm  timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSRA_W_MM_PSEUDO  timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msra_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSRA_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  //===--------------------------------------------------------------------===//
-  // 7. SQRT - No Widen (Unary, 2-Operand)
-  //===--------------------------------------------------------------------===//
-  def : Pat<(int_riscv_bosc_mfsqrt_mm    timm:$md, timm:$ms1),
-            (BOSC_AME_MFSQRT_MM_PSEUDO    timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mfsqrt_cf_mm timm:$md, timm:$ms1),
-            (BOSC_AME_MFSQRT_CF_MM_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mfsqrt_hf_mm timm:$md, timm:$ms1),
-            (BOSC_AME_MFSQRT_HF_MM_PSEUDO timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mfsqrt_f_mm  timm:$md, timm:$ms1),
-            (BOSC_AME_MFSQRT_F_MM_PSEUDO  timm:$md, timm:$ms1)>;
-  def : Pat<(int_riscv_bosc_mfsqrt_d_mm  timm:$md, timm:$ms1),
-            (BOSC_AME_MFSQRT_D_MM_PSEUDO  timm:$md, timm:$ms1)>;
-
-  // Matrix multiply instruction
-  //===--------------------------------------------------------------------===//
-  // 1. No-widen matrix multiply-accumulate
-  //===--------------------------------------------------------------------===//
-  // int
-  def : Pat<(int_riscv_bosc_mma_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mma_h_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMA_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mma_w_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMA_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mma_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMA_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  // int, saturated
-  def : Pat<(int_riscv_bosc_msma_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msma_h_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMA_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msma_w_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMA_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msma_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMA_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  // uint
-  def : Pat<(int_riscv_bosc_mmau_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMAU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmau_h_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMAU_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmau_w_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMAU_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mmau_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MMAU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  // uint, saturated
-  def : Pat<(int_riscv_bosc_msmau_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMAU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msmau_h_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMAU_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msmau_w_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMAU_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msmau_dw_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSMAU_DW_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  // float point
-  def : Pat<(int_riscv_bosc_mfma_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfma_hf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMA_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfma_f_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMA_F_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfma_d_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFMA_D_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  //===--------------------------------------------------------------------===//
-  // 2. Double-widen matrix multiply-accumulate
-  //===--------------------------------------------------------------------===//
-  // uint
-  def : Pat<(int_riscv_bosc_mwmau_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMAU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwmau_h_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMAU_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwmau_w_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMAU_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  // uint, saturated
-  def : Pat<(int_riscv_bosc_mswmau_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSWMAU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mswmau_h_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSWMAU_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mswmau_w_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSWMAU_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  // int
-  def : Pat<(int_riscv_bosc_mwma_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwma_h_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMA_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mwma_w_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MWMA_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  // int, saturated
-  def : Pat<(int_riscv_bosc_mswma_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSWMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mswma_h_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSWMA_H_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mswma_w_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSWMA_W_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  // float point
-  def : Pat<(int_riscv_bosc_mfwma_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFWMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfwma_cf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFWMA_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfwma_hf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFWMA_HF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfwma_f_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFWMA_F_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  //===--------------------------------------------------------------------===//
-  // 3. Quad-widen matrix multiply-accumulate
-  //===--------------------------------------------------------------------===//
-  // uint
-  def : Pat<(int_riscv_bosc_mqmau_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MQMAU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mqmau_b_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MQMAU_B_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  // uint, saturated
-  def : Pat<(int_riscv_bosc_msqmau_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSQMAU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msqmau_b_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSQMAU_B_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  // int
-  def : Pat<(int_riscv_bosc_mqma_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MQMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mqma_b_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MQMA_B_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  // int, saturated
-  def : Pat<(int_riscv_bosc_msqma_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSQMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msqma_b_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSQMA_B_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  // float point
-  def : Pat<(int_riscv_bosc_mfqma_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFQMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_mfqma_cf_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MFQMA_CF_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  //===--------------------------------------------------------------------===//
-  // 4. Oct-widen matrix multiply-accumulate
-  //===--------------------------------------------------------------------===//
-  // uint
-  def : Pat<(int_riscv_bosc_momau_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MOMAU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_momau_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MOMAU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  // uint, saturated
-  def : Pat<(int_riscv_bosc_msomau_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSOMAU_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msomau_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSOMAU_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  // int
-  def : Pat<(int_riscv_bosc_moma_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MOMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_moma_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MOMA_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  // int, saturated
-  def : Pat<(int_riscv_bosc_msoma_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSOMA_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
-  def : Pat<(int_riscv_bosc_msoma_hb_mm timm:$md, timm:$ms1, timm:$ms2),
-            (BOSC_AME_MSOMA_HB_MM_PSEUDO timm:$md, timm:$ms1, timm:$ms2)>;
+  // Quad-widen integer MMA: i8 -> i32.
+  foreach Op = ["mqmau", "msqmau", "mqma", "msqma"] in {
+    def : BOSCAMEPatWidenMMA<
+      !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_mm"),
+      !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_MM"),
+      BOSCAME_I8.Matrix, BOSCAME_I32.Matrix>;
+    def : BOSCAMEPatWidenMMA<
+      !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_b_mm"),
+      !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_B_MM"),
+      BOSCAME_I8.Matrix, BOSCAME_I32.Matrix>;
+  }
 }
+
+// Unsupported until the type layer is implemented:
+//
+//   * *_HB_* and MOM*/MSOM*/MOM*/MSOM* need an explicit packed int4 matrix
+//     ValueType plus TileReg/AccReg and RISCVISelLowering registration.
+//   * *_CF_* and MFQMA_CF need an f8 matrix ValueType plus corresponding
+//     register-class and lowering support.
+//
+// Do not map either family to i8/f16 merely to make TableGen compile: that
+// would select a real instruction with a semantically incorrect LLVM type.
