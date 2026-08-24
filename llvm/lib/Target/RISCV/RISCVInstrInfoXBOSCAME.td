@@ -1143,7 +1143,7 @@ class RVInstBOSCAMEMove_X_T<bits<3> eew_val, string opcodestr>
 
 class RVInstBOSCAMEMove_T_X<bits<3> eew_val, string opcodestr>
     : RVInstBOSCAMEMove<(outs TileReg:$md), (ins TileReg:$md_in, GPR:$rs1, GPR:$rs2),
-                        opcodestr, "$md, $rs1, $rs2"> {                          
+                        opcodestr, "$md, $rs1, $rs2"> {
   bits<5> md;
 
   let Constraints = "$md = $md_in";

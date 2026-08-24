@@ -189,7 +189,7 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
     else
       addRegisterClass(MVT::f64, &RISCV::GPRPairRegClass);
   }
-  
+
   // BOSC AME matrix values default to TileReg. TableGen patterns constrain
   // accumulator operands/results to AccReg explicitly.
   if (Subtarget.hasVendorXBOSCAME()) {

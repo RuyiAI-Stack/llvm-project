@@ -228,7 +228,7 @@ class BOSC_AME_Move_T_F_Intr
 //===----------------------------------------------------------------------===//
 let TargetPrefix = "riscv" in {
   //----------------------------------------------------------------------
-  // 1. Matrix-Matrix Move 
+  // 1. Matrix-Matrix Move
   //----------------------------------------------------------------------
   def int_riscv_bosc_mmve8_t_t  : BOSC_AME_Move_T_T_Intr;
   def int_riscv_bosc_mmve16_t_t : BOSC_AME_Move_T_T_Intr;
@@ -376,7 +376,7 @@ class BOSC_AME_WidenEleWise3_Intr
                 [llvm_anymatrix_ty, LLVMMatchType<1>],
                 [IntrNoMem]>, RISCVVIntrinsic;
 
-// Base class for 2-operand element-wise intrinsics (md, ms1) 
+// Base class for 2-operand element-wise intrinsics (md, ms1)
 class BOSC_AME_EleWise2_Intr
     : Intrinsic<[llvm_anymatrix_ty],
                 [LLVMMatchType<0>],
