@@ -2487,3 +2487,6 @@ include "RISCVMatrixExt.td"
 //===----------------------------------------------------------------------===//
 
 include "RISCVInstrGISel.td"
+
+// Matrix(BOSCAME)
+include "RISCVInstrInfoXBOSCAME.td"

@@ -379,6 +379,7 @@ namespace llvm {
       case iAny:
       case fAny:
       case vAny:
+      case mAny:
       case Any:
         llvm_unreachable("Value type is overloaded.");
       case token:
