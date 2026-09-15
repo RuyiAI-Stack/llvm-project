@@ -531,6 +531,24 @@ void RISCVInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     return;
   }
 
+  // BOSC AME matrix registers, FPGA adaptation boundary (`+xboscame-fpga`).
+  //
+  // The reference FPGA assembly contains no matrix-register copies. Do not
+  // invent an `mmve` lowering here: its eew semantics are not established,
+  // and a wrong choice could silently corrupt values. Matrix values must remain
+  // in the fixed register slots established by the preceding lowering.
+  // Cross-class moves remain unsupported as well.
+  if (STI.hasVendorXBOSCAMEFPGA() &&
+      (RISCV::TileRegRegClass.contains(DstReg) ||
+       RISCV::TileRegRegClass.contains(SrcReg) ||
+       RISCV::AccRegRegClass.contains(DstReg) ||
+       RISCV::AccRegRegClass.contains(SrcReg)))
+    report_fatal_error(
+        "BOSC AME matrix register copy is unsupported for the FPGA "
+        "adaptation: the lowering must preserve fixed matrix register slots "
+        "instead of introducing mmve");
+
+
   if (RISCV::GPRF16RegClass.contains(DstReg, SrcReg)) {
     BuildMI(MBB, MBBI, DL, get(RISCV::PseudoMV_FPR16INX), DstReg)
         .addReg(SrcReg, KillFlag | getRenamableRegState(RenamableSrc));
@@ -728,6 +746,13 @@ void RISCVInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     Opcode = RISCV::PseudoVSPILL7_M1;
   else if (RISCV::VRN8M1RegClass.hasSubClassEq(RC))
     Opcode = RISCV::PseudoVSPILL8_M1;
+  else if (STI.hasVendorXBOSCAMEFPGA() &&
+           (RISCV::TileRegRegClass.hasSubClassEq(RC) ||
+            RISCV::AccRegRegClass.hasSubClassEq(RC)))
+    report_fatal_error(
+        "BOSC AME matrix registers cannot be spilled: an FPGA W8A8 schedule "
+        "must fit acc0..acc7 and its tile registers without register pressure "
+        "(see docs/BOSCAMEFPGAValueSemantics.md)");
   else
     llvm_unreachable("Can't store this register to stack slot");
 
@@ -820,6 +845,13 @@ void RISCVInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     Opcode = RISCV::PseudoVRELOAD7_M1;
   else if (RISCV::VRN8M1RegClass.hasSubClassEq(RC))
     Opcode = RISCV::PseudoVRELOAD8_M1;
+  else if (STI.hasVendorXBOSCAMEFPGA() &&
+           (RISCV::TileRegRegClass.hasSubClassEq(RC) ||
+            RISCV::AccRegRegClass.hasSubClassEq(RC)))
+    report_fatal_error(
+        "BOSC AME matrix registers cannot be spilled: an FPGA W8A8 schedule "
+        "must fit acc0..acc7 and its tile registers without register pressure "
+        "(see docs/BOSCAMEFPGAValueSemantics.md)");
   else
     llvm_unreachable("Can't load this register from stack slot");
 
