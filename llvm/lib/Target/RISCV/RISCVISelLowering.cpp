@@ -219,6 +219,41 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
       addRegisterClass(VT, &RISCV::TileRegRegClass);
   }
 
+  // XT AME matrix values default to MatrixReg.
+  if (Subtarget.hasVendorXTHeadAME()) {
+    static const MVT::SimpleValueType XTAMEIntTypes[] = {
+      // RLEN = 128: MLEN = 512
+      MVT::nxv64i8,  MVT::nxv32i16, MVT::nxv16i32, MVT::nxv8i64,
+
+      // RLEN = 256: MLEN = 2048
+      MVT::nxv256i8, MVT::nxv128i16, MVT::nxv64i32, MVT::nxv32i64,
+
+      // RLEN = 512: MLEN = 8192
+      MVT::nxv1024i8, MVT::nxv512i16, MVT::nxv256i32, MVT::nxv128i64,
+    };
+
+    static const MVT::SimpleValueType XTAMEF16Types[] = {
+      MVT::nxv32f16, MVT::nxv128f16, MVT::nxv512f16,
+    };
+
+    static const MVT::SimpleValueType XTAMEF32Types[] = {
+      MVT::nxv16f32, MVT::nxv64f32, MVT::nxv256f32,
+    };
+
+    static const MVT::SimpleValueType XTAMEF64Types[] = {
+      MVT::nxv8f64, MVT::nxv32f64, MVT::nxv128f64,
+    };
+
+    for (MVT VT : XTAMEIntTypes)
+      addRegisterClass(VT, &RISCV::MatrixRegRegClass);
+    for (MVT VT : XTAMEF16Types)
+      addRegisterClass(VT, &RISCV::MatrixRegRegClass);
+    for (MVT VT : XTAMEF32Types)
+      addRegisterClass(VT, &RISCV::MatrixRegRegClass);
+    for (MVT VT : XTAMEF64Types)
+      addRegisterClass(VT, &RISCV::MatrixRegRegClass);
+  }
+
   static const MVT::SimpleValueType BoolVecVTs[] = {
       MVT::nxv1i1,  MVT::nxv2i1,  MVT::nxv4i1, MVT::nxv8i1,
       MVT::nxv16i1, MVT::nxv32i1, MVT::nxv64i1};

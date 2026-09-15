@@ -1045,6 +1045,59 @@ def AccReg : BOSCAMEReg<
     (add (sequence "ACC%u", 0, 7)), 1>;
 
 //===----------------------------------------------------------------------===//
+// XT AME matrix registers
+//===----------------------------------------------------------------------===//
+
+// RLEN=128, M=4
+defvar m128_i8_t  = nxv64i8;
+defvar m128_i16_t = nxv32i16;
+defvar m128_i32_t = nxv16i32;
+defvar m128_i64_t = nxv8i64;
+defvar m128_f16_t = nxv32f16;
+defvar m128_f32_t = nxv16f32;
+defvar m128_f64_t = nxv8f64;
+
+// RLEN=256, M=8
+defvar m256_i8_t  = nxv256i8;
+defvar m256_i16_t = nxv128i16;
+defvar m256_i32_t = nxv64i32;
+defvar m256_i64_t = nxv32i64;
+defvar m256_f16_t = nxv128f16;
+defvar m256_f32_t = nxv64f32;
+defvar m256_f64_t = nxv32f64;
+
+// RLEN=512, M=16
+defvar m512_i8_t  = nxv1024i8;
+defvar m512_i16_t = nxv512i16;
+defvar m512_i32_t = nxv256i32;
+defvar m512_i64_t = nxv128i64;
+defvar m512_f16_t = nxv512f16;
+defvar m512_f32_t = nxv256f32;
+defvar m512_f64_t = nxv128f64;
+
+// XTAME matrix registers use the same assembly names as the specification
+// (m0-m7), but must remain distinct from the RVV mask registers M0-M7.
+let RegAltNameIndices = [ABIRegAltName] in {
+  foreach Index = 0-7 in
+    def XTM#Index : RISCVReg<Index, "m"#Index, ["m"#Index]>;
+}
+
+class XTheadMatrixReg<list<ValueType> RegTypes, dag RegList, int LMUL>
+    : RISCVRegisterClass<RegTypes, 64, RegList> {
+  int VLMul = LMUL;
+  int Size = !mul(LMUL, 64);
+}
+
+def MatrixReg : XTheadMatrixReg<
+  [m128_i8_t, m128_i16_t, m128_i32_t, m128_i64_t,
+   m128_f16_t, m128_f32_t, m128_f64_t,
+   m256_i8_t, m256_i16_t, m256_i32_t, m256_i64_t,
+   m256_f16_t, m256_f32_t, m256_f64_t,
+   m512_i8_t, m512_i16_t, m512_i32_t, m512_i64_t,
+   m512_f16_t, m512_f32_t, m512_f64_t],
+  (add (sequence "XTM%u", 0, 7)), 1>;
+
+//===----------------------------------------------------------------------===//
 // XSfmmbase tiles
 //===----------------------------------------------------------------------===//
 foreach Index = 0-15 in
