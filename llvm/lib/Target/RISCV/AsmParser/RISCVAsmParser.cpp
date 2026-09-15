@@ -496,8 +496,8 @@ public:
     return Kind == KindTy::Register && Reg.Reg == RISCV::V0;
   }
   bool isMatrixReg() const {
-    return Kind == KindTy::Register && Reg.Reg >= RISCV::AMEM0 &&
-           Reg.Reg <= RISCV::AMEM7;
+    return Kind == KindTy::Register && Reg.Reg >= RISCV::XTM0 &&
+           Reg.Reg <= RISCV::XTM7;
   }
   bool isAnyReg() const {
     return Kind == KindTy::Register &&
@@ -2685,7 +2685,7 @@ ParseStatus RISCVAsmParser::parseMatrixReg(OperandVector &Operands) {
   SMLoc E = getTok().getEndLoc();
   getLexer().Lex();
   Operands.push_back(
-      RISCVOperand::createReg(RISCV::AMEM0 + (Name[1] - '0'), S, E));
+      RISCVOperand::createReg(RISCV::XTM0 + (Name[1] - '0'), S, E));
   return ParseStatus::Success;
 }
 
