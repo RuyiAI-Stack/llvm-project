@@ -118,6 +118,7 @@ extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void LLVMInitializeRISCVTarget() {
   RegisterTargetMachine<RISCVTargetMachine> B(getTheRISCV64beTarget());
   auto *PR = PassRegistry::getPassRegistry();
   initializeGlobalISel(*PR);
+  initializeRISCVFPGARegisterAllocationPass(*PR);
   initializeRISCVO0PreLegalizerCombinerPass(*PR);
   initializeRISCVPreLegalizerCombinerPass(*PR);
   initializeRISCVPostLegalizerCombinerPass(*PR);
@@ -634,6 +635,7 @@ void RISCVPassConfig::addMachineSSAOptimization() {
 }
 
 void RISCVPassConfig::addPreRegAlloc() {
+  addPass(createRISCVFPGARegisterAllocationPass());
   addPass(createRISCVExpandPseudoPreRALegacyPass());
   if (TM->getOptLevel() != CodeGenOptLevel::None) {
     addPass(createRISCVMergeBaseOffsetOptPass());

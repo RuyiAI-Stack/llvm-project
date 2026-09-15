@@ -123,6 +123,7 @@ void RISCVCodeGenPassBuilder::addMachineSSAOptimization(
 }
 
 void RISCVCodeGenPassBuilder::addPreRegAlloc(PassManagerWrapper &PMW) {
+  addMachineFunctionPass(RISCVFPGARegisterAllocationPass(), PMW);
   addMachineFunctionPass(RISCVExpandPseudoPreRAPass(), PMW);
   if (getOptLevel() != CodeGenOptLevel::None) {
     // TODO: RISCVMergeBaseOffsetOptPass
