@@ -2548,7 +2548,6 @@ include "RISCVInstrInfoXGemmini.td"
 include "RISCVInstrInfoXBuckyballExt.td"
 include "RISCVInstrInfoXSpacemiTIME.td"
 include "RISCVInstrInfoXAIF.td"
-include "RISCVMatrixExt.td"
 
 //===----------------------------------------------------------------------===//
 // Global ISel
@@ -2558,3 +2557,5 @@ include "RISCVInstrGISel.td"
 
 // Matrix(BOSCAME)
 include "RISCVInstrInfoXBOSCAME.td"
+// Matrix(XT)
+include "RISCVInstrInfoXTHeadAME.td"

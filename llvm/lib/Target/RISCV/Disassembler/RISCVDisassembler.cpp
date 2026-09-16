@@ -152,8 +152,8 @@ static DecodeStatus DecodeAccRegRegisterClass(MCInst &Inst, uint32_t RegNo,
 static DecodeStatus
 DecodeMatrixRegRegisterClass(MCInst &Inst, uint32_t RegNo, uint64_t Address,
                              const MCDisassembler *Decoder) {
-  return DecodeSimpleRegisterClass<RISCV::AMEM0, 8>(Inst, RegNo, Address,
-                                                    Decoder);
+  return DecodeSimpleRegisterClass<RISCV::XTM0, 8>(Inst, RegNo, Address,
+                                                   Decoder);
 }
 
 template <auto DecodeFn, auto PredicateFn>
