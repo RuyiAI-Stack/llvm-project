@@ -663,7 +663,7 @@ let TargetPrefix = "riscv" in {
 //===----------------------------------------------------------------------===//
 // Matrix Multiply-Accumulate (MMA) Intrinsic Base Class
 //===----------------------------------------------------------------------===//
-// Base class for all 3-operand Matrix Multiply-Accumulate intrinsics
+// Upstream MMA values have no accelerator side effects beyond their SSA result.
 class BOSC_AME_MMA_Intr
     : Intrinsic<[llvm_anymatrix_ty],
                 [LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>],
@@ -778,4 +778,22 @@ let TargetPrefix = "riscv" in {
   // int, saturated
   def int_riscv_bosc_msoma_mm    : BOSC_AME_WidenMMA_Intr;
   //def int_riscv_bosc_msoma_hb_mm : BOSC_AME_WidenMMA_Intr;
+}
+
+// FPGA-only stateful operations. Keeping a separate identity leaves the GEM5
+// memory-effects contract unchanged and preserves the resynchronization MMA.
+let TargetPrefix = "riscv" in {
+  class BOSC_AME_FPGA_Load_Intr
+      : Intrinsic<[llvm_anymatrix_ty], [llvm_ptr_ty, llvm_anyint_ty, llvm_i32_ty],
+                  [NoCapture<ArgIndex<0>>, IntrReadMem, IntrHasSideEffects,
+                   ImmArg<ArgIndex<2>>]>, RISCVVIntrinsic;
+  def int_riscv_bosc_fpga_mlae8_m : BOSC_AME_FPGA_Load_Intr;
+  def int_riscv_bosc_fpga_mlbe8_m : BOSC_AME_FPGA_Load_Intr;
+  def int_riscv_bosc_fpga_mlbte8_m : BOSC_AME_FPGA_Load_Intr;
+  def int_riscv_bosc_fpga_mlce32_m : BOSC_AME_FPGA_Load_Intr;
+  def int_riscv_bosc_fpga_mqma_b_mm
+      : Intrinsic<[llvm_anymatrix_ty],
+                  [LLVMMatchType<0>, llvm_anymatrix_ty, LLVMMatchType<1>],
+                  [IntrWriteMem]>, RISCVVIntrinsic;
+  def int_riscv_bosc_fpga_msce32_m : BOSC_AME_Store_Intr;
 }

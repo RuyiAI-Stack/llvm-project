@@ -209,6 +209,15 @@ BitVector RISCVRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
       markSuperRegs(Reserved, Reg);
 
   // V registers for code generation. We handle them manually.
+  // FPGA matrix registers are assigned by the dedicated slot allocator before
+  // ordinary RA. Reserve them so generic passes cannot reuse them and their
+  // loop live-ins are valid even while scalar virtual registers remain in SSA.
+  if (Subtarget.hasVendorXBOSCAMEFPGA()) {
+    for (MCPhysReg Reg : RISCV::TileRegRegClass)
+      markSuperRegs(Reserved, Reg);
+    for (MCPhysReg Reg : RISCV::AccRegRegClass)
+      markSuperRegs(Reserved, Reg);
+  }
   markSuperRegs(Reserved, RISCV::VL);
   markSuperRegs(Reserved, RISCV::VTYPE);
   markSuperRegs(Reserved, RISCV::VXSAT);
