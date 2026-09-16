@@ -358,9 +358,9 @@ void RISCVInstPrinter::printMatrixReg(const MCInst *MI, unsigned OpNo,
   const MCOperand &MO = MI->getOperand(OpNo);
 
   assert(MO.isReg() && "printMatrixReg can only print register operands");
-  assert(MO.getReg() >= RISCV::AMEM0 && MO.getReg() <= RISCV::AMEM7 &&
+  assert(MO.getReg() >= RISCV::XTM0 && MO.getReg() <= RISCV::XTM7 &&
          "unexpected matrix register");
-  O << "m" << (MO.getReg() - RISCV::AMEM0);
+  O << "m" << (MO.getReg() - RISCV::XTM0);
 }
 
 void RISCVInstPrinter::printVScaleReg(const MCInst *MI, unsigned OpNo,
