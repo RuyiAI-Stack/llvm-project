@@ -39,6 +39,16 @@ public:
 FunctionPass *createRISCVCodeGenPrepareLegacyPass();
 void initializeRISCVCodeGenPrepareLegacyPass(PassRegistry &);
 
+FunctionPass *createRISCVFPGARegisterAllocationPass();
+void initializeRISCVFPGARegisterAllocationPass(PassRegistry &);
+
+class RISCVFPGARegisterAllocationPass
+    : public RequiredPassInfoMixin<RISCVFPGARegisterAllocationPass> {
+public:
+  PreservedAnalyses run(MachineFunction &MF,
+                       MachineFunctionAnalysisManager &MFAM);
+};
+
 FunctionPass *createRISCVDeadRegisterDefinitionsPass();
 void initializeRISCVDeadRegisterDefinitionsPass(PassRegistry &);
 
