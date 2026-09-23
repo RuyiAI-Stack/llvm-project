@@ -1872,3 +1872,45 @@ let Predicates = [HasVendorXBOSCAME] in {
 //
 // Do not map either family to i8/f16 merely to make TableGen compile: that
 // would select a real instruction with a semantically incorrect LLVM type.
+
+// Slot-bearing load pseudos are allocated before the generic register allocator.
+// The real FPGA opcodes retain state dependencies after pseudo expansion.
+let Predicates = [HasVendorXBOSCAMEFPGA] in {
+  let hasSideEffects = 1, mayLoad = 1, mayStore = 0 in {
+    def PseudoFPGA_LOAD_A : Pseudo<(outs TileReg:$dst),
+        (ins GPR:$base, GPR:$stride, i32imm:$slot), []>;
+    def PseudoFPGA_LOAD_B : Pseudo<(outs TileReg:$dst),
+        (ins GPR:$base, GPR:$stride, i32imm:$slot), []>;
+    def PseudoFPGA_LOAD_BT : Pseudo<(outs TileReg:$dst),
+        (ins GPR:$base, GPR:$stride, i32imm:$slot), []>;
+    def PseudoFPGA_LOAD_ACC : Pseudo<(outs AccReg:$dst),
+        (ins GPR:$base, GPR:$stride, i32imm:$slot), []>;
+  }
+  let isCodeGenOnly = 1, hasSideEffects = 1, mayLoad = 1, mayStore = 0 in {
+    def BOSC_AME_FPGA_MLAE8_M : RVInstBOSCAMELoadTile32<0b000001, 0b000, 0b0, "mlae8.m">;
+    def BOSC_AME_FPGA_MLBE8_M : RVInstBOSCAMELoadTile32<0b000010, 0b000, 0b0, "mlbe8.m">;
+    def BOSC_AME_FPGA_MLBTE8_M : RVInstBOSCAMELoadTile32<0b000010, 0b000, 0b1, "mlbte8.m">;
+    def BOSC_AME_FPGA_MLCE32_M : RVInstBOSCAMELoadAcc32<0b000000, 0b010, 0b0, "mlce32.m">;
+  }
+  let isCodeGenOnly = 1, hasSideEffects = 0, mayLoad = 0, mayStore = 1 in
+    def BOSC_AME_FPGA_MQMA_B_MM
+        : BOSC_AME_MMA_QUAD_WIDEN<0b0, 0b0, 0b1, 0b000, "mqma.b.mm">;
+
+  def : Pat<(nxv128i8 (int_riscv_bosc_fpga_mlae8_m iPTR:$base,
+                         (XLenVT GPR:$stride), timm:$slot)),
+            (PseudoFPGA_LOAD_A iPTR:$base, (XLenVT GPR:$stride), timm:$slot)>;
+  def : Pat<(nxv128i8 (int_riscv_bosc_fpga_mlbe8_m iPTR:$base,
+                         (XLenVT GPR:$stride), timm:$slot)),
+            (PseudoFPGA_LOAD_B iPTR:$base, (XLenVT GPR:$stride), timm:$slot)>;
+  def : Pat<(nxv128i8 (int_riscv_bosc_fpga_mlbte8_m iPTR:$base,
+                         (XLenVT GPR:$stride), timm:$slot)),
+            (PseudoFPGA_LOAD_BT iPTR:$base, (XLenVT GPR:$stride), timm:$slot)>;
+  def : Pat<(nxv32i32 (int_riscv_bosc_fpga_mlce32_m iPTR:$base,
+                         (XLenVT GPR:$stride), timm:$slot)),
+            (PseudoFPGA_LOAD_ACC iPTR:$base, (XLenVT GPR:$stride), timm:$slot)>;
+  def : BOSCAMEPatWidenMMA<int_riscv_bosc_fpga_mqma_b_mm,
+                          BOSC_AME_FPGA_MQMA_B_MM, nxv128i8, nxv32i32>;
+  def : Pat<(int_riscv_bosc_fpga_msce32_m (nxv32i32 AccReg:$src),
+                 iPTR:$base, (XLenVT GPR:$stride)),
+            (BOSC_AME_MSCE32_M AccReg:$src, iPTR:$base, (XLenVT GPR:$stride))>;
+}
