@@ -255,6 +255,228 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
   def BOSC_AME_MSOMA_HB_MM : BOSC_AME_MMA_OCT_WIDEN<0b0, 0b1, 0b1, 0b111, "msoma.hb.mm">;
 }
 
+class RVInstBOSCSMM<dag outs, dag ins, string opcodestr, string argstr>
+    : RVInst<outs, ins, opcodestr, argstr, [], InstFormatOther> {
+  bits<6> funct6;
+  bit     fp;     // 0 for integer, 1 for floating-point (if supported in future)
+  bit     sa;     // 0 for unsaturated, 1 for saturated
+  bits<4> ms2;
+  bit     sn;     // Whether the source operand is signed (for integers), 0 for floating-point
+  bits<4> ms1;
+  bits<3> eew;    
+  bit     sp;
+  bits<4> md;
+  bits<7> opcode = 0b1110111;
+
+  let Inst{31-26} = funct6;
+  let Inst{25}    = fp;
+  let Inst{24}    = sa;
+  let Inst{23-20} = ms2;
+  let Inst{19}    = sn;
+  let Inst{18-15} = ms1;
+  let Inst{14-12} = eew;
+  let Inst{11}    = sp;
+  let Inst{10-7}  = md;
+  let Inst{6-0} = 0b1110111;
+}
+
+class BOSC_MMA_SP_NO_WIDEN<bit fp_val, bit sa_val, bit sn_val,
+                   bits<3> eew_val, bit sp_val, string opcodestr>
+    : RVInstBOSCSMM<(outs AccReg:$md),
+                  (ins AccReg:$md_in, TileReg:$ms1, TileReg:$ms2),
+                  opcodestr, "$md, $ms1, $ms2"> {
+  let Constraints = "$md = $md_in";  // Accumulator constraint
+  let funct6 = 0b101000;     // No widening
+  let fp = fp_val;
+  let sa = sa_val;        // Matrix multiplication
+  let sn = sn_val;        // (signed for integers, 0 for floating-point)
+  let eew = eew_val;
+  let sp = sp_val;       // Special instruction
+  let opcode = 0b1110111;
+}
+
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+
+  def BOSC_AME_MMAU_SPA_MM    : BOSC_MMA_SP_NO_WIDEN<0b0, 0b0, 0b0, 0b100, 0b0, "mmau.spa.mm">;
+  def BOSC_AME_MMAU_SPA_H_MM  : BOSC_MMA_SP_NO_WIDEN<0b0, 0b0, 0b0, 0b001, 0b0, "mmau.spa.h.mm">;
+  def BOSC_AME_MMAU_SPA_W_MM  : BOSC_MMA_SP_NO_WIDEN<0b0, 0b0, 0b0, 0b010, 0b0, "mmau.spa.w.mm">;
+  def BOSC_AME_MMAU_SPA_DW_MM : BOSC_MMA_SP_NO_WIDEN<0b0, 0b0, 0b0, 0b011, 0b0, "mmau.spa.dw.mm">;
+  def BOSC_AME_MMAU_SPB_MM    : BOSC_MMA_SP_NO_WIDEN<0b0, 0b0, 0b0, 0b100, 0b1, "mmau.spb.mm">;
+  def BOSC_AME_MMAU_SPB_H_MM  : BOSC_MMA_SP_NO_WIDEN<0b0, 0b0, 0b0, 0b001, 0b1, "mmau.spb.h.mm">;
+  def BOSC_AME_MMAU_SPB_W_MM  : BOSC_MMA_SP_NO_WIDEN<0b0, 0b0, 0b0, 0b010, 0b1, "mmau.spb.w.mm">;
+  def BOSC_AME_MMAU_SPB_DW_MM : BOSC_MMA_SP_NO_WIDEN<0b0, 0b0, 0b0, 0b011, 0b1, "mmau.spb.dw.mm">;
+
+  def BOSC_AME_MSMAU_SPA_MM   : BOSC_MMA_SP_NO_WIDEN<0b0, 0b1, 0b0, 0b100, 0b0, "msmau.spa.mm">;
+  def BOSC_AME_MSMAU_SPA_H_MM : BOSC_MMA_SP_NO_WIDEN<0b0, 0b1, 0b0, 0b001, 0b0, "msmau.spa.h.mm">;
+  def BOSC_AME_MSMAU_SPA_W_MM : BOSC_MMA_SP_NO_WIDEN<0b0, 0b1, 0b0, 0b010, 0b0, "msmau.spa.w.mm">;
+  def BOSC_AME_MSMAU_SPA_DW_MM: BOSC_MMA_SP_NO_WIDEN<0b0, 0b1, 0b0, 0b011, 0b0, "msmau.spa.dw.mm">;
+  def BOSC_AME_MSMAU_SPB_MM   : BOSC_MMA_SP_NO_WIDEN<0b0, 0b1, 0b0, 0b100, 0b1, "msmau.spb.mm">;
+  def BOSC_AME_MSMAU_SPB_H_MM : BOSC_MMA_SP_NO_WIDEN<0b0, 0b1, 0b0, 0b001, 0b1, "msmau.spb.h.mm">;
+  def BOSC_AME_MSMAU_SPB_W_MM : BOSC_MMA_SP_NO_WIDEN<0b0, 0b1, 0b0, 0b010, 0b1, "msmau.spb.w.mm">;
+  def BOSC_AME_MSMAU_SPB_DW_MM: BOSC_MMA_SP_NO_WIDEN<0b0, 0b1, 0b0, 0b011, 0b1, "msmau.spb.dw.mm">;
+
+  def BOSC_AME_MMA_SPA_MM    : BOSC_MMA_SP_NO_WIDEN<0b0, 0b0, 0b1, 0b100, 0b0, "mma.spa.mm">;
+  def BOSC_AME_MMA_SPA_H_MM  : BOSC_MMA_SP_NO_WIDEN<0b0, 0b0, 0b1, 0b001, 0b0, "mma.spa.h.mm">;
+  def BOSC_AME_MMA_SPA_W_MM  : BOSC_MMA_SP_NO_WIDEN<0b0, 0b0, 0b1, 0b010, 0b0, "mma.spa.w.mm">;
+  def BOSC_AME_MMA_SPA_DW_MM : BOSC_MMA_SP_NO_WIDEN<0b0, 0b0, 0b1, 0b011, 0b0, "mma.spa.dw.mm">;
+  def BOSC_AME_MMA_SPB_MM    : BOSC_MMA_SP_NO_WIDEN<0b0, 0b0, 0b1, 0b100, 0b1, "mma.spb.mm">;
+  def BOSC_AME_MMA_SPB_H_MM  : BOSC_MMA_SP_NO_WIDEN<0b0, 0b0, 0b1, 0b001, 0b1, "mma.spb.h.mm">;
+  def BOSC_AME_MMA_SPB_W_MM  : BOSC_MMA_SP_NO_WIDEN<0b0, 0b0, 0b1, 0b010, 0b1, "mma.spb.w.mm">;
+  def BOSC_AME_MMA_SPB_DW_MM : BOSC_MMA_SP_NO_WIDEN<0b0, 0b0, 0b1, 0b011, 0b1, "mma.spb.dw.mm">;
+
+  def BOSC_AME_MSMA_SPA_MM   : BOSC_MMA_SP_NO_WIDEN<0b0, 0b1, 0b1, 0b100, 0b0, "msma.spa.mm">;
+  def BOSC_AME_MSMA_SPA_H_MM : BOSC_MMA_SP_NO_WIDEN<0b0, 0b1, 0b1, 0b001, 0b0, "msma.spa.h.mm">;
+  def BOSC_AME_MSMA_SPA_W_MM : BOSC_MMA_SP_NO_WIDEN<0b0, 0b1, 0b1, 0b010, 0b0, "msma.spa.w.mm">;
+  def BOSC_AME_MSMA_SPA_DW_MM: BOSC_MMA_SP_NO_WIDEN<0b0, 0b1, 0b1, 0b011, 0b0, "msma.spa.dw.mm">;
+  def BOSC_AME_MSMA_SPB_MM   : BOSC_MMA_SP_NO_WIDEN<0b0, 0b1, 0b1, 0b100, 0b1, "msma.spb.mm">;
+  def BOSC_AME_MSMA_SPB_H_MM : BOSC_MMA_SP_NO_WIDEN<0b0, 0b1, 0b1, 0b001, 0b1, "msma.spb.h.mm">;
+  def BOSC_AME_MSMA_SPB_W_MM : BOSC_MMA_SP_NO_WIDEN<0b0, 0b1, 0b1, 0b010, 0b1, "msma.spb.w.mm">;
+  def BOSC_AME_MSMA_SPB_DW_MM: BOSC_MMA_SP_NO_WIDEN<0b0, 0b1, 0b1, 0b011, 0b1, "msma.spb.dw.mm">;
+
+  def BOSC_AME_MFMA_SPA_MM   : BOSC_MMA_SP_NO_WIDEN<0b1, 0b0, 0b1, 0b100, 0b0, "mfma.spa.mm">;
+  def BOSC_AME_MFMA_SPA_HF_MM: BOSC_MMA_SP_NO_WIDEN<0b1, 0b0, 0b1, 0b001, 0b0, "mfma.spa.hf.mm">;
+  def BOSC_AME_MFMA_SPA_F_MM : BOSC_MMA_SP_NO_WIDEN<0b1, 0b0, 0b1, 0b010, 0b0, "mfma.spa.f.mm">;
+  def BOSC_AME_MFMA_SPA_D_MM : BOSC_MMA_SP_NO_WIDEN<0b1, 0b0, 0b1, 0b011, 0b0, "mfma.spa.d.mm">;
+  def BOSC_AME_MFMA_SPB_MM   : BOSC_MMA_SP_NO_WIDEN<0b1, 0b0, 0b1, 0b100, 0b1, "mfma.spb.mm">;
+  def BOSC_AME_MFMA_SPB_HF_MM: BOSC_MMA_SP_NO_WIDEN<0b1, 0b0, 0b1, 0b001, 0b1, "mfma.spb.hf.mm">;
+  def BOSC_AME_MFMA_SPB_F_MM : BOSC_MMA_SP_NO_WIDEN<0b1, 0b0, 0b1, 0b010, 0b1, "mfma.spb.f.mm">;
+  def BOSC_AME_MFMA_SPB_D_MM : BOSC_MMA_SP_NO_WIDEN<0b1, 0b0, 0b1, 0b011, 0b1, "mfma.spb.d.mm">;
+}
+
+class BOSC_MMA_SP_DOUBLE_WIDEN<bit fp_val, bit sa_val, bit sn_val,
+                   bits<3> eew_val, bit sp_val, string opcodestr>
+    : RVInstBOSCSMM<(outs AccReg:$md),
+                  (ins AccReg:$md_in, TileReg:$ms1, TileReg:$ms2),
+                  opcodestr, "$md, $ms1, $ms2"> {
+  let Constraints = "$md = $md_in";  // Accumulator constraint
+  let funct6 = 0b101001;     // Double widening
+  let fp = fp_val;
+  let sa = sa_val;        // Matrix multiplication
+  let sn = sn_val;        // (signed for integers, 0 for floating-point)
+  let eew = eew_val;
+  let sp = sp_val;       // Special instruction
+  let opcode = 0b1110111;
+}
+
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+
+  def BOSC_AME_MWMAU_SPA_MM    : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b0, 0b0, 0b100, 0b0, "mwmau.spa.mm">;
+  def BOSC_AME_MWMAU_SPA_H_MM  : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b0, 0b0, 0b001, 0b0, "mwmau.spa.h.mm">;
+  def BOSC_AME_MWMAU_SPA_W_MM  : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b0, 0b0, 0b010, 0b0, "mwmau.spa.w.mm">;
+  def BOSC_AME_MWMAU_SPB_MM    : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b0, 0b0, 0b100, 0b1, "mwmau.spb.mm">;
+  def BOSC_AME_MWMAU_SPB_H_MM  : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b0, 0b0, 0b001, 0b1, "mwmau.spb.h.mm">;
+  def BOSC_AME_MWMAU_SPB_W_MM  : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b0, 0b0, 0b010, 0b1, "mwmau.spb.w.mm">;
+
+  def BOSC_AME_MSWMAU_SPA_MM   : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b1, 0b0, 0b100, 0b0, "mswmau.spa.mm">;
+  def BOSC_AME_MSWMAU_SPA_H_MM : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b1, 0b0, 0b001, 0b0, "mswmau.spa.h.mm">;
+  def BOSC_AME_MSWMAU_SPA_W_MM : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b1, 0b0, 0b010, 0b0, "mswmau.spa.w.mm">;
+  def BOSC_AME_MSWMAU_SPB_MM   : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b1, 0b0, 0b100, 0b1, "mswmau.spb.mm">;
+  def BOSC_AME_MSWMAU_SPB_H_MM : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b1, 0b0, 0b001, 0b1, "mswmau.spb.h.mm">;
+  def BOSC_AME_MSWMAU_SPB_W_MM : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b1, 0b0, 0b010, 0b1, "mswmau.spb.w.mm">;
+
+  def BOSC_AME_MWMA_SPA_MM    : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b0, 0b1, 0b100, 0b0, "mwma.spa.mm">;
+  def BOSC_AME_MWMA_SPA_H_MM  : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b0, 0b1, 0b001, 0b0, "mwma.spa.h.mm">;
+  def BOSC_AME_MWMA_SPA_W_MM  : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b0, 0b1, 0b010, 0b0, "mwma.spa.w.mm">;
+  def BOSC_AME_MWMA_SPB_MM    : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b0, 0b1, 0b100, 0b1, "mwma.spb.mm">;
+  def BOSC_AME_MWMA_SPB_H_MM  : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b0, 0b1, 0b001, 0b1, "mwma.spb.h.mm">;
+  def BOSC_AME_MWMA_SPB_W_MM  : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b0, 0b1, 0b010, 0b1, "mwma.spb.w.mm">;
+
+  def BOSC_AME_MSWMA_SPA_MM   : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b1, 0b1, 0b100, 0b0, "mswma.spa.mm">;
+  def BOSC_AME_MSWMA_SPA_H_MM : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b1, 0b1, 0b001, 0b0, "mswma.spa.h.mm">;
+  def BOSC_AME_MSWMA_SPA_W_MM : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b1, 0b1, 0b010, 0b0, "mswma.spa.w.mm">;
+  def BOSC_AME_MSWMA_SPB_MM   : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b1, 0b1, 0b100, 0b1, "mswma.spb.mm">;
+  def BOSC_AME_MSWMA_SPB_H_MM : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b1, 0b1, 0b001, 0b1, "mswma.spb.h.mm">;
+  def BOSC_AME_MSWMA_SPB_W_MM : BOSC_MMA_SP_DOUBLE_WIDEN<0b0, 0b1, 0b1, 0b010, 0b1, "mswma.spb.w.mm">;
+
+  def BOSC_AME_MFWMA_SPA_MM   : BOSC_MMA_SP_DOUBLE_WIDEN<0b1, 0b0, 0b1, 0b100, 0b0, "mfwma.spa.mm">;
+  def BOSC_AME_MFWMA_SPA_HF_MM: BOSC_MMA_SP_DOUBLE_WIDEN<0b1, 0b0, 0b1, 0b001, 0b0, "mfwma.spa.hf.mm">;
+  def BOSC_AME_MFWMA_SPA_F_MM : BOSC_MMA_SP_DOUBLE_WIDEN<0b1, 0b0, 0b1, 0b010, 0b0, "mfwma.spa.f.mm">;
+  def BOSC_AME_MFWMA_SPB_MM   : BOSC_MMA_SP_DOUBLE_WIDEN<0b1, 0b0, 0b1, 0b100, 0b1, "mfwma.spb.mm">;
+  def BOSC_AME_MFWMA_SPB_HF_MM: BOSC_MMA_SP_DOUBLE_WIDEN<0b1, 0b0, 0b1, 0b001, 0b1, "mfwma.spb.hf.mm">;
+  def BOSC_AME_MFWMA_SPB_F_MM : BOSC_MMA_SP_DOUBLE_WIDEN<0b1, 0b0, 0b1, 0b010, 0b1, "mfwma.spb.f.mm">;
+}
+
+class BOSC_MMA_SP_QUAD_WIDEN<bit fp_val, bit sa_val, bit sn_val,
+                   bits<3> eew_val, bit sp_val, string opcodestr>
+    : RVInstBOSCSMM<(outs AccReg:$md),
+                  (ins AccReg:$md_in, TileReg:$ms1, TileReg:$ms2),
+                  opcodestr, "$md, $ms1, $ms2"> {
+  let Constraints = "$md = $md_in";  // Accumulator constraint
+  let funct6 = 0b101010;     // Quad widening
+  let fp = fp_val;
+  let sa = sa_val;        // Matrix multiplication
+  let sn = sn_val;        // (signed for integers, 0 for floating-point)
+  let eew = eew_val;
+  let sp = sp_val;       // Special instruction
+  let opcode = 0b1110111;
+}
+
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+
+  def BOSC_AME_MQMAU_SPA_MM    : BOSC_MMA_SP_QUAD_WIDEN<0b0, 0b0, 0b0, 0b100, 0b0, "mqmau.spa.mm">;
+  def BOSC_AME_MQMAU_SPA_B_MM  : BOSC_MMA_SP_QUAD_WIDEN<0b0, 0b0, 0b0, 0b000, 0b0, "mqmau.spa.b.mm">;
+  def BOSC_AME_MQMAU_SPB_MM    : BOSC_MMA_SP_QUAD_WIDEN<0b0, 0b0, 0b0, 0b100, 0b1, "mqmau.spb.mm">;
+  def BOSC_AME_MQMAU_SPB_B_MM  : BOSC_MMA_SP_QUAD_WIDEN<0b0, 0b0, 0b0, 0b000, 0b1, "mqmau.spb.b.mm">;
+
+  def BOSC_AME_MSQMAU_SPA_MM   : BOSC_MMA_SP_QUAD_WIDEN<0b0, 0b1, 0b0, 0b100, 0b0, "msqmau.spa.mm">;
+  def BOSC_AME_MSQMAU_SPA_B_MM : BOSC_MMA_SP_QUAD_WIDEN<0b0, 0b1, 0b0, 0b000, 0b0, "msqmau.spa.b.mm">;
+  def BOSC_AME_MSQMAU_SPB_MM   : BOSC_MMA_SP_QUAD_WIDEN<0b0, 0b1, 0b0, 0b100, 0b1, "msqmau.spb.mm">;
+  def BOSC_AME_MSQMAU_SPB_B_MM : BOSC_MMA_SP_QUAD_WIDEN<0b0, 0b1, 0b0, 0b000, 0b1, "msqmau.spb.b.mm">;
+
+  def BOSC_AME_MQMA_SPA_MM    : BOSC_MMA_SP_QUAD_WIDEN<0b0, 0b0, 0b1, 0b100, 0b0, "mqma.spa.mm">;
+  def BOSC_AME_MQMA_SPA_B_MM  : BOSC_MMA_SP_QUAD_WIDEN<0b0, 0b0, 0b1, 0b000, 0b0, "mqma.spa.b.mm">;
+  def BOSC_AME_MQMA_SPB_MM    : BOSC_MMA_SP_QUAD_WIDEN<0b0, 0b0, 0b1, 0b100, 0b1, "mqma.spb.mm">;
+  def BOSC_AME_MQMA_SPB_B_MM  : BOSC_MMA_SP_QUAD_WIDEN<0b0, 0b0, 0b1, 0b000, 0b1, "mqma.spb.b.mm">;
+
+  def BOSC_AME_MSQMA_SPA_MM   : BOSC_MMA_SP_QUAD_WIDEN<0b0, 0b1, 0b1, 0b100, 0b0, "msqma.spa.mm">;
+  def BOSC_AME_MSQMA_SPA_B_MM : BOSC_MMA_SP_QUAD_WIDEN<0b0, 0b1, 0b1, 0b000, 0b0, "msqma.spa.b.mm">;
+  def BOSC_AME_MSQMA_SPB_MM   : BOSC_MMA_SP_QUAD_WIDEN<0b0, 0b1, 0b1, 0b100, 0b1, "msqma.spb.mm">;
+  def BOSC_AME_MSQMA_SPB_B_MM : BOSC_MMA_SP_QUAD_WIDEN<0b0, 0b1, 0b1, 0b000, 0b1, "msqma.spb.b.mm">;
+
+  def BOSC_AME_MFQMA_SPA_MM   : BOSC_MMA_SP_QUAD_WIDEN<0b1, 0b0, 0b1, 0b100, 0b0, "mfqma.spa.mm">;
+  def BOSC_AME_MFQMA_SPA_CF_MM: BOSC_MMA_SP_QUAD_WIDEN<0b1, 0b0, 0b1, 0b001, 0b0, "mfqma.spa.cf.mm">;
+  def BOSC_AME_MFQMA_SPB_MM   : BOSC_MMA_SP_QUAD_WIDEN<0b1, 0b0, 0b1, 0b100, 0b1, "mfqma.spb.mm">;
+  def BOSC_AME_MFQMA_SPB_CF_MM: BOSC_MMA_SP_QUAD_WIDEN<0b1, 0b0, 0b1, 0b001, 0b1, "mfqma.spb.cf.mm">;
+}
+
+class BOSC_MMA_SP_OCT_WIDEN<bit fp_val, bit sa_val, bit sn_val,
+                   bits<3> eew_val, bit sp_val, string opcodestr>
+    : RVInstBOSCSMM<(outs AccReg:$md),
+                  (ins AccReg:$md_in, TileReg:$ms1, TileReg:$ms2),
+                  opcodestr, "$md, $ms1, $ms2"> {
+  let Constraints = "$md = $md_in";  // Accumulator constraint
+  let funct6 = 0b101011;     // Oct widening
+  let fp = fp_val;
+  let sa = sa_val;        // Matrix multiplication
+  let sn = sn_val;        // (signed for integers, 0 for floating-point)
+  let eew = eew_val;
+  let sp = sp_val;       // Special instruction
+  let opcode = 0b1110111;
+}
+
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+
+  def BOSC_AME_MOMAU_SPA_MM    : BOSC_MMA_SP_OCT_WIDEN<0b0, 0b0, 0b0, 0b100, 0b0, "momau.spa.mm">;
+  def BOSC_AME_MOMAU_SPA_HB_MM : BOSC_MMA_SP_OCT_WIDEN<0b0, 0b0, 0b0, 0b111, 0b0, "momau.spa.hb.mm">;
+  def BOSC_AME_MOMAU_SPB_MM    : BOSC_MMA_SP_OCT_WIDEN<0b0, 0b0, 0b0, 0b100, 0b1, "momau.spb.mm">;
+  def BOSC_AME_MOMAU_SPB_HB_MM : BOSC_MMA_SP_OCT_WIDEN<0b0, 0b0, 0b0, 0b111, 0b1, "momau.spb.hb.mm">;
+
+  def BOSC_AME_MSOMAU_SPA_MM   : BOSC_MMA_SP_OCT_WIDEN<0b0, 0b1, 0b0, 0b100, 0b0, "msomau.spa.mm">;
+  def BOSC_AME_MSOMAU_SPA_HB_MM: BOSC_MMA_SP_OCT_WIDEN<0b0, 0b1, 0b0, 0b111, 0b0, "msomau.spa.hb.mm">;
+  def BOSC_AME_MSOMAU_SPB_MM   : BOSC_MMA_SP_OCT_WIDEN<0b0, 0b1, 0b0, 0b100, 0b1, "msomau.spb.mm">;
+  def BOSC_AME_MSOMAU_SPB_HB_MM: BOSC_MMA_SP_OCT_WIDEN<0b0, 0b1, 0b0, 0b111, 0b1, "msomau.spb.hb.mm">;
+
+  def BOSC_AME_MOMA_SPA_MM    : BOSC_MMA_SP_OCT_WIDEN<0b0, 0b0, 0b1, 0b100, 0b0, "moma.spa.mm">;
+  def BOSC_AME_MOMA_SPA_HB_MM : BOSC_MMA_SP_OCT_WIDEN<0b0, 0b0, 0b1, 0b111, 0b0, "moma.spa.hb.mm">;
+  def BOSC_AME_MOMA_SPB_MM    : BOSC_MMA_SP_OCT_WIDEN<0b0, 0b0, 0b1, 0b100, 0b1, "moma.spb.mm">;
+  def BOSC_AME_MOMA_SPB_HB_MM : BOSC_MMA_SP_OCT_WIDEN<0b0, 0b0, 0b1, 0b111, 0b1, "moma.spb.hb.mm">;
+
+  def BOSC_AME_MSOMA_SPA_MM   : BOSC_MMA_SP_OCT_WIDEN<0b0, 0b1, 0b1, 0b100, 0b0, "msoma.spa.mm">;
+  def BOSC_AME_MSOMA_SPA_HB_MM: BOSC_MMA_SP_OCT_WIDEN<0b0, 0b1, 0b1, 0b111, 0b0, "msoma.spa.hb.mm">;
+  def BOSC_AME_MSOMA_SPB_MM   : BOSC_MMA_SP_OCT_WIDEN<0b0, 0b1, 0b1, 0b100, 0b1, "msoma.spb.mm">;
+  def BOSC_AME_MSOMA_SPB_HB_MM: BOSC_MMA_SP_OCT_WIDEN<0b0, 0b1, 0b1, 0b111, 0b1, "msoma.spb.hb.mm">;
+}
+
 //===----------------------------------------------------------------------===//
 // BOSC AME Element-Wise Instructions
 //===----------------------------------------------------------------------===//
@@ -699,6 +921,214 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
   def BOSC_AME_MSRA_DW_MM : BOSC_AME_SHIFT_NO_WIDEN<1, 1, 0b011, "msra.dw.mm">;
 }
 
+class RVInstBOSCAMETypeConvert<dag outs, dag ins, string opcodestr, string argstr>
+    : RVInst<outs, ins, opcodestr, argstr, [], InstFormatOther> {
+  bits<6> funct6;
+  bit     fd;   
+  bits<3> f3;    
+  bits<2> nw;
+  bit     sn;    
+  bits<4> ms1;
+  bits<3> eew;   
+  bit     ma;
+  bits<4> md;
+  bits<7> opcode = 0b1110111;
+
+  let Inst{31-26} = funct6;
+  let Inst{25}    = fd;
+  let Inst{24-22} = f3;
+  let Inst{21-20} = nw;
+  let Inst{19}    = sn;
+  let Inst{18-15} = ms1;
+  let Inst{14-12} = eew;
+  let Inst{11}    = ma;
+  let Inst{10-7}  = md;
+  let Inst{6-0} = 0b1110111;
+}
+
+class BOSC_AME_CVT_INT<bits<3> f3_val, bits<2> nw_val, bit sn_val,
+                   bits<3> eew_val, string opcodestr>
+    : RVInstBOSCAMETypeConvert<(outs AccReg:$md),
+                  (ins AccReg:$ms1),
+                  opcodestr, "$md, $ms1"> {
+  let funct6 = 0b011000;     
+  let fd = 0b0;
+  let f3 = f3_val;
+  let nw = nw_val;        
+  let sn = sn_val;        // (signed for integers, 0 for floating-point)
+  let eew = eew_val;
+  let ma = 0b0;       
+  let opcode = 0b1110111;
+}
+
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+  //uint to int
+  def BOSC_AME_MCVT_X_XU_M   : BOSC_AME_CVT_INT<0b000, 0b00, 0b1, 0b100, "mcvt.x.xu.m">;
+  def BOSC_AME_MCVT_HB_UHB_M : BOSC_AME_CVT_INT<0b000, 0b00, 0b1, 0b111, "mcvt.hb.uhb.m">;
+  def BOSC_AME_MCVT_B_UB_M   : BOSC_AME_CVT_INT<0b000, 0b00, 0b1, 0b000, "mcvt.b.ub.m">;
+  def BOSC_AME_MCVT_H_UH_M   : BOSC_AME_CVT_INT<0b000, 0b00, 0b1, 0b001, "mcvt.h.uh.m">;
+  def BOSC_AME_MCVT_W_UW_M   : BOSC_AME_CVT_INT<0b000, 0b00, 0b1, 0b010, "mcvt.w.uw.m">;
+  def BOSC_AME_MCVT_DW_UDW_M : BOSC_AME_CVT_INT<0b000, 0b00, 0b1, 0b011, "mcvt.dw.udw.m">;
+  //int to uint
+  def BOSC_AME_MCVT_XU_X_M   : BOSC_AME_CVT_INT<0b001, 0b00, 0b1, 0b100, "mcvt.xu.x.m">;
+  def BOSC_AME_MCVT_UHB_HB_M : BOSC_AME_CVT_INT<0b001, 0b00, 0b1, 0b111, "mcvt.uhb.hb.m">;
+  def BOSC_AME_MCVT_UB_B_M   : BOSC_AME_CVT_INT<0b001, 0b00, 0b1, 0b000, "mcvt.ub.b.m">;
+  def BOSC_AME_MCVT_UH_H_M   : BOSC_AME_CVT_INT<0b001, 0b00, 0b1, 0b001, "mcvt.uh.h.m">;
+  def BOSC_AME_MCVT_UW_W_M   : BOSC_AME_CVT_INT<0b001, 0b00, 0b1, 0b010, "mcvt.uw.w.m">;
+  def BOSC_AME_MCVT_UDW_DW_M : BOSC_AME_CVT_INT<0b001, 0b00, 0b1, 0b011, "mcvt.udw.dw.m">;
+  //uint to (widen)uint
+  def BOSC_AME_MWCVTU_XW_X_M : BOSC_AME_CVT_INT<0b000, 0b01, 0b0, 0b100, "mwcvtu.xw.x.m">;
+  def BOSC_AME_MWCVTU_XQ_X_M : BOSC_AME_CVT_INT<0b001, 0b01, 0b0, 0b100, "mwcvtu.xq.x.m">;
+  def BOSC_AME_MWCVTU_XO_X_M : BOSC_AME_CVT_INT<0b010, 0b01, 0b0, 0b100, "mwcvtu.xo.x.m">;
+  def BOSC_AME_MWCVTU_B_HB_M : BOSC_AME_CVT_INT<0b000, 0b01, 0b0, 0b111, "mwcvtu.b.hb.m">;
+  def BOSC_AME_MWCVTU_H_HB_M : BOSC_AME_CVT_INT<0b001, 0b01, 0b0, 0b111, "mwcvtu.h.hb.m">;
+  def BOSC_AME_MWCVTU_W_HB_M : BOSC_AME_CVT_INT<0b010, 0b01, 0b0, 0b111, "mwcvtu.w.hb.m">;
+  def BOSC_AME_MWCVTU_H_B_M  : BOSC_AME_CVT_INT<0b000, 0b01, 0b0, 0b000, "mwcvtu.h.b.m">;
+  def BOSC_AME_MWCVTU_W_B_M  : BOSC_AME_CVT_INT<0b001, 0b01, 0b0, 0b000, "mwcvtu.w.b.m">;
+  def BOSC_AME_MWCVTU_W_H_M  : BOSC_AME_CVT_INT<0b000, 0b01, 0b0, 0b001, "mwcvtu.w.h.m">;
+  def BOSC_AME_MWCVTU_DW_W_M : BOSC_AME_CVT_INT<0b000, 0b01, 0b0, 0b010, "mwcvtu.dw.w.m">;
+  //int to (widen)int
+  def BOSC_AME_MWCVT_XW_X_M : BOSC_AME_CVT_INT<0b000, 0b01, 0b1, 0b100, "mwcvt.xw.x.m">;
+  def BOSC_AME_MWCVT_XQ_X_M : BOSC_AME_CVT_INT<0b001, 0b01, 0b1, 0b100, "mwcvt.xq.x.m">;
+  def BOSC_AME_MWCVT_XO_X_M : BOSC_AME_CVT_INT<0b010, 0b01, 0b1, 0b100, "mwcvt.xo.x.m">;
+  def BOSC_AME_MWCVT_B_HB_M : BOSC_AME_CVT_INT<0b000, 0b01, 0b1, 0b111, "mwcvt.b.hb.m">;
+  def BOSC_AME_MWCVT_H_HB_M : BOSC_AME_CVT_INT<0b001, 0b01, 0b1, 0b111, "mwcvt.h.hb.m">;
+  def BOSC_AME_MWCVT_W_HB_M : BOSC_AME_CVT_INT<0b010, 0b01, 0b1, 0b111, "mwcvt.w.hb.m">;
+  def BOSC_AME_MWCVT_H_B_M  : BOSC_AME_CVT_INT<0b000, 0b01, 0b1, 0b000, "mwcvt.h.b.m">;
+  def BOSC_AME_MWCVT_W_B_M  : BOSC_AME_CVT_INT<0b001, 0b01, 0b1, 0b000, "mwcvt.w.b.m">;
+  def BOSC_AME_MWCVT_W_H_M  : BOSC_AME_CVT_INT<0b000, 0b01, 0b1, 0b001, "mwcvt.w.h.m">;
+  def BOSC_AME_MWCVT_DW_W_M : BOSC_AME_CVT_INT<0b000, 0b01, 0b1, 0b010, "mwcvt.dw.w.m">;
+  //(widen)uint to uint
+  def BOSC_AME_MNCVTU_X_XW_M : BOSC_AME_CVT_INT<0b000, 0b10, 0b0, 0b100, "mncvtu.x.xw.m">;
+  def BOSC_AME_MNCVTU_X_XQ_M : BOSC_AME_CVT_INT<0b001, 0b10, 0b0, 0b100, "mncvtu.x.xq.m">;
+  def BOSC_AME_MNCVTU_X_XO_M : BOSC_AME_CVT_INT<0b010, 0b10, 0b0, 0b100, "mncvtu.x.xo.m">;
+  def BOSC_AME_MNCVTU_HB_B_M : BOSC_AME_CVT_INT<0b000, 0b10, 0b0, 0b000, "mncvtu.hb.b.m">;
+  def BOSC_AME_MNCVTU_HB_H_M : BOSC_AME_CVT_INT<0b001, 0b10, 0b0, 0b001, "mncvtu.hb.h.m">;
+  def BOSC_AME_MNCVTU_HB_W_M : BOSC_AME_CVT_INT<0b010, 0b10, 0b0, 0b010, "mncvtu.hb.w.m">;
+  def BOSC_AME_MNCVTU_B_H_M  : BOSC_AME_CVT_INT<0b000, 0b10, 0b0, 0b001, "mncvtu.b.h.m">;
+  def BOSC_AME_MNCVTU_B_W_M  : BOSC_AME_CVT_INT<0b001, 0b10, 0b0, 0b010, "mncvtu.b.w.m">;
+  def BOSC_AME_MNCVTU_H_W_M  : BOSC_AME_CVT_INT<0b000, 0b10, 0b0, 0b010, "mncvtu.h.w.m">;
+  def BOSC_AME_MNCVTU_W_DW_M : BOSC_AME_CVT_INT<0b000, 0b10, 0b0, 0b011, "mncvtu.w.dw.m">;
+  //(widen)int to int
+  def BOSC_AME_MNCVT_X_XW_M : BOSC_AME_CVT_INT<0b000, 0b10, 0b1, 0b100, "mncvt.x.xw.m">;
+  def BOSC_AME_MNCVT_X_XQ_M : BOSC_AME_CVT_INT<0b001, 0b10, 0b1, 0b100, "mncvt.x.xq.m">;
+  def BOSC_AME_MNCVT_X_XO_M : BOSC_AME_CVT_INT<0b010, 0b10, 0b1, 0b100, "mncvt.x.xo.m">;
+  def BOSC_AME_MNCVT_HB_B_M : BOSC_AME_CVT_INT<0b000, 0b10, 0b1, 0b000, "mncvt.hb.b.m">;
+  def BOSC_AME_MNCVT_HB_H_M : BOSC_AME_CVT_INT<0b001, 0b10, 0b1, 0b001, "mncvt.hb.h.m">;
+  def BOSC_AME_MNCVT_HB_W_M : BOSC_AME_CVT_INT<0b010, 0b10, 0b1, 0b010, "mncvt.hb.w.m">;
+  def BOSC_AME_MNCVT_B_H_M  : BOSC_AME_CVT_INT<0b000, 0b10, 0b1, 0b001, "mncvt.b.h.m">;
+  def BOSC_AME_MNCVT_B_W_M  : BOSC_AME_CVT_INT<0b001, 0b10, 0b1, 0b010, "mncvt.b.w.m">;
+  def BOSC_AME_MNCVT_H_W_M  : BOSC_AME_CVT_INT<0b000, 0b10, 0b1, 0b010, "mncvt.h.w.m">;
+  def BOSC_AME_MNCVT_W_DW_M : BOSC_AME_CVT_INT<0b000, 0b10, 0b1, 0b011, "mncvt.w.dw.m">;
+}
+
+class BOSC_AME_CVT_FP<bit fd_val, bits<3> f3_val, bits<2> nw_val, bit sn_val,
+                   bits<3> eew_val, string opcodestr>
+    : RVInstBOSCAMETypeConvert<(outs AccReg:$md),
+                  (ins AccReg:$ms1),
+                  opcodestr, "$md, $ms1"> {
+  let funct6 = 0b011001;     
+  let fd = fd_val;
+  let f3 = f3_val;
+  let nw = nw_val;        
+  let sn = sn_val;        // (signed for integers, 0 for floating-point)
+  let eew = eew_val;
+  let ma = 0b0;       
+  let opcode = 0b1110111;
+}
+
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+  //float to float(No widening)
+  def BOSC_AME_MFCVT_BF_HF_M  : BOSC_AME_CVT_FP<0b1, 0b000, 0b00, 0b0, 0b001, "mfcvt.bf.hf.m">;
+  def BOSC_AME_MFCVT_HF_BF_M  : BOSC_AME_CVT_FP<0b1, 0b000, 0b00, 0b1, 0b001, "mfcvt.hf.bf.m">;
+  //float to float(widen)
+  def BOSC_AME_MFWCVT_FW_F_M  : BOSC_AME_CVT_FP<0b1, 0b001, 0b01, 0b0, 0b100, "mfwcvt.fw.f.m">;
+  def BOSC_AME_MFWCVT_HF_CF_M : BOSC_AME_CVT_FP<0b1, 0b001, 0b01, 0b0, 0b000, "mfwcvt.hf.cf.m">;
+  def BOSC_AME_MFWCVT_F_HF_M  : BOSC_AME_CVT_FP<0b1, 0b001, 0b01, 0b0, 0b001, "mfwcvt.f.hf.m">;
+  def BOSC_AME_MFWCVT_D_F_M   : BOSC_AME_CVT_FP<0b1, 0b001, 0b01, 0b0, 0b010, "mfwcvt.d.f.m">;
+  //(widen)float to float
+  def BOSC_AME_MFNCVT_F_FW_M  : BOSC_AME_CVT_FP<0b1, 0b001, 0b10, 0b0, 0b100, "mfncvt.f.fw.m">;
+  def BOSC_AME_MFNCVT_CF_HF_M : BOSC_AME_CVT_FP<0b1, 0b001, 0b10, 0b0, 0b001, "mfncvt.cf.hf.m">;
+  def BOSC_AME_MFNCVT_HF_F_M  : BOSC_AME_CVT_FP<0b1, 0b001, 0b10, 0b0, 0b010, "mfncvt.hf.f.m">;
+  def BOSC_AME_MFNCVT_F_D_M   : BOSC_AME_CVT_FP<0b1, 0b001, 0b10, 0b0, 0b011, "mfncvt.f.d.m">;
+  //uint to float
+  def BOSC_AME_MFCVTU_F_X_M   : BOSC_AME_CVT_FP<0b1, 0b010, 0b00, 0b0, 0b100, "mfcvtu.f.x.m">;
+  def BOSC_AME_MFCVTU_HF_H_M  : BOSC_AME_CVT_FP<0b1, 0b010, 0b00, 0b0, 0b001, "mfcvtu.hf.h.m">;
+  def BOSC_AME_MFCVTU_F_W_M   : BOSC_AME_CVT_FP<0b1, 0b010, 0b00, 0b0, 0b010, "mfcvtu.f.w.m">;
+  def BOSC_AME_MFCVTU_D_DW_M  : BOSC_AME_CVT_FP<0b1, 0b010, 0b00, 0b0, 0b011, "mfcvtu.d.dw.m">;
+  //int to float
+  def BOSC_AME_MFCVT_F_X_M    : BOSC_AME_CVT_FP<0b1, 0b010, 0b00, 0b1, 0b100, "mfcvt.f.x.m">;
+  def BOSC_AME_MFCVT_HF_H_M   : BOSC_AME_CVT_FP<0b1, 0b010, 0b00, 0b1, 0b001, "mfcvt.hf.h.m">;
+  def BOSC_AME_MFCVT_F_W_M    : BOSC_AME_CVT_FP<0b1, 0b010, 0b00, 0b1, 0b010, "mfcvt.f.w.m">;
+  def BOSC_AME_MFCVT_D_DW_M   : BOSC_AME_CVT_FP<0b1, 0b010, 0b00, 0b1, 0b011, "mfcvt.d.dw.m">;
+  //uint to (widen)float
+  def BOSC_AME_MFWCVTU_FW_X_M  : BOSC_AME_CVT_FP<0b1, 0b010, 0b01, 0b0, 0b100, "mfwcvtu.fw.x.m">;
+  def BOSC_AME_MFWCVTU_FQ_X_M  : BOSC_AME_CVT_FP<0b1, 0b110, 0b01, 0b0, 0b100, "mfwcvtu.fq.x.m">;
+  def BOSC_AME_MFWCVTU_FO_X_M  : BOSC_AME_CVT_FP<0b1, 0b111, 0b01, 0b0, 0b100, "mfwcvtu.fo.x.m">;
+  def BOSC_AME_MFWCVTU_HF_HB_M : BOSC_AME_CVT_FP<0b1, 0b110, 0b01, 0b0, 0b111, "mfwcvtu.hf.hb.m">;
+  def BOSC_AME_MFWCVTU_F_HB_M  : BOSC_AME_CVT_FP<0b1, 0b111, 0b01, 0b0, 0b111, "mfwcvtu.f.hb.m">;
+  def BOSC_AME_MFWCVTU_HF_B_M  : BOSC_AME_CVT_FP<0b1, 0b010, 0b01, 0b0, 0b000, "mfwcvtu.hf.b.m">;
+  def BOSC_AME_MFWCVTU_F_B_M   : BOSC_AME_CVT_FP<0b1, 0b110, 0b01, 0b0, 0b000, "mfwcvtu.f.b.m">;
+  def BOSC_AME_MFWCVTU_F_H_M   : BOSC_AME_CVT_FP<0b1, 0b010, 0b01, 0b0, 0b001, "mfwcvtu.f.h.m">;
+  def BOSC_AME_MFWCVTU_D_W_M   : BOSC_AME_CVT_FP<0b1, 0b010, 0b01, 0b0, 0b010, "mfwcvtu.d.w.m">;
+  //int to (widen)float
+  def BOSC_AME_MFWCVT_FW_X_M   : BOSC_AME_CVT_FP<0b1, 0b010, 0b01, 0b1, 0b100, "mfwcvt.fw.x.m">;
+  def BOSC_AME_MFWCVT_FQ_X_M   : BOSC_AME_CVT_FP<0b1, 0b110, 0b01, 0b1, 0b100, "mfwcvt.fq.x.m">;
+  def BOSC_AME_MFWCVT_FO_X_M   : BOSC_AME_CVT_FP<0b1, 0b111, 0b01, 0b1, 0b100, "mfwcvt.fo.x.m">;
+  def BOSC_AME_MFWCVT_HF_HB_M  : BOSC_AME_CVT_FP<0b1, 0b110, 0b01, 0b1, 0b111, "mfwcvt.hf.hb.m">;
+  def BOSC_AME_MFWCVT_F_HB_M   : BOSC_AME_CVT_FP<0b1, 0b111, 0b01, 0b1, 0b111, "mfwcvt.f.hb.m">;
+  def BOSC_AME_MFWCVT_HF_B_M   : BOSC_AME_CVT_FP<0b1, 0b010, 0b01, 0b1, 0b000, "mfwcvt.hf.b.m">;
+  def BOSC_AME_MFWCVT_F_B_M    : BOSC_AME_CVT_FP<0b1, 0b110, 0b01, 0b1, 0b000, "mfwcvt.f.b.m">;
+  def BOSC_AME_MFWCVT_F_H_M    : BOSC_AME_CVT_FP<0b1, 0b010, 0b01, 0b1, 0b001, "mfwcvt.f.h.m">;
+  def BOSC_AME_MFWCVT_D_W_M    : BOSC_AME_CVT_FP<0b1, 0b010, 0b01, 0b1, 0b010, "mfwcvt.d.w.m">;
+  //(widen)uint to float
+  def BOSC_AME_MFNCVTU_F_XW_M  : BOSC_AME_CVT_FP<0b1, 0b010, 0b10, 0b0, 0b100, "mfncvtu.f.xw.m">;
+  def BOSC_AME_MFNCVTU_HF_W_M  : BOSC_AME_CVT_FP<0b1, 0b010, 0b10, 0b0, 0b010, "mfncvtu.hf.w.m">;
+  def BOSC_AME_MFNCVTU_F_DW_M  : BOSC_AME_CVT_FP<0b1, 0b010, 0b10, 0b0, 0b011, "mfncvtu.f.dw.m">;
+  //(widen)int to float
+  def BOSC_AME_MFNCVT_F_XW_M   : BOSC_AME_CVT_FP<0b1, 0b010, 0b10, 0b1, 0b100, "mfncvt.f.xw.m">;
+  def BOSC_AME_MFNCVT_HF_W_M   : BOSC_AME_CVT_FP<0b1, 0b010, 0b10, 0b1, 0b010, "mfncvt.hf.w.m">;
+  def BOSC_AME_MFNCVT_F_DW_M   : BOSC_AME_CVT_FP<0b1, 0b010, 0b10, 0b1, 0b011, "mfncvt.f.dw.m">;
+  //float to uint
+  def BOSC_AME_MFCVTU_X_F_M    : BOSC_AME_CVT_FP<0b0, 0b010, 0b00, 0b0, 0b100, "mfcvtu.x.f.m">;
+  def BOSC_AME_MFCVTU_H_HF_M   : BOSC_AME_CVT_FP<0b0, 0b010, 0b00, 0b0, 0b001, "mfcvtu.h.hf.m">;
+  def BOSC_AME_MFCVTU_W_F_M    : BOSC_AME_CVT_FP<0b0, 0b010, 0b00, 0b0, 0b010, "mfcvtu.w.f.m">;
+  def BOSC_AME_MFCVTU_DW_D_M   : BOSC_AME_CVT_FP<0b0, 0b010, 0b00, 0b0, 0b011, "mfcvtu.dw.d.m">;
+  //float to int
+  def BOSC_AME_MFCVT_X_F_M     : BOSC_AME_CVT_FP<0b0, 0b010, 0b00, 0b1, 0b100, "mfcvt.x.f.m">;
+  def BOSC_AME_MFCVT_H_HF_M    : BOSC_AME_CVT_FP<0b0, 0b010, 0b00, 0b1, 0b001, "mfcvt.h.hf.m">;
+  def BOSC_AME_MFCVT_W_F_M     : BOSC_AME_CVT_FP<0b0, 0b010, 0b00, 0b1, 0b010, "mfcvt.w.f.m">;
+  def BOSC_AME_MFCVT_DW_D_M    : BOSC_AME_CVT_FP<0b0, 0b010, 0b00, 0b1, 0b011, "mfcvt.dw.d.m">;
+  //float to (widen)uint
+  def BOSC_AME_MFWCVTU_XW_F_M  : BOSC_AME_CVT_FP<0b0, 0b010, 0b01, 0b0, 0b100, "mfwcvtu.xw.f.m">;
+  def BOSC_AME_MFWCVTU_W_HF_M  : BOSC_AME_CVT_FP<0b0, 0b010, 0b01, 0b0, 0b001, "mfwcvtu.w.hf.m">;
+  def BOSC_AME_MFWCVTU_DW_F_M  : BOSC_AME_CVT_FP<0b0, 0b010, 0b01, 0b0, 0b010, "mfwcvtu.dw.f.m">;
+  //float to (widen)int
+  def BOSC_AME_MFWCVT_XW_F_M   : BOSC_AME_CVT_FP<0b0, 0b010, 0b01, 0b1, 0b100, "mfwcvt.xw.f.m">;
+  def BOSC_AME_MFWCVT_W_HF_M   : BOSC_AME_CVT_FP<0b0, 0b010, 0b01, 0b1, 0b001, "mfwcvt.w.hf.m">;
+  def BOSC_AME_MFWCVT_DW_F_M   : BOSC_AME_CVT_FP<0b0, 0b010, 0b01, 0b1, 0b010, "mfwcvt.dw.f.m">;
+  //(widen)float to uint
+  def BOSC_AME_MFNCVTU_X_FW_M  : BOSC_AME_CVT_FP<0b0, 0b010, 0b10, 0b0, 0b100, "mfncvtu.x.fw.m">;
+  def BOSC_AME_MFNCVTU_X_FQ_M  : BOSC_AME_CVT_FP<0b0, 0b110, 0b10, 0b0, 0b100, "mfncvtu.x.fq.m">;
+  def BOSC_AME_MFNCVTU_X_FO_M  : BOSC_AME_CVT_FP<0b0, 0b111, 0b10, 0b0, 0b100, "mfncvtu.x.fo.m">;
+  def BOSC_AME_MFNCVTU_HB_HF_M : BOSC_AME_CVT_FP<0b0, 0b110, 0b10, 0b0, 0b001, "mfncvtu.hb.hf.m">;
+  def BOSC_AME_MFNCVTU_HB_F_M  : BOSC_AME_CVT_FP<0b0, 0b111, 0b10, 0b0, 0b010, "mfncvtu.hb.f.m">;
+  def BOSC_AME_MFNCVTU_B_HF_M  : BOSC_AME_CVT_FP<0b0, 0b010, 0b10, 0b0, 0b001, "mfncvtu.b.hf.m">;
+  def BOSC_AME_MFNCVTU_B_F_M   : BOSC_AME_CVT_FP<0b0, 0b110, 0b10, 0b0, 0b010, "mfncvtu.b.f.m">;
+  def BOSC_AME_MFNCVTU_H_F_M   : BOSC_AME_CVT_FP<0b0, 0b010, 0b10, 0b0, 0b010, "mfncvtu.h.f.m">;
+  def BOSC_AME_MFNCVTU_W_D_M   : BOSC_AME_CVT_FP<0b0, 0b010, 0b10, 0b0, 0b011, "mfncvtu.w.d.m">;
+  //(widen)float to int
+  def BOSC_AME_MFNCVT_X_FW_M   : BOSC_AME_CVT_FP<0b0, 0b010, 0b10, 0b1, 0b100, "mfncvt.x.fw.m">;
+  def BOSC_AME_MFNCVT_X_FQ_M   : BOSC_AME_CVT_FP<0b0, 0b110, 0b10, 0b1, 0b100, "mfncvt.x.fq.m">;
+  def BOSC_AME_MFNCVT_X_FO_M   : BOSC_AME_CVT_FP<0b0, 0b111, 0b10, 0b1, 0b100, "mfncvt.x.fo.m">;
+  def BOSC_AME_MFNCVT_HB_HF_M  : BOSC_AME_CVT_FP<0b0, 0b110, 0b10, 0b1, 0b001, "mfncvt.hb.hf.m">;
+  def BOSC_AME_MFNCVT_HB_F_M   : BOSC_AME_CVT_FP<0b0, 0b111, 0b10, 0b1, 0b010, "mfncvt.hb.f.m">;
+  def BOSC_AME_MFNCVT_B_HF_M   : BOSC_AME_CVT_FP<0b0, 0b010, 0b10, 0b1, 0b001, "mfncvt.b.hf.m">;
+  def BOSC_AME_MFNCVT_B_F_M    : BOSC_AME_CVT_FP<0b0, 0b110, 0b10, 0b1, 0b010, "mfncvt.b.f.m">;
+  def BOSC_AME_MFNCVT_H_F_M    : BOSC_AME_CVT_FP<0b0, 0b010, 0b10, 0b1, 0b010, "mfncvt.h.f.m">;
+  def BOSC_AME_MFNCVT_W_D_M    : BOSC_AME_CVT_FP<0b0, 0b010, 0b10, 0b1, 0b011, "mfncvt.w.d.m">;
+}
+
 //===----------------------------------------------------------------------===//
 // BOSC AME Configuration Instructions
 //===----------------------------------------------------------------------===//
@@ -740,6 +1170,52 @@ class RVInstBOSCAMEConfigImm32<bits<6> funct6_val, bits<3> funct3_val, string op
   let Inst{31-26} = funct6_val;  // To be defined in subclasses
 }
 
+class RVInstBOSCAMEConfigSew<bits<5> field_val, string opcodestr>
+    : RVInst<(outs GPR:$rd), (ins uimm5:$rs2),
+               opcodestr, "$rd, $rs2", [], InstFormatOther> {
+  bits<5> rs2;
+  bits<5> rd;
+
+  let Inst{6-0} = 0b1110111;
+  let Inst{11-7} = rd;
+  let Inst{14-12} = 0b110;
+  let Inst{19-15} = field_val;
+  let Inst{24-20} = rs2;
+  let Inst{25}    = 0b1;  // 1 for register source
+  let Inst{31-26} = 0b000000;  
+}
+
+class RVInstBOSCAMEConfigSpi<bits<6> funct6_val, string opcodestr>
+    : RVInst<(outs GPR:$rd), (ins uimm5:$imm),
+               opcodestr, "$rd, $imm", [], InstFormatOther> {
+  bits<5> imm;
+  bits<5> rd;
+
+  let Inst{6-0} = 0b1110111;
+  let Inst{11-7} = rd;
+  let Inst{14-12} = 0b111;
+  let Inst{19-15} = imm;
+  let Inst{24-20} = 0b00000;
+  let Inst{25}    = 0b1;  // 1 for register source
+  let Inst{31-26} = funct6_val;  
+}
+
+class RVInstBOSCAMEConfigReg2<bits<6> funct6_val, bits<3> funct3_val, string opcodestr>
+    : RVInst<(outs GPR:$rd), (ins GPR:$rs1, GPR:$rs2),
+               opcodestr, "$rd, $rs1, $rs2", [], InstFormatOther> {
+  bits<5> rs2;
+  bits<5> rs1;
+  bits<5> rd;
+
+  let Inst{6-0} = 0b1110111;
+  let Inst{11-7} = rd;
+  let Inst{14-12} = funct3_val;
+  let Inst{19-15} = rs1;
+  let Inst{24-20} = rs2;
+  let Inst{25}    = 0b0;  // 0 for register source
+  let Inst{31-26} = funct6_val;  // To be defined in subclasses
+}
+
 let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
   // msettype - set the mtype CSR based on the value in a register
   def BOSC_AME_MSETTYPE : RVInstBOSCAMEConfig32<0b000000, 0b100, "msettype">;
@@ -749,6 +1225,16 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, mayLoad = 0, mayStore 
   def BOSC_AME_MSETTILEN : RVInstBOSCAMEConfig32<0b000001, 0b100, "msettilen">;
   // msettilek - set tile K dimension from register
   def BOSC_AME_MSETTILEK : RVInstBOSCAMEConfig32<0b000001, 0b110, "msettilek">;
+
+  def BOSC_AME_MSETTSP : RVInstBOSCAMEConfig32<0b000000, 0b111, "msettsp">;
+  def BOSC_AME_MSETTSPI : RVInstBOSCAMEConfigSpi<0b000000, "msettspi">;
+  def BOSC_AME_MSETDSP : RVInstBOSCAMEConfig32<0b000001, 0b111, "msetdsp">;
+  def BOSC_AME_MSETDSPI : RVInstBOSCAMEConfigSpi<0b000001, "msetdspi">;
+
+  def BOSC_AME_MSETOUTSH : RVInstBOSCAMEConfigReg2<0b000010, 0b100, "msetoutsh">;
+  def BOSC_AME_MSETINSH : RVInstBOSCAMEConfigReg2<0b000010, 0b101, "msetinsh">;
+  def BOSC_AME_MSETSK : RVInstBOSCAMEConfigReg2<0b000010, 0b110, "msetsk">;
+  def BOSC_AME_MSETPADVAL : RVInstBOSCAMEConfig32<0b000010, 0b111, "msetpadval">;
 }
 
 let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
@@ -762,6 +1248,21 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, mayLoad = 0, mayStore 
   def BOSC_AME_MSETTILENI : RVInstBOSCAMEConfigImm32<0b000001, 0b100, "msettileni">;
   // msettileki - set tile K dimension from immediate
   def BOSC_AME_MSETTILEKI : RVInstBOSCAMEConfigImm32<0b000001, 0b110, "msettileki">;
+}
+
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
+  // msetsew - set the SEW CSR based on the value in a register
+  def BOSC_AME_MSETSEW : RVInstBOSCAMEConfigSew<0b00000, "msetsew">;
+  def BOSC_AME_MSETINT4 : RVInstBOSCAMEConfigSew<0b00001, "msetint4">;
+  def BOSC_AME_MSETINT8 : RVInstBOSCAMEConfigSew<0b00010, "msetint8">;
+  def BOSC_AME_MSETINT16 : RVInstBOSCAMEConfigSew<0b00011, "msetint16">;
+  def BOSC_AME_MSETINT32 : RVInstBOSCAMEConfigSew<0b00100, "msetint32">;
+  def BOSC_AME_MSETINT64 : RVInstBOSCAMEConfigSew<0b00101, "msetint64">;
+  def BOSC_AME_MSETFP8 : RVInstBOSCAMEConfigSew<0b00110, "msetfp8">;
+  def BOSC_AME_MSETFP16 : RVInstBOSCAMEConfigSew<0b00111, "msetfp16">;
+  def BOSC_AME_MSETFP32 : RVInstBOSCAMEConfigSew<0b01000, "msetfp32">;
+  def BOSC_AME_MSETFP64 : RVInstBOSCAMEConfigSew<0b01001, "msetfp64">;
+  def BOSC_AME_MSETBA : RVInstBOSCAMEConfigSew<0b01010, "msetba">;
 }
 
 //===----------------------------------------------------------------------===//
@@ -818,6 +1319,39 @@ class RVInstBOSCAMELoadAcc32<bits<6> funct6_val, bits<3> eew_val, bit tr_val, st
   let Inst{31-26} = funct6_val;  // funct6
 }
 
+class RVInstBOSCAMELoadVector<bits<6> funct6_val, bits<3> eew_val, string opcodestr>
+    : RVInst<(outs VR:$vd), (ins GPR:$rs1, GPR:$rs2),
+               opcodestr, "$vd, (${rs1}), $rs2", [], InstFormatOther> {
+  bits<5> rs2;
+  bits<5> rs1;
+  bits<5> vd;
+
+  let Inst{6-0}   = 0b1110111;   // AME prefix
+  let Inst{11-7}  = vd;
+  let Inst{14-12} = eew_val;
+  let Inst{19-15} = rs1;
+  let Inst{24-20} = rs2;
+  let Inst{25}    = 0;           // ls = 0 for load
+  let Inst{31-26} = funct6_val;  // funct6
+}
+
+class RVInstBOSCAMELoadUnfoldTile<bits<6> funct6_val, bits<3> eew_val, string opcodestr>
+    : RVInst<(outs TileReg:$md), (ins GPR:$rs1, GPR:$rs2),
+               opcodestr, "$md, (${rs1}), $rs2", [], InstFormatOther> {
+  bits<5> rs2;
+  bits<5> rs1;
+  bits<4> md;  // TileReg index for load
+
+  let Inst{6-0}   = 0b1110111;   // AME prefix
+  let Inst{10-7}  = md;
+  let Inst{11}    = 0;
+  let Inst{14-12} = eew_val;
+  let Inst{19-15} = rs1;
+  let Inst{24-20} = rs2;
+  let Inst{25}    = 0;           // ls = 0 for load
+  let Inst{31-26} = funct6_val;  // funct6
+}
+
 // Store from TileReg (for matrix A and B)
 class RVInstBOSCAMEStoreTile32<bits<6> funct6_val, bits<3> eew_val, bit tr_val, string opcodestr>
     : RVInst<(outs), (ins TileReg:$ms3, GPR:$rs1, GPR:$rs2),
@@ -847,6 +1381,39 @@ class RVInstBOSCAMEStoreAcc32<bits<6> funct6_val, bits<3> eew_val, bit tr_val, s
   let Inst{6-0}   = 0b1110111;   // AME prefix
   let Inst{10-7}  = ms3;
   let Inst{11}    = tr_val;
+  let Inst{14-12} = eew_val;
+  let Inst{19-15} = rs1;
+  let Inst{24-20} = rs2;
+  let Inst{25}    = 1;           // ls = 1 for store
+  let Inst{31-26} = funct6_val;  // funct6
+}
+
+class RVInstBOSCAMEStoreVector<bits<6> funct6_val, bits<3> eew_val, string opcodestr>
+    : RVInst<(outs), (ins VR:$vs3, GPR:$rs1, GPR:$rs2),
+               opcodestr, "$vs3, (${rs1}), $rs2", [], InstFormatOther> {
+  bits<5> rs2;
+  bits<5> rs1;
+  bits<5> vs3;  // VR index for store
+
+  let Inst{6-0}   = 0b1110111;   // AME prefix
+  let Inst{11-7}  = vs3;
+  let Inst{14-12} = eew_val;
+  let Inst{19-15} = rs1;
+  let Inst{24-20} = rs2;
+  let Inst{25}    = 1;           // ls = 1 for store
+  let Inst{31-26} = funct6_val;  // funct6
+}
+
+class RVInstBOSCAMEStoreFoldTile<bits<6> funct6_val, bits<3> eew_val, string opcodestr>
+    : RVInst<(outs), (ins TileReg:$ms3, GPR:$rs1, GPR:$rs2),
+               opcodestr, "$ms3, (${rs1}), $rs2", [], InstFormatOther> {
+  bits<5> rs2;
+  bits<5> rs1;
+  bits<4> ms3;  // TileReg index for store
+
+  let Inst{6-0}   = 0b1110111;   // AME prefix
+  let Inst{10-7}  = ms3;
+  let Inst{11}    = 0;
   let Inst{14-12} = eew_val;
   let Inst{19-15} = rs1;
   let Inst{24-20} = rs2;
@@ -917,6 +1484,36 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 1, mayStore 
   def BOSC_AME_MLACCE64_M : RVInstBOSCAMELoadAcc32<0b000011, 0b011, 0b1, "mlacce64.m">;
 }
 
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 1, mayStore = 0 in {
+  def BOSC_AME_MLAE8_V  : RVInstBOSCAMELoadVector<0b100001, 0b000, "mlae8.v">;
+  def BOSC_AME_MLAE16_V : RVInstBOSCAMELoadVector<0b100001, 0b001, "mlae16.v">;
+  def BOSC_AME_MLAE32_V : RVInstBOSCAMELoadVector<0b100001, 0b010, "mlae32.v">;
+  def BOSC_AME_MLAE64_V : RVInstBOSCAMELoadVector<0b100001, 0b011, "mlae64.v">;
+  def BOSC_AME_MLBE8_V  : RVInstBOSCAMELoadVector<0b100010, 0b000, "mlbe8.v">;
+  def BOSC_AME_MLBE16_V : RVInstBOSCAMELoadVector<0b100010, 0b001, "mlbe16.v">;
+  def BOSC_AME_MLBE32_V : RVInstBOSCAMELoadVector<0b100010, 0b010, "mlbe32.v">;
+  def BOSC_AME_MLBE64_V : RVInstBOSCAMELoadVector<0b100010, 0b011, "mlbe64.v">;
+  def BOSC_AME_MLCE8_V  : RVInstBOSCAMELoadVector<0b100000, 0b000, "mlce8.v">;
+  def BOSC_AME_MLCE16_V : RVInstBOSCAMELoadVector<0b100000, 0b001, "mlce16.v">;
+  def BOSC_AME_MLCE32_V : RVInstBOSCAMELoadVector<0b100000, 0b010, "mlce32.v">;
+  def BOSC_AME_MLCE64_V : RVInstBOSCAMELoadVector<0b100000, 0b011, "mlce64.v">;
+}
+
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 1, mayStore = 0 in {
+  def BOSC_AME_MLUFAE8_M  : RVInstBOSCAMELoadUnfoldTile<0b100001, 0b100, "mlufae8.m">;
+  def BOSC_AME_MLUFAE16_M : RVInstBOSCAMELoadUnfoldTile<0b100001, 0b101, "mlufae16.m">;
+  def BOSC_AME_MLUFAE32_M : RVInstBOSCAMELoadUnfoldTile<0b100001, 0b110, "mlufae32.m">;
+  def BOSC_AME_MLUFAE64_M : RVInstBOSCAMELoadUnfoldTile<0b100001, 0b111, "mlufae64.m">;
+  def BOSC_AME_MLUFBE8_M  : RVInstBOSCAMELoadUnfoldTile<0b100010, 0b100, "mlufbe8.m">;
+  def BOSC_AME_MLUFBE16_M : RVInstBOSCAMELoadUnfoldTile<0b100010, 0b101, "mlufbe16.m">;
+  def BOSC_AME_MLUFBE32_M : RVInstBOSCAMELoadUnfoldTile<0b100010, 0b110, "mlufbe32.m">;
+  def BOSC_AME_MLUFBE64_M : RVInstBOSCAMELoadUnfoldTile<0b100010, 0b111, "mlufbe64.m">;
+  def BOSC_AME_MLUFCE8_M  : RVInstBOSCAMELoadUnfoldTile<0b100000, 0b100, "mlufce8.m">;
+  def BOSC_AME_MLUFCE16_M : RVInstBOSCAMELoadUnfoldTile<0b100000, 0b101, "mlufce16.m">;
+  def BOSC_AME_MLUFCE32_M : RVInstBOSCAMELoadUnfoldTile<0b100000, 0b110, "mlufce32.m">;
+  def BOSC_AME_MLUFCE64_M : RVInstBOSCAMELoadUnfoldTile<0b100000, 0b111, "mlufce64.m">;
+}
+
 //===----------------------------------------------------------------------===//
 // Store matrix A from TileReg - msae*.m
 // Syntax: msae{8|16|32|64}.m ms3, (rs1), rs2
@@ -975,6 +1572,36 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
   def BOSC_AME_MSACCE16_M : RVInstBOSCAMEStoreAcc32<0b000011, 0b001, 0b1, "msacce16.m">;
   def BOSC_AME_MSACCE32_M : RVInstBOSCAMEStoreAcc32<0b000011, 0b010, 0b1, "msacce32.m">;
   def BOSC_AME_MSACCE64_M : RVInstBOSCAMEStoreAcc32<0b000011, 0b011, 0b1, "msacce64.m">;
+}
+
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 1 in {
+  def BOSC_AME_MSAE8_V  : RVInstBOSCAMEStoreVector<0b100001, 0b000, "msae8.v">;
+  def BOSC_AME_MSAE16_V : RVInstBOSCAMEStoreVector<0b100001, 0b001, "msae16.v">;
+  //def BOSC_AME_MSAE32_V : RVInstBOSCAMEStoreVector<0b100001, 0b010, "msae32.v">;
+  def BOSC_AME_MSAE64_V : RVInstBOSCAMEStoreVector<0b100001, 0b011, "msae64.v">;
+  def BOSC_AME_MSBE8_V  : RVInstBOSCAMEStoreVector<0b100010, 0b000, "msbe8.v">;
+  def BOSC_AME_MSBE16_V : RVInstBOSCAMEStoreVector<0b100010, 0b001, "msbe16.v">;
+  //def BOSC_AME_MSBE32_V : RVInstBOSCAMEStoreVector<0b100010, 0b010, "msbe32.v">;
+  def BOSC_AME_MSBE64_V : RVInstBOSCAMEStoreVector<0b100010, 0b011, "msbe64.v">;
+  def BOSC_AME_MSCE8_V  : RVInstBOSCAMEStoreVector<0b100000, 0b000, "msce8.v">;
+  def BOSC_AME_MSCE16_V : RVInstBOSCAMEStoreVector<0b100000, 0b001, "msce16.v">;
+  //def BOSC_AME_MSCE32_V : RVInstBOSCAMEStoreVector<0b100000, 0b010, "msce32.v">;
+  def BOSC_AME_MSCE64_V : RVInstBOSCAMEStoreVector<0b100000, 0b011, "msce64.v">;
+}
+
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 1 in {
+  def BOSC_AME_MSFDAE8_M  : RVInstBOSCAMEStoreFoldTile<0b100001, 0b100, "msfdae8.m">;
+  def BOSC_AME_MSFDAE16_M : RVInstBOSCAMEStoreFoldTile<0b100001, 0b101, "msfdae16.m">;
+  def BOSC_AME_MSFDAE32_M : RVInstBOSCAMEStoreFoldTile<0b100001, 0b110, "msfdae32.m">;
+  def BOSC_AME_MSFDAE64_M : RVInstBOSCAMEStoreFoldTile<0b100001, 0b111, "msfdae64.m">;
+  def BOSC_AME_MSFDBE8_M  : RVInstBOSCAMEStoreFoldTile<0b100010, 0b100, "msfdbe8.m">;
+  def BOSC_AME_MSFDBE16_M : RVInstBOSCAMEStoreFoldTile<0b100010, 0b101, "msfdbe16.m">;
+  def BOSC_AME_MSFDBE32_M : RVInstBOSCAMEStoreFoldTile<0b100010, 0b110, "msfdbe32.m">;
+  def BOSC_AME_MSFDBE64_M : RVInstBOSCAMEStoreFoldTile<0b100010, 0b111, "msfdbe64.m">;
+  def BOSC_AME_MSFDCE8_M  : RVInstBOSCAMEStoreFoldTile<0b100000, 0b100, "msfdce8.m">;
+  def BOSC_AME_MSFDCE16_M : RVInstBOSCAMEStoreFoldTile<0b100000, 0b101, "msfdce16.m">;
+  def BOSC_AME_MSFDCE32_M : RVInstBOSCAMEStoreFoldTile<0b100000, 0b110, "msfdce32.m">;
+  def BOSC_AME_MSFDCE64_M : RVInstBOSCAMEStoreFoldTile<0b100000, 0b111, "msfdce64.m">;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1286,6 +1913,100 @@ let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore 
   def BOSC_AME_MFMVE64_A_F : RVInstBOSCAMEFMove_A_F<0b111, "mfmve64.a.f", FPR64>;
 }
 
+// For data moving between vector and matrix
+// The vsew of vector must equal to msew of matrix.
+class RVInstBOSCAMEMove_V_M<bits<6> funct6_val, bit var_val, bits<3> eew_val, string opcodestr>
+    : RVInstBOSCAMEMove<(outs VR:$vd),
+                        (ins TileReg:$ms1, GPR:$rs2),
+                        opcodestr, "$vd, $ms1, $rs2"> {
+  bits<5> rs2;
+  bits<4> ms1;
+  bits<5> vd;
+
+  let Inst{31-26} = funct6_val;
+  let Inst{25}    = 0b0;
+  let Inst{24-20} = rs2;
+  let Inst{19}    = var_val;
+  let Inst{18-15} = ms1;
+  let Inst{14-12} = eew_val;
+  let Inst{11-7}  = vd;
+  let Inst{6-0}   = 0b1110111;
+}
+
+class RVInstBOSCAMEMove_M_V<bits<6> funct6_val, bits<3> eew_val, bit var_val, string opcodestr>
+    : RVInstBOSCAMEMove<(outs TileReg:$md),
+                        (ins VR:$vs1, GPR:$rs2),
+                        opcodestr, "$md, $vs1, $rs2"> {
+  bits<5> rs2;
+  bits<5> vs1;
+  bits<4> md;
+
+  let Inst{31-26} = funct6_val;
+  let Inst{25}    = 0b1;
+  let Inst{24-20} = rs2;
+  let Inst{19-15} = vs1;
+  let Inst{14-12} = eew_val;
+  let Inst{11}    = var_val;
+  let Inst{10-7}  = md;
+  let Inst{6-0}   = 0b1110111;
+}
+
+let Predicates = [HasVendorXBOSCAME], hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+  // Data move between matrix register rows and vector registers.
+  def BOSC_AME_MMVARE8_V_M  : RVInstBOSCAMEMove_V_M<0b100110, 0b0, 0b100, "mmvare8.v.m">;
+  def BOSC_AME_MMVARE16_V_M : RVInstBOSCAMEMove_V_M<0b100110, 0b0, 0b101, "mmvare16.v.m">;
+  def BOSC_AME_MMVARE32_V_M : RVInstBOSCAMEMove_V_M<0b100110, 0b0, 0b110, "mmvare32.v.m">;
+  def BOSC_AME_MMVARE64_V_M : RVInstBOSCAMEMove_V_M<0b100110, 0b0, 0b111, "mmvare64.v.m">;
+  def BOSC_AME_MMVBRE8_V_M  : RVInstBOSCAMEMove_V_M<0b100110, 0b1, 0b100, "mmvbre8.v.m">;
+  def BOSC_AME_MMVBRE16_V_M : RVInstBOSCAMEMove_V_M<0b100110, 0b1, 0b101, "mmvbre16.v.m">;
+  def BOSC_AME_MMVBRE32_V_M : RVInstBOSCAMEMove_V_M<0b100110, 0b1, 0b110, "mmvbre32.v.m">;
+  def BOSC_AME_MMVBRE64_V_M : RVInstBOSCAMEMove_V_M<0b100110, 0b1, 0b111, "mmvbre64.v.m">;
+  def BOSC_AME_MMVCRE8_V_M  : RVInstBOSCAMEMove_V_M<0b100110, 0b0, 0b000, "mmvcre8.v.m">;
+  def BOSC_AME_MMVCRE16_V_M : RVInstBOSCAMEMove_V_M<0b100110, 0b0, 0b001, "mmvcre16.v.m">;
+  def BOSC_AME_MMVCRE32_V_M : RVInstBOSCAMEMove_V_M<0b100110, 0b0, 0b010, "mmvcre32.v.m">;
+  def BOSC_AME_MMVCRE64_V_M : RVInstBOSCAMEMove_V_M<0b100110, 0b0, 0b011, "mmvcre64.v.m">;
+  
+  def BOSC_AME_MMVARE8_M_V  : RVInstBOSCAMEMove_M_V<0b100110, 0b100, 0b0, "mmvare8.m.v">;
+  def BOSC_AME_MMVARE16_M_V : RVInstBOSCAMEMove_M_V<0b100110, 0b101, 0b0, "mmvare16.m.v">;
+  def BOSC_AME_MMVARE32_M_V : RVInstBOSCAMEMove_M_V<0b100110, 0b110, 0b0, "mmvare32.m.v">;
+  def BOSC_AME_MMVARE64_M_V : RVInstBOSCAMEMove_M_V<0b100110, 0b111, 0b0, "mmvare64.m.v">;
+  def BOSC_AME_MMVBRE8_M_V  : RVInstBOSCAMEMove_M_V<0b100110, 0b100, 0b1, "mmvbre8.m.v">;
+  def BOSC_AME_MMVBRE16_M_V : RVInstBOSCAMEMove_M_V<0b100110, 0b101, 0b1, "mmvbre16.m.v">;
+  def BOSC_AME_MMVBRE32_M_V : RVInstBOSCAMEMove_M_V<0b100110, 0b110, 0b1, "mmvbre32.m.v">;
+  def BOSC_AME_MMVBRE64_M_V : RVInstBOSCAMEMove_M_V<0b100110, 0b111, 0b1, "mmvbre64.m.v">;
+  def BOSC_AME_MMVCRE8_M_V  : RVInstBOSCAMEMove_M_V<0b100110, 0b000, 0b0, "mmvcre8.m.v">;
+  def BOSC_AME_MMVCRE16_M_V : RVInstBOSCAMEMove_M_V<0b100110, 0b001, 0b0, "mmvcre16.m.v">;
+  def BOSC_AME_MMVCRE32_M_V : RVInstBOSCAMEMove_M_V<0b100110, 0b010, 0b0, "mmvcre32.m.v">;
+  def BOSC_AME_MMVCRE64_M_V : RVInstBOSCAMEMove_M_V<0b100110, 0b011, 0b0, "mmvcre64.m.v">;
+
+  // Data move between matrix register columns and vector registers.
+  def BOSC_AME_MMVACE8_V_M  : RVInstBOSCAMEMove_V_M<0b100111, 0b0, 0b100, "mmvace8.v.m">;
+  def BOSC_AME_MMVACE16_V_M : RVInstBOSCAMEMove_V_M<0b100111, 0b0, 0b101, "mmvace16.v.m">;
+  def BOSC_AME_MMVACE32_V_M : RVInstBOSCAMEMove_V_M<0b100111, 0b0, 0b110, "mmvace32.v.m">;
+  def BOSC_AME_MMVACE64_V_M : RVInstBOSCAMEMove_V_M<0b100111, 0b0, 0b111, "mmvace64.v.m">;
+  def BOSC_AME_MMVBCE8_V_M  : RVInstBOSCAMEMove_V_M<0b100111, 0b1, 0b100, "mmvbce8.v.m">;
+  def BOSC_AME_MMVBCE16_V_M : RVInstBOSCAMEMove_V_M<0b100111, 0b1, 0b101, "mmvbce16.v.m">;
+  def BOSC_AME_MMVBCE32_V_M : RVInstBOSCAMEMove_V_M<0b100111, 0b1, 0b110, "mmvbce32.v.m">;
+  def BOSC_AME_MMVBCE64_V_M : RVInstBOSCAMEMove_V_M<0b100111, 0b1, 0b111, "mmvbce64.v.m">;
+  def BOSC_AME_MMVCCE8_V_M  : RVInstBOSCAMEMove_V_M<0b100111, 0b0, 0b000, "mmvcce8.v.m">;
+  def BOSC_AME_MMVCCE16_V_M : RVInstBOSCAMEMove_V_M<0b100111, 0b0, 0b001, "mmvcce16.v.m">;
+  def BOSC_AME_MMVCCE32_V_M : RVInstBOSCAMEMove_V_M<0b100111, 0b0, 0b010, "mmvcce32.v.m">;
+  def BOSC_AME_MMVCCE64_V_M : RVInstBOSCAMEMove_V_M<0b100111, 0b0, 0b011, "mmvcce64.v.m">;
+
+  def BOSC_AME_MMVACE8_M_V  : RVInstBOSCAMEMove_M_V<0b100111, 0b100, 0b0, "mmvace8.m.v">;
+  def BOSC_AME_MMVACE16_M_V : RVInstBOSCAMEMove_M_V<0b100111, 0b101, 0b0, "mmvace16.m.v">;
+  def BOSC_AME_MMVACE32_M_V : RVInstBOSCAMEMove_M_V<0b100111, 0b110, 0b0, "mmvace32.m.v">;
+  def BOSC_AME_MMVACE64_M_V : RVInstBOSCAMEMove_M_V<0b100111, 0b111, 0b0, "mmvace64.m.v">;
+  def BOSC_AME_MMVBCE8_M_V  : RVInstBOSCAMEMove_M_V<0b100111, 0b100, 0b1, "mmvbce8.m.v">;
+  def BOSC_AME_MMVBCE16_M_V : RVInstBOSCAMEMove_M_V<0b100111, 0b101, 0b1, "mmvbce16.m.v">;
+  def BOSC_AME_MMVBCE32_M_V : RVInstBOSCAMEMove_M_V<0b100111, 0b110, 0b1, "mmvbce32.m.v">;
+  def BOSC_AME_MMVBCE64_M_V : RVInstBOSCAMEMove_M_V<0b100111, 0b111, 0b1, "mmvbce64.m.v">;
+  def BOSC_AME_MMVCCE8_M_V  : RVInstBOSCAMEMove_M_V<0b100111, 0b000, 0b0, "mmvcce8.m.v">;
+  def BOSC_AME_MMVCCE16_M_V : RVInstBOSCAMEMove_M_V<0b100111, 0b001, 0b0, "mmvcce16.m.v">;
+  def BOSC_AME_MMVCCE32_M_V : RVInstBOSCAMEMove_M_V<0b100111, 0b010, 0b0, "mmvcce32.m.v">;
+  def BOSC_AME_MMVCCE64_M_V : RVInstBOSCAMEMove_M_V<0b100111, 0b011, 0b0, "mmvcce64.m.v">;
+}
+
 // Data Broadcast Instructions
 class RVInstBOSCAMEBroadcastTile<bits<5> rs2_val, bits<3> eew_val, string opcodestr>
     : RVInstBOSCAMEMove<(outs TileReg:$md), (ins TileReg:$ms1),
@@ -1434,9 +2155,36 @@ def BOSCAME_I16 : BOSCAMETypeInfo<nxv64i16,  "16", "H">;
 def BOSCAME_I32 : BOSCAMETypeInfo<nxv32i32,  "32", "W">;
 def BOSCAME_I64 : BOSCAMETypeInfo<nxv16i64,  "64", "DW">;
 
+// XW/XQ/XO are the wider integer matrix shapes. LLVM has no scalable i128,
+// so retain the 64-bit storage element and represent the wider shape by its
+// scalable element count.
+def BOSCAME_I64_XW : BOSCAMETypeInfo<nxv32i64,  "XW", "XW">;
+def BOSCAME_I64_XQ : BOSCAMETypeInfo<nxv64i64,  "XQ", "XQ">;
+def BOSCAME_I64_XO : BOSCAMETypeInfo<nxv128i64, "XO", "XO">;
+
 def BOSCAME_F16 : BOSCAMETypeInfo<nxv64f16, "16", "HF", f16, FPR16>;
+def BOSCAME_BF16 : BOSCAMETypeInfo<nxv64bf16, "16", "BF">;
 def BOSCAME_F32 : BOSCAMETypeInfo<nxv32f32, "32", "F",  f32, FPR32>;
 def BOSCAME_F64 : BOSCAMETypeInfo<nxv16f64, "64", "D",  f64, FPR64>;
+
+// Vector instructions use LMUL=1 RVV types allocated by VR.  Matrix/vector
+// moves additionally require a matching TileReg MVT; nxv64bf16 is currently
+// registered only for AccReg, so BOSCAME_VBF16 is used only by load/store.
+class BOSCAMEVectorTypeInfo<BOSCAMETypeInfo MatrixInfoValue,
+                             ValueType VectorType> {
+  ValueType Matrix = MatrixInfoValue.Matrix;
+  ValueType Vector = VectorType;
+  string Number = MatrixInfoValue.Number;
+}
+
+def BOSCAME_VI8  : BOSCAMEVectorTypeInfo<BOSCAME_I8,  nxv8i8>;
+def BOSCAME_VI16 : BOSCAMEVectorTypeInfo<BOSCAME_I16, nxv4i16>;
+def BOSCAME_VI32 : BOSCAMEVectorTypeInfo<BOSCAME_I32, nxv2i32>;
+def BOSCAME_VI64 : BOSCAMEVectorTypeInfo<BOSCAME_I64, nxv1i64>;
+def BOSCAME_VF16 : BOSCAMEVectorTypeInfo<BOSCAME_F16, nxv4f16>;
+def BOSCAME_VBF16: BOSCAMEVectorTypeInfo<BOSCAME_BF16, nxv4bf16>;
+def BOSCAME_VF32 : BOSCAMEVectorTypeInfo<BOSCAME_F32, nxv2f32>;
+def BOSCAME_VF64 : BOSCAMEVectorTypeInfo<BOSCAME_F64, nxv1f64>;
 
 class BOSCAMEWidenInfo<BOSCAMETypeInfo DstType,
                        BOSCAMETypeInfo SrcType, string SuffixValue> {
@@ -1467,6 +2215,10 @@ class BOSCAMEPatConfigImm<SDPatternOperator OpNode, RVInst Inst>
     : Pat<(XLenVT (OpNode boscame_tuimm10:$imm)),
           (Inst boscame_tuimm10:$imm)>;
 
+class BOSCAMEPatConfigSew<SDPatternOperator OpNode, RVInst Inst>
+    : Pat<(XLenVT (OpNode uimm5:$imm)),
+          (Inst uimm5:$imm)>;
+
 class BOSCAMEPatLoad<SDPatternOperator OpNode, Instruction Inst,
                      ValueType MatrixType>
     : Pat<(MatrixType (OpNode iPTR:$base, (XLenVT GPR:$stride))),
@@ -1478,6 +2230,32 @@ class BOSCAMEPatStore<SDPatternOperator OpNode, Instruction Inst,
                   (XLenVT GPR:$stride)),
           (Inst (MatrixType MatrixRC:$matrix), iPTR:$base,
                 (XLenVT GPR:$stride))>;
+
+class BOSCAMEPatVectorLoad<SDPatternOperator OpNode, Instruction Inst,
+                            ValueType VectorType>
+    : Pat<(VectorType (OpNode iPTR:$base, (XLenVT GPR:$stride))),
+          (VectorType (Inst iPTR:$base, (XLenVT GPR:$stride)))>;
+
+class BOSCAMEPatVectorStore<SDPatternOperator OpNode, Instruction Inst,
+                             ValueType VectorType>
+    : Pat<(OpNode (VectorType VR:$vector), iPTR:$base,
+                  (XLenVT GPR:$stride)),
+          (Inst (VectorType VR:$vector), iPTR:$base,
+                (XLenVT GPR:$stride))>;
+
+class BOSCAMEPatMatrixToVector<SDPatternOperator OpNode, Instruction Inst,
+                                ValueType VectorType, ValueType MatrixType>
+    : Pat<(VectorType
+             (OpNode (MatrixType TileReg:$matrix), (XLenVT GPR:$index))),
+          (VectorType
+             (Inst (MatrixType TileReg:$matrix), (XLenVT GPR:$index)))>;
+
+class BOSCAMEPatVectorToMatrix<SDPatternOperator OpNode, Instruction Inst,
+                                ValueType MatrixType, ValueType VectorType>
+    : Pat<(MatrixType
+             (OpNode (VectorType VR:$vector), (XLenVT GPR:$index))),
+          (MatrixType
+             (Inst (VectorType VR:$vector), (XLenVT GPR:$index)))>;
 
 class BOSCAMEPatUnaryMatrix<SDPatternOperator OpNode, Instruction Inst,
                             ValueType DstType, RegisterClass DstRC,
@@ -1536,6 +2314,14 @@ class BOSCAMEPatAccUnary<SDPatternOperator OpNode, Instruction Inst,
     : Pat<(MatrixType (OpNode (MatrixType AccReg:$src))),
           (MatrixType (Inst (MatrixType AccReg:$src)))>;
 
+// Matrix type-conversion instructions operate on accumulator registers.  The
+// intrinsic type is polymorphic, so each pattern supplies the source and
+// destination matrix MVT explicitly.
+class BOSCAMEPatConvert<SDPatternOperator OpNode, Instruction Inst,
+                        ValueType DstType, ValueType SrcType>
+    : Pat<(DstType (OpNode (SrcType AccReg:$src))),
+          (DstType (Inst (SrcType AccReg:$src)))>;
+
 // The first intrinsic operand is the old accumulator. It selects the tied
 // md_in operand; the instruction's "$md = $md_in" constraint ties it to md.
 class BOSCAMEPatMMA<SDPatternOperator OpNode, Instruction Inst,
@@ -1573,6 +2359,192 @@ let Predicates = [HasVendorXBOSCAME] in {
   def : BOSCAMEPatConfigImm<int_riscv_bosc_msettileni, BOSC_AME_MSETTILENI>;
   def : BOSCAMEPatConfigImm<int_riscv_bosc_msettileki, BOSC_AME_MSETTILEKI>;
 
+  // Additional configuration forms. Register forms return the configured
+  // XLEN value, while the SEW/BA forms consume an immediate encoding.
+  def : PatGpr<int_riscv_bosc_msettsp, BOSC_AME_MSETTSP>;
+  def : PatGpr<int_riscv_bosc_msetdsp, BOSC_AME_MSETDSP>;
+  def : PatGpr<int_riscv_bosc_msetpadval, BOSC_AME_MSETPADVAL>;
+  def : BOSCAMEPatConfigImm<int_riscv_bosc_msettspi, BOSC_AME_MSETTSPI>;
+  def : BOSCAMEPatConfigImm<int_riscv_bosc_msetdspi, BOSC_AME_MSETDSPI>;
+  def : BOSCAMEPatConfigSew<int_riscv_bosc_msetsew, BOSC_AME_MSETSEW>;
+  def : BOSCAMEPatConfigSew<int_riscv_bosc_msetba, BOSC_AME_MSETBA>;
+
+  // Every conversion below follows the direction in the instruction-table
+  // comments.  HB/CF/FQ/FO formats are deliberately omitted.
+  def : BOSCAMEPatConvert<int_riscv_bosc_mcvt_x_xu_m, BOSC_AME_MCVT_X_XU_M, 
+                          BOSCAME_I64.Matrix, BOSCAME_I64.Matrix>;
+  def : BOSCAMEPatConvert<int_riscv_bosc_mcvt_b_ub_m, BOSC_AME_MCVT_B_UB_M, 
+                          BOSCAME_I8.Matrix, BOSCAME_I8.Matrix>;
+  def : BOSCAMEPatConvert<int_riscv_bosc_mcvt_h_uh_m, BOSC_AME_MCVT_H_UH_M, 
+                          BOSCAME_I16.Matrix, BOSCAME_I16.Matrix>;
+  def : BOSCAMEPatConvert<int_riscv_bosc_mcvt_w_uw_m, BOSC_AME_MCVT_W_UW_M, 
+                          BOSCAME_I32.Matrix, BOSCAME_I32.Matrix>;
+  def : BOSCAMEPatConvert<int_riscv_bosc_mcvt_dw_udw_m, BOSC_AME_MCVT_DW_UDW_M, 
+                          BOSCAME_I64.Matrix, BOSCAME_I64.Matrix>;
+  def : BOSCAMEPatConvert<int_riscv_bosc_mcvt_xu_x_m, BOSC_AME_MCVT_XU_X_M, 
+                          BOSCAME_I64.Matrix, BOSCAME_I64.Matrix>;
+  def : BOSCAMEPatConvert<int_riscv_bosc_mcvt_ub_b_m, BOSC_AME_MCVT_UB_B_M, 
+                          BOSCAME_I8.Matrix, BOSCAME_I8.Matrix>;
+  def : BOSCAMEPatConvert<int_riscv_bosc_mcvt_uh_h_m, BOSC_AME_MCVT_UH_H_M, 
+                          BOSCAME_I16.Matrix, BOSCAME_I16.Matrix>;
+  def : BOSCAMEPatConvert<int_riscv_bosc_mcvt_uw_w_m, BOSC_AME_MCVT_UW_W_M, 
+                          BOSCAME_I32.Matrix, BOSCAME_I32.Matrix>;
+  def : BOSCAMEPatConvert<int_riscv_bosc_mcvt_udw_dw_m, BOSC_AME_MCVT_UDW_DW_M, 
+                          BOSCAME_I64.Matrix, BOSCAME_I64.Matrix>;
+
+  foreach C = ["mwcvtu", "mwcvt"] in {
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_xw_x_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_XW_X_M"), 
+                            BOSCAME_I64_XW.Matrix, BOSCAME_I64.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_xq_x_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_XQ_X_M"), 
+                            BOSCAME_I64_XQ.Matrix, BOSCAME_I64.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_xo_x_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_XO_X_M"), 
+                            BOSCAME_I64_XO.Matrix, BOSCAME_I64.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_h_b_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_H_B_M"), 
+                            BOSCAME_I16.Matrix, BOSCAME_I8.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_w_b_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_W_B_M"), 
+                            BOSCAME_I32.Matrix, BOSCAME_I8.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_w_h_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_W_H_M"), 
+                            BOSCAME_I32.Matrix, BOSCAME_I16.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_dw_w_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_DW_W_M"), 
+                            BOSCAME_I64.Matrix, BOSCAME_I32.Matrix>;
+  }
+  foreach C = ["mncvtu", "mncvt"] in {
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_x_xw_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_X_XW_M"), 
+                            BOSCAME_I64.Matrix, BOSCAME_I64_XW.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_x_xq_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_X_XQ_M"), 
+                            BOSCAME_I64.Matrix, BOSCAME_I64_XQ.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_x_xo_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_X_XO_M"), 
+                            BOSCAME_I64.Matrix, BOSCAME_I64_XO.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_b_h_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_B_H_M"), 
+                            BOSCAME_I8.Matrix, BOSCAME_I16.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_b_w_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_B_W_M"), 
+                            BOSCAME_I8.Matrix, BOSCAME_I32.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_h_w_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_H_W_M"), 
+                            BOSCAME_I16.Matrix, BOSCAME_I32.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_w_dw_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_W_DW_M"), 
+                            BOSCAME_I32.Matrix, BOSCAME_I64.Matrix>;
+  }
+
+  // FP<->FP. FW is represented by the available f64 accumulator storage.
+  def : BOSCAMEPatConvert<int_riscv_bosc_mfcvt_bf_hf_m, BOSC_AME_MFCVT_BF_HF_M, 
+                          BOSCAME_BF16.Matrix, BOSCAME_F16.Matrix>;
+  def : BOSCAMEPatConvert<int_riscv_bosc_mfcvt_hf_bf_m, BOSC_AME_MFCVT_HF_BF_M, 
+                          BOSCAME_F16.Matrix, BOSCAME_BF16.Matrix>;
+  def : BOSCAMEPatConvert<int_riscv_bosc_mfwcvt_fw_f_m, BOSC_AME_MFWCVT_FW_F_M, 
+                          BOSCAME_F64.Matrix, BOSCAME_F32.Matrix>;
+  def : BOSCAMEPatConvert<int_riscv_bosc_mfwcvt_f_hf_m, BOSC_AME_MFWCVT_F_HF_M, 
+                          BOSCAME_F32.Matrix, BOSCAME_F16.Matrix>;
+  def : BOSCAMEPatConvert<int_riscv_bosc_mfwcvt_d_f_m, BOSC_AME_MFWCVT_D_F_M, 
+                          BOSCAME_F64.Matrix, BOSCAME_F32.Matrix>;
+  def : BOSCAMEPatConvert<int_riscv_bosc_mfncvt_f_fw_m, BOSC_AME_MFNCVT_F_FW_M, 
+                          BOSCAME_F32.Matrix, BOSCAME_F64.Matrix>;
+  def : BOSCAMEPatConvert<int_riscv_bosc_mfncvt_hf_f_m, BOSC_AME_MFNCVT_HF_F_M, 
+                          BOSCAME_F16.Matrix, BOSCAME_F32.Matrix>;
+  def : BOSCAMEPatConvert<int_riscv_bosc_mfncvt_f_d_m, BOSC_AME_MFNCVT_F_D_M, 
+                          BOSCAME_F32.Matrix, BOSCAME_F64.Matrix>;
+
+  // Integer -> FP (unsigned and signed, respectively).
+  foreach C = ["mfcvtu", "mfcvt"] in {
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_f_x_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_F_X_M"), 
+                            BOSCAME_F64.Matrix, BOSCAME_I64.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_hf_h_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_HF_H_M"), 
+                            BOSCAME_F16.Matrix, BOSCAME_I16.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_f_w_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_F_W_M"), 
+                            BOSCAME_F32.Matrix, BOSCAME_I32.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_d_dw_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_D_DW_M"), 
+                            BOSCAME_F64.Matrix, BOSCAME_I64.Matrix>;
+  }
+  foreach C = ["mfwcvtu", "mfwcvt"] in {
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_fw_x_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_FW_X_M"), 
+                            BOSCAME_F64.Matrix, BOSCAME_I64.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_hf_b_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_HF_B_M"), 
+                            BOSCAME_F16.Matrix, BOSCAME_I8.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_f_b_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_F_B_M"), 
+                            BOSCAME_F32.Matrix, BOSCAME_I8.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_f_h_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_F_H_M"), 
+                            BOSCAME_F32.Matrix, BOSCAME_I16.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_d_w_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_D_W_M"), 
+                            BOSCAME_F64.Matrix, BOSCAME_I32.Matrix>;
+  }
+  foreach C = ["mfncvtu", "mfncvt"] in {
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_f_xw_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_F_XW_M"), 
+                            BOSCAME_F32.Matrix, BOSCAME_I64_XW.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_hf_w_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_HF_W_M"), 
+                            BOSCAME_F16.Matrix, BOSCAME_I32.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_f_dw_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_F_DW_M"), 
+                            BOSCAME_F32.Matrix, BOSCAME_I64.Matrix>;
+  }
+
+  // FP -> integer (unsigned and signed, respectively).
+  foreach C = ["mfcvtu", "mfcvt"] in {
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_x_f_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_X_F_M"), 
+                            BOSCAME_I64.Matrix, BOSCAME_F32.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_h_hf_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_H_HF_M"), 
+                            BOSCAME_I16.Matrix, BOSCAME_F16.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_w_f_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_W_F_M"), 
+                            BOSCAME_I32.Matrix, BOSCAME_F32.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_dw_d_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_DW_D_M"), 
+                            BOSCAME_I64.Matrix, BOSCAME_F64.Matrix>;
+  }
+  foreach C = ["mfwcvtu", "mfwcvt"] in {
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_xw_f_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_XW_F_M"), 
+                            BOSCAME_I64_XW.Matrix, BOSCAME_F32.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_w_hf_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_W_HF_M"), 
+                            BOSCAME_I32.Matrix, BOSCAME_F16.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_dw_f_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_DW_F_M"), 
+                            BOSCAME_I64.Matrix, BOSCAME_F32.Matrix>;
+  }
+  foreach C = ["mfncvtu", "mfncvt"] in {
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_x_fw_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_X_FW_M"), 
+                            BOSCAME_I64.Matrix, BOSCAME_F64.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_b_hf_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_B_HF_M"), 
+                            BOSCAME_I8.Matrix, BOSCAME_F16.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_b_f_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_B_F_M"), 
+                            BOSCAME_I8.Matrix, BOSCAME_F32.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_h_f_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_H_F_M"), 
+                            BOSCAME_I16.Matrix, BOSCAME_F32.Matrix>;
+    def : BOSCAMEPatConvert<!cast<SDPatternOperator>("int_riscv_bosc_"#C#"_w_d_m"), 
+                            !cast<Instruction>("BOSC_AME_"#!toupper(C)#"_W_D_M"), 
+                            BOSCAME_I32.Matrix, BOSCAME_F64.Matrix>;
+  }
+
   // Memory instructions. A given EEW can be used by an integer or a floating
   // matrix type, so both type families get a pattern for the same instruction.
   foreach T = [BOSCAME_I8, BOSCAME_I16, BOSCAME_I32, BOSCAME_I64,
@@ -1601,6 +2573,57 @@ let Predicates = [HasVendorXBOSCAME] in {
         !cast<Instruction>("BOSC_AME_"#!toupper(Op)#T.Number#"_M"),
         T.Matrix, AccReg>;
   }
+
+  foreach T = [BOSCAME_I8, BOSCAME_I16, BOSCAME_I32, BOSCAME_I64] in {
+    foreach Op = ["mlufae", "mlufbe", "mlufce"] in
+      def : BOSCAMEPatLoad<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#T.Number#"_m"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#T.Number#"_M"),
+        T.Matrix>;
+
+    foreach Op = ["msfdae", "msfdbe", "msfdce"] in
+      def : BOSCAMEPatStore<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#T.Number#"_m"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#T.Number#"_M"),
+        T.Matrix, TileReg>;
+  }
+
+  // Vector loads use an LMUL=1 VR result.  The same EEW encoding supports
+  // integer and floating-point vector element types.
+  foreach T = [BOSCAME_VI8, BOSCAME_VI16, BOSCAME_VI32, BOSCAME_VI64,
+               BOSCAME_VF16, BOSCAME_VBF16, BOSCAME_VF32, BOSCAME_VF64] in
+    foreach Op = ["mlae", "mlbe", "mlce"] in
+      def : BOSCAMEPatVectorLoad<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#T.Number#"_v"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#T.Number#"_V"),
+        T.Vector>;
+
+  // The 32-bit vector-store instruction definitions are currently disabled,
+  // so only emit patterns for the active 8/16/64-bit instructions.
+  foreach T = [BOSCAME_VI8, BOSCAME_VI16, BOSCAME_VI64,
+               BOSCAME_VF16, BOSCAME_VBF16, BOSCAME_VF64] in
+    foreach Op = ["msae", "msbe", "msce"] in
+      def : BOSCAMEPatVectorStore<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#T.Number#"_v"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#T.Number#"_V"),
+        T.Vector>;
+
+  // Move matrix rows/columns to vectors and vectors back to matrix
+  // rows/columns.  The register-index operand is held in a GPR.
+  foreach T = [BOSCAME_VI8, BOSCAME_VI16, BOSCAME_VI32, BOSCAME_VI64,
+               BOSCAME_VF16, BOSCAME_VF32, BOSCAME_VF64] in
+    foreach Op = ["mmvare", "mmvbre", "mmvcre",
+                  "mmvace", "mmvbce", "mmvcce"] in {
+      def : BOSCAMEPatMatrixToVector<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#T.Number#"_v_m"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#T.Number#"_V_M"),
+        T.Vector, T.Matrix>;
+      def : BOSCAMEPatVectorToMatrix<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#T.Number#"_m_v"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#T.Number#"_M_V"),
+        T.Matrix, T.Vector>;
+    }
+
 
   // Integer matrix moves.
   foreach T = [BOSCAME_I8, BOSCAME_I16, BOSCAME_I32, BOSCAME_I64] in {
@@ -1860,6 +2883,85 @@ let Predicates = [HasVendorXBOSCAME] in {
       !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_b_mm"),
       !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_B_MM"),
       BOSCAME_I8.Matrix, BOSCAME_I32.Matrix>;
+  }
+
+  // Sparse no-widen MMA. Sparse A/B variants share the same DAG shape; the
+  // sparse selector is encoded in the instruction name and does not alter
+  // the intrinsic operands.
+  foreach T = [BOSCAME_I8, BOSCAME_I16, BOSCAME_I32, BOSCAME_I64] in
+    foreach Sp = ["spa", "spb"] in
+      foreach Op = ["mma", "msma", "mmau", "msmau"] in
+        def : BOSCAMEPatMMA<
+          !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_"#Sp#"_mm"),
+          !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_"#!toupper(Sp)#"_MM"),
+          T.Matrix, T.Matrix>;
+
+  foreach T = [BOSCAME_I16, BOSCAME_I32, BOSCAME_I64] in
+    foreach Sp = ["spa", "spb"] in
+      foreach Op = ["mma", "msma", "mmau", "msmau"] in
+        def : BOSCAMEPatMMA<
+          !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_"#Sp#"_"#
+                                    !tolower(T.Suffix)#"_mm"),
+          !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_"#!toupper(Sp)#"_"#
+                             T.Suffix#"_MM"),
+          T.Matrix, T.Matrix>;
+
+  foreach T = [BOSCAME_F16, BOSCAME_F32, BOSCAME_F64] in
+    foreach Sp = ["spa", "spb"] in
+      def : BOSCAMEPatMMA<
+        !cast<SDPatternOperator>("int_riscv_bosc_mfma_"#Sp#"_mm"),
+        !cast<Instruction>("BOSC_AME_MFMA_"#!toupper(Sp)#"_MM"),
+        T.Matrix, T.Matrix>;
+
+  foreach T = [BOSCAME_F16, BOSCAME_F32, BOSCAME_F64] in
+    foreach Sp = ["spa", "spb"] in
+      def : BOSCAMEPatMMA<
+        !cast<SDPatternOperator>("int_riscv_bosc_mfma_"#Sp#"_"#
+                                  !tolower(T.Suffix)#"_mm"),
+        !cast<Instruction>("BOSC_AME_MFMA_"#!toupper(Sp)#"_"#T.Suffix#"_MM"),
+        T.Matrix, T.Matrix>;
+
+  // Sparse double-widen MMA: H->W and W->DW (and HF->F/F->D).
+  foreach W = [BOSCAME_I16_TO_I32_MMA, BOSCAME_I32_TO_I64_MMA] in
+    foreach Sp = ["spa", "spb"] in
+      foreach Op = ["mwmau", "mswmau", "mwma", "mswma"] in {
+        def : BOSCAMEPatWidenMMA<
+          !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_"#Sp#"_mm"),
+          !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_"#!toupper(Sp)#"_MM"),
+          W.Src.Matrix, W.Dst.Matrix>;
+        def : BOSCAMEPatWidenMMA<
+          !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_"#Sp#"_"#
+                                    !tolower(W.Suffix)#"_mm"),
+          !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_"#!toupper(Sp)#"_"#
+                             W.Suffix#"_MM"),
+          W.Src.Matrix, W.Dst.Matrix>;
+      }
+
+  foreach W = [BOSCAME_F16_TO_F32, BOSCAME_F32_TO_F64] in
+    foreach Sp = ["spa", "spb"] in {
+      def : BOSCAMEPatWidenMMA<
+        !cast<SDPatternOperator>("int_riscv_bosc_mfwma_"#Sp#"_mm"),
+        !cast<Instruction>("BOSC_AME_MFWMA_"#!toupper(Sp)#"_MM"),
+        W.Src.Matrix, W.Dst.Matrix>;
+      def : BOSCAMEPatWidenMMA<
+        !cast<SDPatternOperator>("int_riscv_bosc_mfwma_"#Sp#"_"#
+                                  !tolower(W.Suffix)#"_mm"),
+        !cast<Instruction>("BOSC_AME_MFWMA_"#!toupper(Sp)#"_"#W.Suffix#"_MM"),
+        W.Src.Matrix, W.Dst.Matrix>;
+    }
+
+  // Sparse quad-widen integer MMA: i8 -> i32.
+  foreach Sp = ["spa", "spb"] in {
+    foreach Op = ["mqmau", "msqmau", "mqma", "msqma"] in {
+      def : BOSCAMEPatWidenMMA<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_"#Sp#"_mm"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_"#!toupper(Sp)#"_MM"),
+        BOSCAME_I8.Matrix, BOSCAME_I32.Matrix>;
+      def : BOSCAMEPatWidenMMA<
+        !cast<SDPatternOperator>("int_riscv_bosc_"#Op#"_"#Sp#"_b_mm"),
+        !cast<Instruction>("BOSC_AME_"#!toupper(Op)#"_"#!toupper(Sp)#"_B_MM"),
+        BOSCAME_I8.Matrix, BOSCAME_I32.Matrix>;
+    }
   }
 }
 
