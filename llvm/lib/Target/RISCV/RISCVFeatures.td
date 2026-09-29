@@ -1423,6 +1423,21 @@ def HasVendorXBOSCAME
       AssemblerPredicate<(all_of FeatureVendorXBOSCAME),
           "'XBOSCAME' (BOSC AME extension)">;
 
+// FPGA-only BOSC AME convention (Qwen3 W8A8 prototype).
+//
+// The FPGA datapath uses 8-bit A/B tiles with a 32-bit accumulator, and the
+// accumulator register file has to be distinguishable from the tile register
+// file for values that carry no instruction constraint of their own (a
+// loop-carried accumulator PHI).  This is a *prototype* convention: it must not
+// change the behaviour of the default `+xboscame` target that the GEM5 flow
+// uses.  See docs/BOSCAMEFPGAValueSemantics.md.
+def FeatureVendorXBOSCAMEFPGA
+    : SubtargetFeature<"xboscame-fpga", "HasVendorXBOSCAMEFPGA", "true",
+                       "BOSC AME FPGA convention (W8A8 prototype)",
+                       [FeatureVendorXBOSCAME]>;
+def HasVendorXBOSCAMEFPGA
+    : Predicate<"Subtarget->hasVendorXBOSCAMEFPGA()">;
+
 def FeatureVendorXBBPebble
     : RISCVExtension<1, 0, "Buckyball Pebble core extension">;
 def HasVendorXBBPebble

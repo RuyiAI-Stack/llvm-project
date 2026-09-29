@@ -190,9 +190,41 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
       addRegisterClass(MVT::f64, &RISCV::GPRPairRegClass);
   }
 
-  // BOSC AME matrix values default to TileReg. TableGen patterns constrain
-  // accumulator operands/results to AccReg explicitly.
-  if (Subtarget.hasVendorXBOSCAME()) {
+  // BOSC AME matrix values.  TableGen patterns constrain every AME operand to
+  // its hardware register file explicitly, so this table only decides the class
+  // of values that carry *no* instruction constraint of their own - most
+  // importantly a loop-carried accumulator PHI, which is created from its IR
+  // type alone.
+  //
+  // PROTOTYPE (FPGA, `+xboscame-fpga` only): the W8A8 datapath uses 8-bit A/B
+  // tiles and a 32-bit accumulator, so the integer width selects the register
+  // file (i32 -> AccReg, everything else -> TileReg).  This is a heuristic for
+  // one datapath, not an ABI: a type used as both a tile and an accumulator
+  // would need a role-carrying representation instead.  The default
+  // `+xboscame` target keeps the upstream mapping below unchanged, so the GEM5
+  // flow is not affected.
+  if (Subtarget.hasVendorXBOSCAMEFPGA()) {
+    static const MVT::SimpleValueType BOSCTileIntTypes[] = {
+      MVT::nxv128i8,  MVT::nxv256i8,  MVT::nxv512i8,   MVT::nxv1024i8, MVT::nxv2048i8,
+      MVT::nxv64i16,  MVT::nxv128i16, MVT::nxv256i16,  MVT::nxv512i16, MVT::nxv1024i16,
+      MVT::nxv16i64,  MVT::nxv32i64,  MVT::nxv64i64,   MVT::nxv128i64, MVT::nxv256i64,
+    };
+    static const MVT::SimpleValueType BOSCAccIntTypes[] = {
+      MVT::nxv32i32,  MVT::nxv64i32,  MVT::nxv128i32,  MVT::nxv256i32, MVT::nxv512i32,
+    };
+    for (MVT VT : BOSCTileIntTypes)
+      addRegisterClass(VT, &RISCV::TileRegRegClass);
+    for (MVT VT : BOSCAccIntTypes)
+      addRegisterClass(VT, &RISCV::AccRegRegClass);
+
+    static const MVT::SimpleValueType FPGAFloatTypes[] = {
+      MVT::nxv64f16,  MVT::nxv128f16, MVT::nxv256f16,  MVT::nxv512f16, MVT::nxv1024f16,
+      MVT::nxv32f32,  MVT::nxv64f32,  MVT::nxv128f32,  MVT::nxv256f32, MVT::nxv512f32,
+      MVT::nxv16f64,  MVT::nxv32f64,  MVT::nxv64f64,   MVT::nxv128f64, MVT::nxv256f64,
+    };
+    for (MVT VT : FPGAFloatTypes)
+      addRegisterClass(VT, &RISCV::TileRegRegClass);
+  } else if (Subtarget.hasVendorXBOSCAME()) {
     static const MVT::SimpleValueType BOSCIntTypes[] = {
       MVT::nxv128i8,  MVT::nxv256i8,  MVT::nxv512i8,   MVT::nxv1024i8, MVT::nxv2048i8,
       MVT::nxv64i16,  MVT::nxv128i16, MVT::nxv256i16,  MVT::nxv512i16, MVT::nxv1024i16,
