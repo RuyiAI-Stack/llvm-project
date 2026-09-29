@@ -1013,6 +1013,7 @@ defvar mint16_t = nxv64i16;
 defvar mint32_t = nxv32i32;
 defvar mint64_t = nxv16i64;
 defvar mfloat16_t = nxv64f16;
+defvar mfloatbf16_t = nxv64bf16;
 defvar mfloat32_t = nxv32f32;
 defvar mfloat64_t = nxv16f64;
 
@@ -1044,7 +1045,8 @@ def TileReg : BOSCAMEReg<
 
 def AccReg : BOSCAMEReg<
     [mint8_t, mint16_t, mint32_t, mint64_t,
-     mfloat16_t, mfloat32_t, mfloat64_t],
+     nxv32i64, nxv64i64, nxv128i64,
+     mfloat16_t, mfloatbf16_t, mfloat32_t, mfloat64_t],
     (add (sequence "ACC%u", 0, 7)), 1>;
 
 //===----------------------------------------------------------------------===//

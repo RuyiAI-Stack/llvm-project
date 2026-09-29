@@ -217,6 +217,12 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
       addRegisterClass(VT, &RISCV::TileRegRegClass);
     for (MVT VT : BOSCF64Types)
       addRegisterClass(VT, &RISCV::TileRegRegClass);
+
+    static const MVT::SimpleValueType BOSCAccExtraTypes[] = {
+      MVT::nxv32i64, MVT::nxv64i64, MVT::nxv128i64, MVT::nxv64bf16,
+    };
+    for (MVT VT : BOSCAccExtraTypes)
+      addRegisterClass(VT, &RISCV::AccRegRegClass);
   }
 
   // XT AME matrix values default to MatrixReg.
