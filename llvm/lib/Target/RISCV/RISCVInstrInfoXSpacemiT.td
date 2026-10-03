@@ -170,7 +170,60 @@ class SMTParamDotPseudo<Instruction Base, bit IsHP>
   let mayStore = 0;
 }
 
+// Layout instructions read whole single-register inputs, independently of VL.
+// pack/upack write a pair; these intrinsic forms request LMUL=1. Narrowing
+// SEW is the destination width; pack4 consumes bytes and packs nibbles.
+class SMTPackPseudo<Instruction Base, bit Wide>
+    : RISCVVPseudo<!if(Wide, (outs VRM2:$vd), (outs VR:$vd)),
+                    (ins VR:$vs1, VR:$vs2, smt_uimm2:$imm2,
+                         AVL:$vl, sew:$sew)> {
+  let BaseInstr = Base;
+  let VLMul = 0;
+  let HasVLOp = 1;
+  let HasSEWOp = 1;
+  let ReadsPastVL = 1;
+  let Uses = [VL, VTYPE];
+  let Constraints = "@earlyclobber $vd";
+  let hasSideEffects = 0;
+  let mayLoad = 0;
+  let mayStore = 0;
+}
+
 let Predicates = [HasVendorXSMTVDotII, IsRV64] in {
+  foreach Op = ["VPACK", "VUPACK", "VNPACK", "VNSPACK", "VNPACK4", "VNSPACK4"] in
+    def "PseudoSMT_" # Op # "_VV_M1" :
+        SMTPackPseudo<!cast<Instruction>(Op # "_VV"),
+                      !or(!eq(Op, "VPACK"), !eq(Op, "VUPACK"))>;
+
+  foreach Op = ["vpack", "vupack"] in {
+    foreach T = [nxv8i8, nxv4i16, nxv2i32, nxv1i64] in {
+      defvar WideT = !cast<ValueType>("nxv" # !mul(T.nElem, 2) # "i" #
+                                     T.ElementType.Size);
+      def : Pat<(WideT (!cast<Intrinsic>("int_riscv_ime_" # Op)
+                        T:$vs1, T:$vs2, smt_uimm2:$imm2)),
+                (!cast<Instruction>("PseudoSMT_" # !toupper(Op) # "_VV_M1")
+                    VR:$vs1, VR:$vs2, smt_uimm2:$imm2,
+                    (XLenVT -1), (XLenVT !logtwo(T.ElementType.Size)))>;
+    }
+  }
+  foreach Op = ["vnpack", "vnspack"] in {
+    foreach T = [nxv8i8, nxv4i16, nxv2i32] in {
+      defvar NarrowInT = !cast<ValueType>("nxv" # !srl(T.nElem, 1) # "i" #
+                                         !mul(T.ElementType.Size, 2));
+      def : Pat<(T (!cast<Intrinsic>("int_riscv_ime_" # Op)
+                    NarrowInT:$vs1, NarrowInT:$vs2, smt_uimm2:$imm2)),
+                (!cast<Instruction>("PseudoSMT_" # !toupper(Op) # "_VV_M1")
+                    VR:$vs1, VR:$vs2, smt_uimm2:$imm2,
+                    (XLenVT -1), (XLenVT !logtwo(T.ElementType.Size)))>;
+    }
+  }
+  foreach Op = ["vnpack4", "vnspack4"] in
+    def : Pat<(!cast<Intrinsic>("int_riscv_ime_" # Op)
+                nxv8i8:$vs1, nxv8i8:$vs2, smt_uimm2:$imm2),
+              (!cast<Instruction>("PseudoSMT_" # !toupper(Op) # "_VV_M1")
+                  VR:$vs1, VR:$vs2, smt_uimm2:$imm2,
+                  (XLenVT -1), (XLenVT 3))>;
+
   foreach Suffix = ["", "u", "su", "us"] in {
     defvar HPReal = !cast<Instruction>("VMADOT" # !toupper(Suffix) # "_HP");
     defvar SPReal = !cast<Instruction>("VMADOT" # !toupper(Suffix) # "_SP");

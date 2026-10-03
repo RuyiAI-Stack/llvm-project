@@ -99,6 +99,34 @@ def int_riscv_loop_conv_ws_config6 : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty], [
 // HP requires the caller to configure MCPM.BF16=0. These intrinsics neither
 // change that CSR nor provide automatic FP16/BF16 mode switching.
 let TargetPrefix = "riscv" in {
+  // A100 layout transforms use LMUL=1 and read entire source registers.
+  // pack/upack concatenate two single-register inputs into a register pair.
+  // The overload type is the result (nxv16i8/nxv8i16/nxv4i32/nxv2i64).
+  foreach Op = ["vpack", "vupack"] in
+    def int_riscv_ime_ # Op :
+        Intrinsic<[llvm_anyvector_ty],
+                  [LLVMOneNthElementsVectorType<0, 2>,
+                   LLVMOneNthElementsVectorType<0, 2>, llvm_i32_ty],
+                  [IntrNoMem, ImmArg<ArgIndex<2>>]>;
+
+  // Narrow two registers from 2*SEW to SEW, then interleave their blocks.
+  // The overload type is the input (nxv4i16/nxv2i32/nxv1i64). Subdivision
+  // keeps the result one register wide while doubling its element count.
+  foreach Op = ["vnpack", "vnspack"] in
+    def int_riscv_ime_ # Op :
+        Intrinsic<[LLVMSubdivide2VectorType<0>],
+                  [llvm_anyvector_ty, LLVMMatchType<0>, llvm_i32_ty],
+                  [IntrNoMem, ImmArg<ArgIndex<2>>]>;
+
+  // Byte inputs are truncated / signed-saturated to nibbles, low nibble
+  // first. A byte vector represents the packed result; this is not int4
+  // sign extension. Saturating pack instructions do not modify vxsat.
+  foreach Op = ["vnpack4", "vnspack4"] in
+    def int_riscv_ime_ # Op :
+        Intrinsic<[LLVMType<nxv8i8>],
+                  [LLVMType<nxv8i8>, LLVMType<nxv8i8>, llvm_i32_ty],
+                  [IntrNoMem, ImmArg<ArgIndex<2>>]>;
+
   foreach Suffix = ["", "u", "su", "us"] in {
     def int_riscv_ime_vmadot # Suffix # _hp :
         Intrinsic<[LLVMType<nxv4f16>],
