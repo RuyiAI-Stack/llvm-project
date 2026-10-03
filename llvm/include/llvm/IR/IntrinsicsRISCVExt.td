@@ -87,6 +87,60 @@ def int_riscv_loop_conv_ws_config6 : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty], [
 // IME Extension Intrinsics
 //===----------------------------------------------------------------------===//
 
+// The A100 native tile overloads require VLEN=1024 (vscale=16): nxv8i8 is
+// exactly one 128-byte register, nxv4i32 is a 64-element accumulator pair,
+// and nxv4f16 is a 64-element single-register accumulator. zvl1024b is a
+// minimum VLEN guarantee, not a substitute for the fixed-VLEN tile contract.
+//
+// HP: int8 8x16 * transposed int8 8x16, per-column FP16 scales, FP16 C.
+// SP: int8 8x32 * transposed compressed int8 8x16, 4:2 recovery parameters,
+//     int32 C. Parameter registers contain a full nxv4f16 / nxv8i8 vector;
+//     the immediate selects one of eight HP groups / four SP segments.
+// HP requires the caller to configure MCPM.BF16=0. These intrinsics neither
+// change that CSR nor provide automatic FP16/BF16 mode switching.
+let TargetPrefix = "riscv" in {
+  // A100 layout transforms use LMUL=1 and read entire source registers.
+  // pack/upack concatenate two single-register inputs into a register pair.
+  // The overload type is the result (nxv16i8/nxv8i16/nxv4i32/nxv2i64).
+  foreach Op = ["vpack", "vupack"] in
+    def int_riscv_ime_ # Op :
+        Intrinsic<[llvm_anyvector_ty],
+                  [LLVMOneNthElementsVectorType<0, 2>,
+                   LLVMOneNthElementsVectorType<0, 2>, llvm_i32_ty],
+                  [IntrNoMem, ImmArg<ArgIndex<2>>]>;
+
+  // Narrow two registers from 2*SEW to SEW, then interleave their blocks.
+  // The overload type is the input (nxv4i16/nxv2i32/nxv1i64). Subdivision
+  // keeps the result one register wide while doubling its element count.
+  foreach Op = ["vnpack", "vnspack"] in
+    def int_riscv_ime_ # Op :
+        Intrinsic<[LLVMSubdivide2VectorType<0>],
+                  [llvm_anyvector_ty, LLVMMatchType<0>, llvm_i32_ty],
+                  [IntrNoMem, ImmArg<ArgIndex<2>>]>;
+
+  // Byte inputs are truncated / signed-saturated to nibbles, low nibble
+  // first. A byte vector represents the packed result; this is not int4
+  // sign extension. Saturating pack instructions do not modify vxsat.
+  foreach Op = ["vnpack4", "vnspack4"] in
+    def int_riscv_ime_ # Op :
+        Intrinsic<[LLVMType<nxv8i8>],
+                  [LLVMType<nxv8i8>, LLVMType<nxv8i8>, llvm_i32_ty],
+                  [IntrNoMem, ImmArg<ArgIndex<2>>]>;
+
+  foreach Suffix = ["", "u", "su", "us"] in {
+    def int_riscv_ime_vmadot # Suffix # _hp :
+        Intrinsic<[LLVMType<nxv4f16>],
+                  [LLVMType<nxv4f16>, LLVMType<nxv8i8>, LLVMType<nxv8i8>,
+                   LLVMType<nxv4f16>, llvm_i32_ty],
+                  [IntrNoMem, ImmArg<ArgIndex<4>>]>;
+    def int_riscv_ime_vmadot # Suffix # _sp :
+        Intrinsic<[LLVMType<nxv4i32>],
+                  [LLVMType<nxv4i32>, LLVMType<nxv16i8>, LLVMType<nxv8i8>,
+                   LLVMType<nxv8i8>, llvm_i32_ty],
+                  [IntrNoMem, ImmArg<ArgIndex<4>>]>;
+  }
+}
+
 let TargetPrefix = "riscv" in
 def int_riscv_ime_vmadot : Intrinsic<[llvm_anyvector_ty],
                                      [LLVMMatchType<0>, llvm_anyvector_ty, llvm_anyvector_ty],
