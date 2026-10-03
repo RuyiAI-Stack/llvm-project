@@ -109,3 +109,45 @@ let DecoderNamespace = "XSMT" in {
     }
   }
 } // DecoderNamespace = "XSMT"
+
+// A100 matrix operands occupy one vector register, while the accumulator
+// occupies an aligned pair. Model the required e32,m1 VTYPE independently of
+// the accumulator's register class. The matrix instruction reads the entire
+// tile, including the second accumulator register, irrespective of VL.
+class SMTDotPseudo<Instruction Base, bit IsInteger>
+    : RISCVVPseudo<(outs VRM2:$vd_wb),
+                    !if(IsInteger,
+                        (ins VRM2:$vd, VR:$vs1, VR:$vs2, SMT_INT:$vtype,
+                             AVL:$vl, sew:$sew),
+                        (ins VRM2:$vd, VR:$vs1, VR:$vs2,
+                             AVL:$vl, sew:$sew))> {
+  let BaseInstr = Base;
+  let VLMul = 0; // LMUL=1 is mandatory even though vd occupies two registers.
+  let HasVLOp = 1;
+  let HasSEWOp = 1;
+  let ReadsPastVL = 1;
+  let Uses = [VL, VTYPE];
+  let Constraints = "@earlyclobber $vd_wb, $vd = $vd_wb";
+  let hasSideEffects = 0;
+  let mayLoad = 0;
+  let mayStore = 0;
+}
+
+let Predicates = [HasVendorXSMTVDotII, IsRV64] in {
+  foreach Suffix = ["", "u", "su", "us"] in {
+    defvar Real = !cast<Instruction>("VMADOT" # !toupper(Suffix));
+    defvar Intr = !cast<Intrinsic>("int_riscv_ime_vmadot" # Suffix);
+    def "PseudoSMT_VMADOT" # !toupper(Suffix) # "_M1" :
+        SMTDotPseudo<Real, 1>;
+    def : Pat<(nxv4i32 (Intr nxv4i32:$vd, nxv8i8:$vs1, nxv8i8:$vs2)),
+              (!cast<Instruction>("PseudoSMT_VMADOT" # !toupper(Suffix) # "_M1")
+                  VRM2:$vd, VR:$vs1, VR:$vs2,
+                  (XLenVT 3), (XLenVT -1), (XLenVT 5))>;
+  }
+
+  def PseudoSMT_VFWMADOT_M1 : SMTDotPseudo<VFWMADOT, 0>;
+  def : Pat<(nxv4f32 (int_riscv_ime_vfmadot
+                       nxv4f32:$vd, nxv4f16:$vs1, nxv4f16:$vs2)),
+            (PseudoSMT_VFWMADOT_M1 VRM2:$vd, VR:$vs1, VR:$vs2,
+                                 (XLenVT -1), (XLenVT 5))>;
+}
