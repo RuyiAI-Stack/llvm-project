@@ -423,6 +423,43 @@ It is our intention to follow the naming conventions described in [riscv-non-isa
 
 The current vendor extensions supported are:
 
+`XSMTVDotII` (SpacemiT A100 IME)
+
+: `-mcpu=spacemit-a100` enables this extension and `zvl1024b`. Native IME tile
+  intrinsics require **VLEN=1024** (`vscale=16`); `zvl1024b` alone only promises
+  a minimum VLEN. On heterogeneous K3 systems the caller must execute on an
+  A100 core and ensure that `vlenb` is 128 before using these tiles.
+
+  The native int8 dot overloads use `<vscale x 8 x i8>` for each 128-byte input
+  tile and `<vscale x 4 x i32>` for the 64-lane accumulator register pair.
+  `llvm.riscv.ime.vmadot.hp` and its `u`, `su`, `us` variants instead return
+  `<vscale x 4 x half>` in a **single** vector register. Their operands are
+  `(C, A, B, scales, i32 immarg)`, with C and scales of type
+  `<vscale x 4 x half>` and A/B of type `<vscale x 8 x i8>`.
+  The immediate, in the range 0–7, selects eight per-column scales from the
+  scale vector, which is allocated to v0 or v1. HP uses e16,m1; software must
+  configure `MCPM.BF16=0` for FP16 scales and accumulation. The intrinsic does
+  not change that CSR.
+
+  `llvm.riscv.ime.vmadot.sp` and its signedness variants perform 4:2 sparse
+  int8 dot products. Their operands are `(C, A, B, parameters, i32 immarg)`:
+  C is `<vscale x 4 x i32>`, A is `<vscale x 16 x i8>` (a register pair), and
+  B and parameters are `<vscale x 8 x i8>`. The immediate is **0–3**, selecting
+  a 256-bit segment of the v0/v1 recovery-parameter register. SP uses e32,m1.
+  HP/SP destinations cannot overlap their input or parameter registers.
+
+  A100 has a separate IME scheduling model: measured accumulator dependency
+  latencies are 8 cycles for int8, 9 for sparse int8, and 10 for HP and FP16
+  dot. Independent dots share a pipeline with one-cycle reciprocal throughput.
+  Scalar and general RVV timings currently reuse the existing X60
+  approximations; A100-specific RVV calibration remains outstanding.
+  Changing e32,m1 / e8,m2 / e16,m1 configurations still requires `vsetvli`.
+  A scheduling model does not eliminate those changes; grouping compatible
+  work or using whole-register tile loads can reduce configuration overhead.
+
+  Instruction semantics and parameter layouts are described in the
+  [SpacemiT IME specification](https://github.com/spacemit-com/docs-ai/blob/main/en/architecture/ime_extension.md).
+
 `XAIFET`
 
 : LLVM implements [the AIFET (AI Foundry's ET) vendor-defined instructions specified in](https://github.com/aifoundry-org/et-man/blob/main/ET%20Programmer's%20Reference%20Manual.pdf) originally defined by Esperanto Technologies (and now under the AI Foundry non-profit). Instructions are prefixed with `aif.` as described in the specification.

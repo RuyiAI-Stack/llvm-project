@@ -12,6 +12,9 @@
 
 include "RISCVInstrFormatsSpacemitV.td"
 
+// A100 dot instruction and pseudo scheduling is supplied by InstRW mappings
+// in RISCVSchedSpacemitA100.td, including accumulator dependency latencies.
+
 let DecoderNamespace = "XSMT" in {
   let Predicates = [HasVendorXSMTVDot, IsRV64], ElementsDependOn = EltDepsNone,
       VS1VS2Constraint = WidenV, DestEEW = EEWSEWx4 in {
@@ -110,6 +113,9 @@ let DecoderNamespace = "XSMT" in {
   }
 } // DecoderNamespace = "XSMT"
 
+// These native tile overloads assume VLEN=1024 (vscale=16). In particular,
+// nxv8i8 is a 128-byte 8x16 int8 tile only at that VLEN. A100 enables
+// zvl1024b, but software must execute on its fixed-1024-bit vector cores.
 // A100 matrix operands occupy one vector register, while the accumulator
 // occupies an aligned pair. Model the required e32,m1 VTYPE independently of
 // the accumulator's register class. The matrix instruction reads the entire
@@ -133,8 +139,58 @@ class SMTDotPseudo<Instruction Base, bit IsInteger>
   let mayStore = 0;
 }
 
+// HP writes a single register. SP writes a pair and reads a pair for A.
+// Both instructions use LMUL=1 regardless of their operand register groups.
+// ImmArg operands arrive as TargetConstant nodes, with an i32 IR type.
+def smt_uimm3 : RISCVOp<i32>, TImmLeaf<i32, [{ return isUInt<3>(Imm); }]> {
+  let OperandType = "OPERAND_UIMM3";
+}
+def smt_uimm2 : RISCVOp<i32>, TImmLeaf<i32, [{ return isUInt<2>(Imm); }]> {
+  let OperandType = "OPERAND_UIMM2";
+}
+
+class SMTParamDotPseudo<Instruction Base, bit IsHP>
+    : RISCVVPseudo<!if(IsHP, (outs VR:$vd_wb), (outs VRM2:$vd_wb)),
+                    !if(IsHP,
+                        (ins VR:$vd, ZZZ_VRSMTNoV0V1:$vs1, ZZZ_VRSMTNoV0V1:$vs2,
+                             ZZZ_VRSMTV0V1:$vmask, smt_uimm3:$imm, SMT_INT:$vtype,
+                             AVL:$vl, sew:$sew),
+                        (ins VRM2:$vd, VRM2NoV0:$vs1, ZZZ_VRSMTNoV0V1:$vs2,
+                             ZZZ_VRSMTV0V1:$vmask, smt_uimm2:$imm, SMT_INT:$vtype,
+                             AVL:$vl, sew:$sew))> {
+  let BaseInstr = Base;
+  let VLMul = 0;
+  let HasVLOp = 1;
+  let HasSEWOp = 1;
+  let ReadsPastVL = 1;
+  let Uses = [VL, VTYPE];
+  let Constraints = "@earlyclobber $vd_wb, $vd = $vd_wb";
+  let hasSideEffects = 0;
+  let mayLoad = 0;
+  let mayStore = 0;
+}
+
 let Predicates = [HasVendorXSMTVDotII, IsRV64] in {
   foreach Suffix = ["", "u", "su", "us"] in {
+    defvar HPReal = !cast<Instruction>("VMADOT" # !toupper(Suffix) # "_HP");
+    defvar SPReal = !cast<Instruction>("VMADOT" # !toupper(Suffix) # "_SP");
+    defvar HPIntr = !cast<Intrinsic>("int_riscv_ime_vmadot" # Suffix # "_hp");
+    defvar SPIntr = !cast<Intrinsic>("int_riscv_ime_vmadot" # Suffix # "_sp");
+    def "PseudoSMT_VMADOT" # !toupper(Suffix) # "_HP_M1" :
+        SMTParamDotPseudo<HPReal, 1>;
+    def "PseudoSMT_VMADOT" # !toupper(Suffix) # "_SP_M1" :
+        SMTParamDotPseudo<SPReal, 0>;
+    def : Pat<(HPIntr nxv4f16:$vd, nxv8i8:$vs1, nxv8i8:$vs2,
+                      nxv4f16:$vmask, smt_uimm3:$imm),
+              (!cast<Instruction>("PseudoSMT_VMADOT" # !toupper(Suffix) # "_HP_M1")
+                  VR:$vd, ZZZ_VRSMTNoV0V1:$vs1, ZZZ_VRSMTNoV0V1:$vs2, ZZZ_VRSMTV0V1:$vmask,
+                  smt_uimm3:$imm, (XLenVT 3), (XLenVT -1), (XLenVT 4))>;
+    def : Pat<(SPIntr nxv4i32:$vd, nxv16i8:$vs1, nxv8i8:$vs2,
+                      nxv8i8:$vmask, smt_uimm2:$imm),
+              (!cast<Instruction>("PseudoSMT_VMADOT" # !toupper(Suffix) # "_SP_M1")
+                  VRM2:$vd, VRM2NoV0:$vs1, ZZZ_VRSMTNoV0V1:$vs2, ZZZ_VRSMTV0V1:$vmask,
+                  smt_uimm2:$imm, (XLenVT 3), (XLenVT -1), (XLenVT 5))>;
+
     defvar Real = !cast<Instruction>("VMADOT" # !toupper(Suffix));
     defvar Intr = !cast<Intrinsic>("int_riscv_ime_vmadot" # Suffix);
     def "PseudoSMT_VMADOT" # !toupper(Suffix) # "_M1" :
