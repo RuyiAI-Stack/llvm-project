@@ -912,6 +912,14 @@ def VR : VReg<!listconcat(VM1VTs, VMaskVTs),
 
 def VRNoV0 : VReg<!listconcat(VM1VTs, VMaskVTs), (sub VR, V0), 1>;
 
+// A100 IME sparse recovery parameters and block-quantization scales are held
+// in v0 or v1. Keep matrix sources out of both registers even when a source
+// and the parameter operand happen to have the same SSA value. The names
+// sort after the canonical VR classes, following the convention used for
+// fractional LMUL classes, to preserve canonical vector type inference.
+def ZZZ_VRSMTV0V1 : VReg<!listconcat(VM1VTs, VMaskVTs), (add V0, V1), 1>;
+def ZZZ_VRSMTNoV0V1 : VReg<!listconcat(VM1VTs, VMaskVTs), (sub VR, V0, V1), 1>;
+
 def VRM2 : VReg<VM2VTs, (add (sequence "V%uM2", 8, 31, 2),
                              (sequence "V%uM2", 6, 0, 2)), 2> {
   let DecoderMethod = "DecodeVectorRegisterClass<RISCV::VRM2RegClassID, 32, 2>";
