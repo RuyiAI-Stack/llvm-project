@@ -1,9 +1,10 @@
-; RUN: llc -mtriple=riscv64 -mcpu=spacemit-a100 -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=riscv64 -mcpu=spacemit-a100 -verify-machineinstrs < %s | FileCheck %s --check-prefixes=CHECK,CPU
 ; RUN: llc -mtriple=riscv64 -mattr=+v,+zvfh,+xsmtvdotii -verify-machineinstrs < %s | FileCheck %s
 ; RUN: llc -mtriple=riscv64 -mcpu=spacemit-a100 -verify-machineinstrs -stop-after=finalize-isel < %s | FileCheck %s --check-prefix=ISEL
 
 ; A100 inputs use one vector register and the accumulator uses two.
 ; Computing the dot requires LMUL=1, not the accumulator's LMUL=2.
+; CPU: .attribute 5, "{{.*}}zvl1024b1p0{{.*}}xsmtvdotii1p0"
 declare <vscale x 4 x i32> @llvm.riscv.ime.vmadot.nxv4i32.nxv8i8.nxv8i8(<vscale x 4 x i32>, <vscale x 8 x i8>, <vscale x 8 x i8>)
 declare <vscale x 4 x i32> @llvm.riscv.ime.vmadotu.nxv4i32.nxv8i8.nxv8i8(<vscale x 4 x i32>, <vscale x 8 x i8>, <vscale x 8 x i8>)
 declare <vscale x 4 x i32> @llvm.riscv.ime.vmadotsu.nxv4i32.nxv8i8.nxv8i8(<vscale x 4 x i32>, <vscale x 8 x i8>, <vscale x 8 x i8>)
