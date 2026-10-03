@@ -152,7 +152,7 @@ class SMX60SegmentedLdStCycles<string mx, int sew, int nf> {
   int c = !mul(SMX60GetVLMAX<mx, sew>.val, nf);
 }
 
-def SpacemitX60Model : SchedMachineModel {
+class SpacemitX60SchedModel : SchedMachineModel {
   let IssueWidth        = 2; // dual-issue
   let MicroOpBufferSize = 0; // in-order
   let LoadLatency       = 3; // worse case: >= 3
@@ -164,7 +164,11 @@ def SpacemitX60Model : SchedMachineModel {
                              HasStdExtZksed, HasStdExtZksh, HasStdExtZkr];
 }
 
-let SchedModel = SpacemitX60Model in {
+multiclass SpacemitX60ModelResources<SchedMachineModel Model,
+                                    int VSetCycles = 1,
+                                    int VSetVLCycles = 1> {
+defvar ResourcePrefix = NAME;
+let SchedModel = Model in {
 
 //===----------------------------------------------------------------------===//
 // Define processor resources for Spacemit-X60
@@ -172,33 +176,43 @@ let SchedModel = SpacemitX60Model in {
 // Information gathered from the C908 user manual:
 let BufferSize = 0 in {
   // The LSU supports dual issue for scalar store/load instructions
-  def SMX60_LS : ProcResource<2>;
+  def _LS : ProcResource<2>;
 
   // An IEU can decode and issue two instructions at the same time
-  def SMX60_IEUA : ProcResource<1>;
-  def SMX60_IEUB : ProcResource<1>;
-  def SMX60_IEU : ProcResGroup<[SMX60_IEUA, SMX60_IEUB]>;
+  def _IEUA : ProcResource<1>;
+  def _IEUB : ProcResource<1>;
+  def _IEU : ProcResGroup<[!cast<ProcResource>(ResourcePrefix # "_IEUA"),
+                           !cast<ProcResource>(ResourcePrefix # "_IEUB")]>;
 
   // Although the X60 does appear to support multiple issue for at least some
   // floating point instructions, this model assumes single issue as
   // increasing it reduces the gains we saw in performance
-  def SMX60_FP : ProcResource<1>;
+  def _FP : ProcResource<1>;
 
   // Vector pipeline
   // Single issue for vector store/load instructions
-  def SMX60_VLS : ProcResource<1>;
+  def _VLS : ProcResource<1>;
 
   // The C908 user manual says: "Vector floating-point units support vector
   // floating-point computation of different bits. In addition, vector integer
   // units are added". Developer confirmed it's a separate VIEU
-  def SMX60_VIEU : ProcResource<1>;
+  def _VIEU : ProcResource<1>;
 
   // The C908 user manual says: "The vector execution unit is developed by
   // extending the floating-point unit", so let's assume single issue for now
-  def SMX60_VFP : ProcResource<1>;
+  def _VFP : ProcResource<1>;
 }
 
 //===----------------------------------------------------------------------===//
+
+  defvar SMX60_LS = !cast<ProcResource>(ResourcePrefix # "_LS");
+  defvar SMX60_IEUA = !cast<ProcResource>(ResourcePrefix # "_IEUA");
+  defvar SMX60_IEUB = !cast<ProcResource>(ResourcePrefix # "_IEUB");
+  defvar SMX60_IEU = !cast<ProcResGroup>(ResourcePrefix # "_IEU");
+  defvar SMX60_FP = !cast<ProcResource>(ResourcePrefix # "_FP");
+  defvar SMX60_VLS = !cast<ProcResource>(ResourcePrefix # "_VLS");
+  defvar SMX60_VIEU = !cast<ProcResource>(ResourcePrefix # "_VIEU");
+  defvar SMX60_VFP = !cast<ProcResource>(ResourcePrefix # "_VFP");
 
 // Branching
 def : WriteRes<WriteJmp, [SMX60_IEUA]>;
@@ -385,9 +399,13 @@ let Latency = 4 in {
 }
 
 // 6. Configuration-Setting Instructions
-def : WriteRes<WriteVSETVLI, [SMX60_IEUA]>;
-def : WriteRes<WriteVSETIVLI, [SMX60_IEUA]>;
-def : WriteRes<WriteVSETVL, [SMX60_IEUA]>;
+let Latency = VSetCycles, ReleaseAtCycles = [VSetCycles] in {
+  def : WriteRes<WriteVSETVLI, [SMX60_IEUA]>;
+  def : WriteRes<WriteVSETIVLI, [SMX60_IEUA]>;
+}
+let Latency = VSetVLCycles, ReleaseAtCycles = [VSetVLCycles] in {
+  def : WriteRes<WriteVSETVL, [SMX60_IEUA]>;
+}
 
 // 7. Vector Loads and Stores
 foreach mx = SchedMxList in {
@@ -499,7 +517,7 @@ foreach mx = SchedMxList in {
   }
 
   let Latency = VIALULat in
-  def SMX60WriteVCOPY_ # mx : SchedWriteRes<[]>;
+  def NAME # "WriteVCOPY_" # mx : SchedWriteRes<[]>;
 
   defvar VILogicalLat = ConstValueUntilLMULThenDouble<"M2", 4, mx>.c;
   defvar VILogicalOcc = ConstValueUntilLMULThenDouble<"MF2", 1, mx>.c;
@@ -1039,26 +1057,6 @@ def : WriteRes<WriteCSR, [SMX60_IEU]>;
 def : WriteRes<WriteNop, [SMX60_IEU]>;
 def : WriteRes<WriteRdVLENB, [SMX60_IEUA]>;
 
-// Assign scheduling info to COPY instructions.
-// Note: We try NOT to assign ProcResource but only latency to vector COPY because
-// those resources might prevent those COPYs from showing up to the scheulder
-// until it's too late.
-// Specifically, for a given COPY of live-in (physical) register, ideally we want it
-// to be visible to the top available queue as early as possible so that it can be scheduled
-// at the beginning of the function. Assigning resource to vector COPYs might risk
-// creating structural hazard that prevents those COPYs from even entering the available
-// queue and as a consequence, sinking those COPYs.
-// I see little difference on assigning ProcResource to scalar COPY or not, so I'm still
-// assigning WriteIALU to it.
-def SMX60CopySchedWriteVariant : SchedWriteVariant<[
-  SchedVar<SchedPredicate<[{ TII->isVRegCopy(MI, /*LMUL=*/1) }]>, [SMX60WriteVCOPY_M1]>,
-  SchedVar<SchedPredicate<[{ TII->isVRegCopy(MI, /*LMUL=*/2) }]>, [SMX60WriteVCOPY_M2]>,
-  SchedVar<SchedPredicate<[{ TII->isVRegCopy(MI, /*LMUL=*/4) }]>, [SMX60WriteVCOPY_M4]>,
-  SchedVar<SchedPredicate<[{ TII->isVRegCopy(MI, /*LMUL=*/8) }]>, [SMX60WriteVCOPY_M8]>,
-  SchedVar<NoSchedPred,                                           [WriteIALU]>
-]>;
-def : InstRW<[SMX60CopySchedWriteVariant], (instrs COPY)>;
-
 //===----------------------------------------------------------------------===//
 // Bypass and advance
 def : ReadAdvance<ReadJmp, 0>;
@@ -1350,3 +1348,32 @@ defm : UnsupportedSchedZvk;
 defm : UnsupportedSchedSFB;
 defm : UnsupportedSchedXsf;
 }
+
+} // SpacemitX60ModelResources
+
+def SpacemitX60Model : SpacemitX60SchedModel;
+defm SMX60 : SpacemitX60ModelResources<SpacemitX60Model>;
+
+// Instantiate COPY mappings after the named vector COPY writes exist.
+// Vector copies carry latency but no pipeline resource, so copies of live-in
+// registers remain available early in scheduling. Scalar copies use WriteIALU.
+multiclass SpacemitX60CopyResources<SchedMachineModel Model,
+                                  string ResourcePrefix> {
+let SchedModel = Model in {
+  defvar VCopyM1 = !cast<SchedWrite>(ResourcePrefix # "WriteVCOPY_M1");
+  defvar VCopyM2 = !cast<SchedWrite>(ResourcePrefix # "WriteVCOPY_M2");
+  defvar VCopyM4 = !cast<SchedWrite>(ResourcePrefix # "WriteVCOPY_M4");
+  defvar VCopyM8 = !cast<SchedWrite>(ResourcePrefix # "WriteVCOPY_M8");
+def NAME # "CopySchedWriteVariant" : SchedWriteVariant<[
+  SchedVar<SchedPredicate<[{ TII->isVRegCopy(MI, /*LMUL=*/1) }]>, [VCopyM1]>,
+  SchedVar<SchedPredicate<[{ TII->isVRegCopy(MI, /*LMUL=*/2) }]>, [VCopyM2]>,
+  SchedVar<SchedPredicate<[{ TII->isVRegCopy(MI, /*LMUL=*/4) }]>, [VCopyM4]>,
+  SchedVar<SchedPredicate<[{ TII->isVRegCopy(MI, /*LMUL=*/8) }]>, [VCopyM8]>,
+  SchedVar<NoSchedPred,                                           [WriteIALU]>
+]>;
+def : InstRW<[!cast<SchedWrite>(ResourcePrefix # "CopySchedWriteVariant")],
+             (instrs COPY)>;
+
+}
+}
+defm SMX60 : SpacemitX60CopyResources<SpacemitX60Model, "SMX60">;

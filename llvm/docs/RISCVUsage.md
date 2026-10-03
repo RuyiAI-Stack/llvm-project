@@ -423,6 +423,85 @@ It is our intention to follow the naming conventions described in [riscv-non-isa
 
 The current vendor extensions supported are:
 
+`XSMTVDotII` (SpacemiT A100 IME)
+
+: `-mcpu=spacemit-a100` enables this extension and `zvl1024b`. Native IME tile
+  intrinsics require **VLEN=1024** (`vscale=16`); `zvl1024b` alone only promises
+  a minimum VLEN. On heterogeneous K3 systems the caller must execute on an
+  A100 core and ensure that `vlenb` is 128 before using these tiles.
+
+  The native int8 dot overloads use `<vscale x 8 x i8>` for each 128-byte input
+  tile and `<vscale x 4 x i32>` for the 64-lane accumulator register pair.
+  `llvm.riscv.ime.vmadot.hp` and its `u`, `su`, `us` variants instead return
+  `<vscale x 4 x half>` in a **single** vector register. Their operands are
+  `(C, A, B, scales, i32 immarg)`, with C and scales of type
+  `<vscale x 4 x half>` and A/B of type `<vscale x 8 x i8>`.
+  The immediate, in the range 0–7, selects eight per-column scales from the
+  scale vector, which is allocated to v0 or v1. HP uses e16,m1; software must
+  configure `MCPM.BF16=0` for FP16 scales and accumulation. The intrinsic does
+  not change that CSR.
+
+  `llvm.riscv.ime.vmadot.sp` and its signedness variants perform 4:2 sparse
+  int8 dot products. Their operands are `(C, A, B, parameters, i32 immarg)`:
+  C is `<vscale x 4 x i32>`, A is `<vscale x 16 x i8>` (a register pair), and
+  B and parameters are `<vscale x 8 x i8>`. The immediate is **0–3**, selecting
+  a 256-bit segment of the v0/v1 recovery-parameter register. SP uses e32,m1.
+  HP/SP destinations cannot overlap their input or parameter registers.
+
+  Layout transforms are available as `llvm.riscv.ime.vpack`, `vupack`,
+  `vnpack`, `vnspack`, `vnpack4`, and `vnspack4`. Each takes `(A, B, i32
+  immarg)` with an immediate in **0–3** and reads the entire source registers,
+  independently of VL. All use LMUL=1 and forbid destination/source overlap.
+
+  * `vpack` interleaves the inputs into a register pair; `vupack` de-interleaves
+    their concatenation into a register pair. They preserve element width.
+    Supported result overloads are `nxv16i8`, `nxv8i16`, `nxv4i32`, and
+    `nxv2i64`; each input has half the result's element count. The immediate
+    selects blocks of SEW, 128, 256, or 512 bits, respectively.
+  * `vnpack` truncates each input from 2*SEW to SEW and interleaves the
+    narrowed blocks. `vnspack` instead applies signed saturation. Their
+    input overloads are `nxv4i16`, `nxv2i32`, and `nxv1i64`; the result has
+    twice the element count and half the element width, occupying one
+    register. VTYPE SEW is the **destination** width (8, 16, or 32).
+  * `vnpack4` and `vnspack4` take and return `nxv8i8`. Input bytes are
+    truncated or signed-saturated to four bits and packed with the first
+    element in the low nibble. The output is a byte vector containing packed
+    nibbles. These intrinsics use e8,m1. Neither instruction expands int4
+    values to int8, and `vupack` does not perform sign extension.
+
+  For the four narrowing instructions, the immediate selects **32, 64, 128,
+  or 256 bits of narrowed output from each source** before interleaving.
+  Saturating pack instructions do not round according to `vxrm` or update
+  `vxsat`. At VLEN=1024, single-register inputs/results contain 128 bytes
+  and register-pair results contain 256 bytes.
+
+  The hardware specification also describes BF16 input support for
+  `smt.vfwmadot` and BF16 scales/results for HP, selected by `MCPM.BF16=1`.
+  The current floating-point intrinsics model FP16 and require
+  `MCPM.BF16=0`; a BF16 value must not be passed by bitcasting to FP16.
+  The public IME specification does not give the MCPM CSR number, BF16 bit
+  position, or privilege requirements. LLVM therefore does not provide a
+  symbolic MCPM CSR or a mode-switch intrinsic; platform runtime code must
+  establish the required mode using its documented control interface.
+
+  A100 has a separate IME scheduling model: measured accumulator dependency
+  latencies are 8 cycles for int8, 9 for sparse int8, and 10 for HP and FP16
+  dot. Independent dots share a pipeline with one-cycle reciprocal throughput.
+  Pack dependency latency and reciprocal throughput are 5 and 4 cycles;
+  the four narrowing packs use 3 and 2 cycles. Unpack immediates 0/1 use
+  13 and 13 cycles, immediate 2 uses a conservative 6-cycle pair latency
+  and 4-cycle throughput, and immediate 3 uses 5 and 4 cycles. These layout
+  timings were measured across all supported SEWs with LMUL=1; contention
+  with other RVV operations is approximate.
+  Scalar and general RVV timings currently reuse the existing X60
+  approximations; A100-specific RVV calibration remains outstanding.
+  Changing e32,m1 / e8,m2 / e16,m1 configurations still requires `vsetvli`.
+  A scheduling model does not eliminate those changes; grouping compatible
+  work or using whole-register tile loads can reduce configuration overhead.
+
+  Instruction semantics and parameter layouts are described in the
+  [SpacemiT IME specification](https://github.com/spacemit-com/docs-ai/blob/main/en/architecture/ime_extension.md).
+
 `XAIFET`
 
 : LLVM implements [the AIFET (AI Foundry's ET) vendor-defined instructions specified in](https://github.com/aifoundry-org/et-man/blob/main/ET%20Programmer's%20Reference%20Manual.pdf) originally defined by Esperanto Technologies (and now under the AI Foundry non-profit). Instructions are prefixed with `aif.` as described in the specification.
