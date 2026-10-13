@@ -640,6 +640,27 @@ void RISCVInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     return;
   }
 
+  // AME tile/accumulator register copies.  The AME matrix register files are
+  // separate from each other and from the vector register file, and the ISA
+  // only has whole-register moves inside one file (mmve*.t.t / mmve*.a.a).
+  // The cross-file forms (mmve*.a.t / mmve*.t.a) are indexed lane moves, not
+  // register copies, so a copy spanning both files cannot be expanded here.
+  if (RISCV::TileRegRegClass.contains(DstReg, SrcReg) ||
+      RISCV::AccRegRegClass.contains(DstReg, SrcReg)) {
+    assert(RISCV::TileRegRegClass.contains(DstReg, SrcReg) ==
+               RISCV::TileRegRegClass.contains(SrcReg) &&
+           "copying between the AME tile and accumulator register files is "
+           "not representable as a single instruction");
+    // A whole-register move transfers all 128 bytes for any element width, so
+    // the widest encoding is used to move the register with the fewest lanes.
+    unsigned Opcode = RISCV::TileRegRegClass.contains(DstReg, SrcReg)
+                          ? RISCV::BOSC_AME_MMVE64_T_T
+                          : RISCV::BOSC_AME_MMVE64_A_A;
+    BuildMI(MBB, MBBI, DL, get(Opcode), DstReg)
+        .addReg(SrcReg, KillFlag | getRenamableRegState(RenamableSrc));
+    return;
+  }
+
   // VR->VR copies.
   const TargetRegisterClass *RegClass =
       TRI->getCommonMinimalPhysRegClass(SrcReg, DstReg);
