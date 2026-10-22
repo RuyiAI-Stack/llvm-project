@@ -318,6 +318,54 @@ static DecodeStatus DecodeYBNDSWImm(MCInst &Inst, uint64_t Imm, int64_t Address,
   return MCDisassembler::Success;
 }
 
+static DecodeStatus
+DecodeZamesTileRegRegisterClass(MCInst &Inst, uint32_t RegNo, uint64_t Address,
+                                const MCDisassembler *Decoder) {
+  if (RegNo >= 4)
+    return MCDisassembler::Fail;
+
+  MCRegister Reg = RISCV::ZAMES_TR0 + RegNo;
+  Inst.addOperand(MCOperand::createReg(Reg));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus
+DecodeZamesAccRegRegisterClass(MCInst &Inst, uint32_t RegNo, uint64_t Address,
+                               const MCDisassembler *Decoder) {
+  if (RegNo < 4 || RegNo >= 8)
+    return MCDisassembler::Fail;
+
+  MCRegister Reg = RISCV::ZAMES_ACC0 + (RegNo - 4);
+  Inst.addOperand(MCOperand::createReg(Reg));
+  return MCDisassembler::Success;
+}
+
+// Union of ZamesTileReg (0-3) and ZamesAccReg (4-7) for real instructions whose
+// md field accepts either register file (e.g. mzero).
+static DecodeStatus
+DecodeZamesTileOrAccRegRegisterClass(MCInst &Inst, uint32_t RegNo,
+                                     uint64_t Address,
+                                     const MCDisassembler *Decoder) {
+  if (RegNo >= 8)
+    return MCDisassembler::Fail;
+
+  MCRegister Reg =
+      RegNo < 4 ? RISCV::ZAMES_TR0 + RegNo : RISCV::ZAMES_ACC0 + (RegNo - 4);
+  Inst.addOperand(MCOperand::createReg(Reg));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeSyncRRegisterClass(MCInst &Inst, uint32_t RegNo,
+                                             uint64_t Address,
+                                             const MCDisassembler *Decoder) {
+  if (RegNo >= 16)
+    return MCDisassembler::Fail;
+
+  MCRegister Reg = RISCV::SYNC0 + RegNo;
+  Inst.addOperand(MCOperand::createReg(Reg));
+  return MCDisassembler::Success;
+}
+
 static DecodeStatus decodeVMaskReg(MCInst &Inst, uint32_t RegNo,
                                    uint64_t Address,
                                    const MCDisassembler *Decoder) {

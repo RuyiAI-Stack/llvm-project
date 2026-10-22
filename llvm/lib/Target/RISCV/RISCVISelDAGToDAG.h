@@ -16,6 +16,9 @@
 #include "RISCV.h"
 #include "RISCVTargetMachine.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
+#include "llvm/IR/DiagnosticInfo.h"
+#include "llvm/IR/InstIterator.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Support/KnownBits.h"
 
 // RISC-V specific code to select RISC-V machine instructions for
@@ -33,6 +36,33 @@ public:
 
   bool runOnMachineFunction(MachineFunction &MF) override {
     Subtarget = &MF.getSubtarget<RISCVSubtarget>();
+    // ZAMES/ZMASYNC intrinsics use i64 scalar interfaces and their
+    // SelectionDAG patterns and pseudos are constrained to RV64. Diagnose
+    // them before instruction selection on RV32 instead of failing with an
+    // uncontrolled "Cannot select" or a crash.
+    if (!Subtarget->is64Bit()) {
+      Function &F = MF.getFunction();
+      for (Instruction &I : instructions(F)) {
+        auto *II = dyn_cast<IntrinsicInst>(&I);
+        if (!II)
+          continue;
+        StringRef Name = Intrinsic::getBaseName(II->getIntrinsicID());
+        if (Name.starts_with("llvm.riscv.zames.") ||
+            Name.starts_with("llvm.riscv.zmasync.")) {
+          F.getContext().diagnose(DiagnosticInfoUnsupported(
+              F, "ZAMES/ZMASYNC code generation requires RV64",
+              I.getDebugLoc()));
+          // Leave a minimal, valid function body so later passes do not
+          // trip over the unselected machine function; compilation still
+          // fails with the error emitted above.
+          MachineBasicBlock *Entry = MF.CreateMachineBasicBlock();
+          MF.push_back(Entry);
+          BuildMI(Entry, DebugLoc(),
+                  Subtarget->getInstrInfo()->get(RISCV::PseudoRET));
+          return true;
+        }
+      }
+    }
     return SelectionDAGISel::runOnMachineFunction(MF);
   }
 
