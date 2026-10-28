@@ -1,0 +1,244 @@
+name: Manually rebase PR onto riscv
+
+# Install on the author's source repository's default branch.
+# Run manually in Actions with the target repository's PR number.
+# Uses the source repository's GITHUB_TOKEN; no custom secret or label required.
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number in RuyiAI-Stack/llvm-project'
+        required: true
+        type: string
+      dry_run:
+        description: 'Preview the rebase without pushing'
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: manual-rebase-riscv-${{ github.repository }}-${{ inputs.pr_number }}
+  cancel-in-progress: false
+
+jobs:
+  rebase:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      # Never execute PR code, hooks, builds, or submodules with write credentials.
+      # Conflicts favor riscv; duplicate old-base patches are skipped.
+      - name: Rebase PR source branch onto riscv
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        shell: bash
+        run: |
+          python3 - <<'PYTHON'
+          #!/usr/bin/env python3
+          """Manually rebase a PR in its author's repository."""
+
+          import base64
+          import json
+          import os
+          from pathlib import Path
+          import re
+          import subprocess
+          import tempfile
+          import urllib.error
+          import urllib.request
+
+          BASE_REPO = "RuyiAI-Stack/llvm-project"
+          BASE_BRANCH = "riscv"
+
+
+          class GitError(RuntimeError):
+              pass
+
+
+          class Git:
+              def __init__(self, path, source_repo, token=""):
+                  self.path = Path(path)
+                  self.env = os.environ.copy()
+                  self.env.update(
+                      GIT_CONFIG_NOSYSTEM="1",
+                      GIT_CONFIG_GLOBAL=os.devnull,
+                      GIT_ATTR_NOSYSTEM="1",
+                      GIT_TERMINAL_PROMPT="0",
+                      GIT_EDITOR="true",
+                      GIT_SEQUENCE_EDITOR="true",
+                      GIT_MERGE_AUTOEDIT="no",
+                      GIT_LFS_SKIP_SMUDGE="1",
+                  )
+                  config = {
+                      "core.hooksPath": os.devnull,
+                      "core.fsmonitor": "false",
+                      "core.attributesFile": os.devnull,
+                      "credential.helper": "",
+                      "user.name": "github-actions[bot]",
+                      "user.email": "41898282+github-actions[bot]@users.noreply.github.com",
+                  }
+                  if token:
+                      auth = base64.b64encode(f"x-access-token:{token}".encode()).decode()
+                      config[f"http.https://github.com/{source_repo}.git.extraheader"] = f"AUTHORIZATION: basic {auth}"
+                  self.env["GIT_CONFIG_COUNT"] = str(len(config))
+                  for index, (key, value) in enumerate(config.items()):
+                      self.env[f"GIT_CONFIG_KEY_{index}"] = key
+                      self.env[f"GIT_CONFIG_VALUE_{index}"] = value
+
+              def run(self, *args, check=True):
+                  result = subprocess.run(
+                      ["git", *args], cwd=self.path, env=self.env,
+                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=3600,
+                  )
+                  if check and result.returncode:
+                      message = result.stderr.decode(errors="replace")
+                      raise GitError(f"git {args[0]} failed: {message[-12000:]}")
+                  return result
+
+              def text(self, *args):
+                  return self.run(*args).stdout.decode(errors="surrogateescape").strip()
+
+
+          def resolve_ours(git):
+              """Resolve conflicts -Xours cannot handle, including modify/delete conflicts."""
+              entries = git.run("ls-files", "--unmerged", "-z").stdout
+              stages = {}
+              for entry in entries.split(b"\0"):
+                  if not entry:
+                      continue
+                  metadata, path = entry.split(b"\t", 1)
+                  stage = int(metadata.split()[2])
+                  stages.setdefault(os.fsdecode(path), set()).add(stage)
+              for path, present in stages.items():
+                  if 2 in present:
+                      git.run("checkout", "--ours", "--", path)
+                      git.run("add", "--", path)
+                  else:
+                      git.run("rm", "--force", "--ignore-unmatch", "--", path)
+              return len(stages)
+
+
+          def rebase(git, base, head):
+              """Drop equivalent patches and prefer the rebased (base) side on conflict."""
+              if git.run("merge-base", "--is-ancestor", base, head, check=False).returncode == 0:
+                  return head, 0
+              # A shallow or unrelated history must fail rather than invent a merge base.
+              git.run("merge-base", base, head)
+              git.run("checkout", "--detach", head)
+              result = git.run(
+                  "rebase", "--no-fork-point", "--no-rebase-merges", "--no-update-refs",
+                  "--no-autostash", "--empty=drop", "--strategy=ort", "-Xours", base,
+                  check=False,
+              )
+              conflicts = 0
+              try:
+                  while result.returncode:
+                      resolved = resolve_ours(git)
+                      if not resolved:
+                          raise GitError(result.stderr.decode(errors="replace")[-12000:])
+                      conflicts += resolved
+                      result = git.run("rebase", "--continue", check=False)
+                  new_head = git.text("rev-parse", "HEAD")
+                  git.run("merge-base", "--is-ancestor", base, new_head)
+                  return new_head, conflicts
+              except BaseException:
+                  git.run("rebase", "--abort", check=False)
+                  raise
+
+
+          def push(git, url, ref, expected_head, new_head):
+              git.run("check-ref-format", f"refs/heads/{ref}")
+              git.run(
+                  "push", f"--force-with-lease=refs/heads/{ref}:{expected_head}",
+                  url, f"{new_head}:refs/heads/{ref}",
+              )
+
+
+          def get_pr(number):
+              # Public upstream: do not send the source-scoped token to another repository.
+              request = urllib.request.Request(
+                  f"https://api.github.com/repos/{BASE_REPO}/pulls/{number}",
+                  headers={
+                      "Accept": "application/vnd.github+json",
+                      "X-GitHub-Api-Version": "2022-11-28",
+                      "User-Agent": "manual-riscv-rebase",
+                  },
+              )
+              try:
+                  with urllib.request.urlopen(request, timeout=60) as response:
+                      return json.load(response)
+              except urllib.error.HTTPError as error:
+                  raise RuntimeError(f"Cannot read PR #{number}: HTTP {error.code}") from error
+
+
+          def validate_pr(pr, source_repo):
+              if pr["state"] != "open":
+                  raise RuntimeError("PR is not open")
+              if (pr["base"]["repo"]["full_name"].lower() != BASE_REPO.lower()
+                      or pr["base"]["ref"] != BASE_BRANCH):
+                  raise RuntimeError(f"PR must target {BASE_REPO}:{BASE_BRANCH}")
+              head_repo = pr["head"]["repo"]
+              if head_repo is None or head_repo["full_name"].lower() != source_repo.lower():
+                  raise RuntimeError("Run this workflow in the PR source repository")
+              if (source_repo.lower() == BASE_REPO.lower()
+                      and pr["head"]["ref"] == BASE_BRANCH):
+                  raise RuntimeError("Refusing to rewrite the riscv base branch")
+              return pr["head"]["ref"], pr["head"]["sha"]
+
+
+          def main():
+              number = os.environ["PR_NUMBER"].strip()
+              if not re.fullmatch(r"[1-9][0-9]*", number):
+                  raise RuntimeError("PR number must be a positive integer")
+              source_repo = os.environ["GITHUB_REPOSITORY"]
+              if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", source_repo):
+                  raise RuntimeError("Invalid source repository name")
+              token = os.environ.get("GH_TOKEN", "")
+              if not token:
+                  raise RuntimeError("GITHUB_TOKEN is required")
+              dry_run = os.environ.get("DRY_RUN") == "true"
+              ref, old_head = validate_pr(get_pr(number), source_repo)
+              with tempfile.TemporaryDirectory(prefix="manual-riscv-rebase-") as directory:
+                  git = Git(directory, source_repo, token)
+                  git.run("init", "--quiet")
+                  git.run("check-ref-format", f"refs/heads/{ref}")
+                  git.run("remote", "add", "upstream", f"https://github.com/{BASE_REPO}.git")
+                  git.run("config", "remote.upstream.promisor", "true")
+                  git.run("config", "remote.upstream.partialclonefilter", "blob:none")
+                  git.run(
+                      "fetch", "--no-tags", "--filter=blob:none", "upstream",
+                      f"+refs/heads/{BASE_BRANCH}:refs/remotes/upstream/{BASE_BRANCH}",
+                      f"+refs/pull/{number}/head:refs/remotes/upstream/pr",
+                  )
+                  base = git.text("rev-parse", f"refs/remotes/upstream/{BASE_BRANCH}")
+                  if git.text("rev-parse", "refs/remotes/upstream/pr") != old_head:
+                      raise RuntimeError("PR changed during fetch; rerun against the latest head")
+                  new_head, conflicts = rebase(git, base, old_head)
+                  count = git.text("rev-list", "--count", f"{base}..{new_head}")
+                  details = f"PR #{number}: {old_head[:12]} -> {new_head[:12]}; {count} PR commits; {conflicts} extra conflict paths resolved"
+                  if new_head == old_head:
+                      result = "Already based on the latest riscv; no push. " + details
+                  elif dry_run:
+                      result = "Dry run; no push. " + details
+                  else:
+                      if validate_pr(get_pr(number), source_repo) != (ref, old_head):
+                          raise RuntimeError("PR source branch changed; refusing to overwrite it")
+                      base_tip = git.text("ls-remote", "--exit-code", "upstream", f"refs/heads/{BASE_BRANCH}").split()[0]
+                      if base_tip != base:
+                          raise RuntimeError("riscv changed during rebase; rerun against the new base")
+                      # Only write to this workflow's own repository, with an exact SHA lease.
+                      push(git, f"https://github.com/{source_repo}.git", ref, old_head, new_head)
+                      result = f"Pushed {source_repo}:{ref}. " + details
+              print(result.replace("::", ": :"), flush=True)
+              summary = os.environ.get("GITHUB_STEP_SUMMARY")
+              if summary:
+                  with open(summary, "a", encoding="utf-8") as stream:
+                      stream.write(result.replace("\n", " ") + "\n")
+
+
+          if __name__ == "__main__":
+              main()
+          PYTHON
