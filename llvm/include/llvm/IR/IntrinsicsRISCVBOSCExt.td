@@ -24,6 +24,36 @@
 
 // Matrix configuration intrinsics (with immediate)
 let TargetPrefix = "riscv" in {
+  // A configured tile operation is one ordered effect, including its hidden
+  // matrix configuration state. Deliberately do not use IntrReadMem,
+  // IntrWriteMem, IntrArgMemOnly or IntrNoMem: an MMA must order a subsequent
+  // input load even when their explicit memory ranges cannot alias. Selection
+  // keeps configuration and the instruction together until the last machine
+  // pseudo expansion, after scheduling and register allocation.
+  // load.{a,b,acc}(base, byte_stride, dim0, dim1, mtype)
+  foreach Role = ["a", "b", "acc"] in
+    def int_riscv_bosc_ordered_load_#Role
+        : Intrinsic<[llvm_anymatrix_ty],
+                    [llvm_ptr_ty, llvm_i64_ty, llvm_i64_ty, llvm_i64_ty,
+                     llvm_i64_ty], [IntrHasSideEffects]>;
+
+  def int_riscv_bosc_ordered_mma
+      : Intrinsic<[llvm_anymatrix_ty],
+                  [LLVMMatchType<0>, llvm_anymatrix_ty, LLVMMatchType<1>,
+                   llvm_i64_ty, llvm_i64_ty, llvm_i64_ty, llvm_i64_ty],
+                  [IntrHasSideEffects]>;
+
+  def int_riscv_bosc_ordered_store_acc
+      : Intrinsic<[], [llvm_anymatrix_ty, llvm_ptr_ty, llvm_i64_ty,
+                       llvm_i64_ty, llvm_i64_ty, llvm_i64_ty],
+                  [IntrHasSideEffects]>;
+
+  // A defining self-clear: no input accumulator and no memory read of C.
+  def int_riscv_bosc_ordered_zero_acc
+      : Intrinsic<[llvm_anymatrix_ty],
+                  [llvm_i64_ty, llvm_i64_ty, llvm_i64_ty],
+                  [IntrHasSideEffects]>;
+
   // Configuration Register Instructions
   // msettype - Set the mtype CSR based on register value
   def int_riscv_bosc_msettype : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>],

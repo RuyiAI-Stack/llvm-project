@@ -2206,6 +2206,72 @@ def BOSCAME_I32_TO_I64_MMA : BOSCAMEWidenInfo<BOSCAME_I64, BOSCAME_I32, "W">;
 def BOSCAME_F16_TO_F32 : BOSCAMEWidenInfo<BOSCAME_F32, BOSCAME_F16, "HF">;
 def BOSCAME_F32_TO_F64 : BOSCAMEWidenInfo<BOSCAME_F64, BOSCAME_F32, "F">;
 
+// Configured tile pseudos remain indivisible through all machine scheduling.
+// Their operands use allocatable matrix register classes, with the old and
+// new MMA accumulator tied. The conservative memory effects also serialize
+// nonaliasing input loads around the MMA's hidden configuration effects.
+// Expand only in RISCVExpandPseudoPreEmit, and account for every emitted
+// instruction here so branch relaxation sees the complete size.
+let Predicates = [HasVendorXBOSCAME, IsRV64], hasSideEffects = 1,
+    mayLoad = 1, mayStore = 1,
+    Defs = [MTYPE, TILEM, TILEN, TILEK] in {
+  class BOSCAMEOrderedLoad<RegisterClass RC>
+      : Pseudo<(outs RC:$matrix),
+               (ins GPR:$base, GPR:$stride, GPR:$dim0, GPR:$dim1,
+                    GPR:$mtype), []> {
+    let Size = 24; // two fences, three configurations, one load
+  }
+  def PseudoBOSCAMEOrderedLoadA : BOSCAMEOrderedLoad<TileReg>;
+  def PseudoBOSCAMEOrderedLoadB : BOSCAMEOrderedLoad<TileReg>;
+  def PseudoBOSCAMEOrderedLoadAcc : BOSCAMEOrderedLoad<AccReg>;
+
+  def PseudoBOSCAMEOrderedMMA
+      : Pseudo<(outs AccReg:$matrix),
+               (ins AccReg:$acc, TileReg:$lhs, TileReg:$rhs, GPR:$m,
+                    GPR:$n, GPR:$k, GPR:$mtype), []> {
+    let Constraints = "$matrix = $acc";
+    let Size = 28; // two fences, four configurations, one MMA
+  }
+  def PseudoBOSCAMEOrderedStoreAcc
+      : Pseudo<(outs),
+               (ins AccReg:$matrix, GPR:$base, GPR:$stride, GPR:$m,
+                    GPR:$n, GPR:$mtype), []> {
+    let Size = 24;
+  }
+  def PseudoBOSCAMEOrderedZeroAcc
+      : Pseudo<(outs AccReg:$matrix),
+               (ins GPR:$m, GPR:$n, GPR:$mtype), []> {
+    let Size = 24;
+  }
+}
+
+let Predicates = [HasVendorXBOSCAME, IsRV64] in {
+  foreach Role = ["A", "B"] in
+    def : Pat<(nxv128i8
+                (!cast<SDPatternOperator>("int_riscv_bosc_ordered_load_" #
+                                           !tolower(Role))
+                  iPTR:$base, i64:$stride, i64:$dim0, i64:$dim1, i64:$mtype)),
+              (!cast<Instruction>("PseudoBOSCAMEOrderedLoad" # Role)
+                iPTR:$base, i64:$stride, i64:$dim0, i64:$dim1, i64:$mtype)>;
+  def : Pat<(nxv32i32 (int_riscv_bosc_ordered_load_acc iPTR:$base,
+                      i64:$stride, i64:$m, i64:$n, i64:$mtype)),
+            (PseudoBOSCAMEOrderedLoadAcc iPTR:$base, i64:$stride,
+                                        i64:$m, i64:$n, i64:$mtype)>;
+  def : Pat<(nxv32i32 (int_riscv_bosc_ordered_mma
+                        (nxv32i32 AccReg:$acc),
+                        (nxv128i8 TileReg:$lhs), (nxv128i8 TileReg:$rhs),
+                        i64:$m, i64:$n, i64:$k, i64:$mtype)),
+            (PseudoBOSCAMEOrderedMMA AccReg:$acc, TileReg:$lhs, TileReg:$rhs,
+                                    i64:$m, i64:$n, i64:$k, i64:$mtype)>;
+  def : Pat<(int_riscv_bosc_ordered_store_acc (nxv32i32 AccReg:$matrix),
+              iPTR:$base, i64:$stride, i64:$m, i64:$n, i64:$mtype),
+            (PseudoBOSCAMEOrderedStoreAcc AccReg:$matrix, iPTR:$base,
+                i64:$stride, i64:$m, i64:$n, i64:$mtype)>;
+  def : Pat<(nxv32i32 (int_riscv_bosc_ordered_zero_acc i64:$m, i64:$n,
+                                                    i64:$mtype)),
+            (PseudoBOSCAMEOrderedZeroAcc i64:$m, i64:$n, i64:$mtype)>;
+}
+
 // Immediate operands marked ImmArg in the LLVM intrinsic are lowered to
 // TargetConstant nodes.  Use TImmLeaf for the DAG pattern so the matcher
 // accepts those target constants (uimm10 is an ImmLeaf used by asm operands).
