@@ -349,6 +349,7 @@
 ; CHECK-NEXT:   zalasr                           - 'Zalasr' (Load-Acquire and Store-Release Instructions).
 ; CHECK-NEXT:   zalrsc                           - 'Zalrsc' (Load-Reserved/Store-Conditional).
 ; CHECK-NEXT:   zama16b                          - 'Zama16b' (Atomic 16-byte misaligned loads, stores and AMOs).
+; CHECK: zames
 ; CHECK-NEXT:   zawrs                            - 'Zawrs' (Wait on Reservation Set).
 ; CHECK-NEXT:   zba                              - 'Zba' (Address Generation Instructions).
 ; CHECK-NEXT:   zbb                              - 'Zbb' (Basic Bit-Manipulation).
@@ -405,6 +406,7 @@
 ; CHECK-NEXT:   zksed                            - 'Zksed' (ShangMi Suite: SM4 Block Cipher Instructions).
 ; CHECK-NEXT:   zksh                             - 'Zksh' (ShangMi Suite: SM3 Hash Function Instructions).
 ; CHECK-NEXT:   zkt                              - 'Zkt' (Data Independent Execution Latency).
+; CHECK: zmasync
 ; CHECK-NEXT:   zmmul                            - 'Zmmul' (Integer Multiplication).
 ; CHECK-NEXT:   ztso                             - 'Ztso' (Memory Model - Total Store Order).
 ; CHECK-NEXT:   zvbb                             - 'Zvbb' (Vector basic bit-manipulation instructions).

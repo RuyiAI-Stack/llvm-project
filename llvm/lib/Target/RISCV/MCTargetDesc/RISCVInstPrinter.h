@@ -54,6 +54,8 @@ public:
                    raw_ostream &O);
   void printXSfmmVType(const MCInst *MI, unsigned OpNo,
                        const MCSubtargetInfo &STI, raw_ostream &O);
+  void printMCFGSel(const MCInst *MI, unsigned OpNo, const MCSubtargetInfo &STI,
+                    raw_ostream &O);
   void printVMaskReg(const MCInst *MI, unsigned OpNo,
                      const MCSubtargetInfo &STI, raw_ostream &O);
   void printMatrixReg(const MCInst *MI, unsigned OpNo,

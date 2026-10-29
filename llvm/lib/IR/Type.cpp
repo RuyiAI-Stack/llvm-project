@@ -981,6 +981,17 @@ Expected<TargetExtType *> TargetExtType::checkParams(TargetExtType *TTy) {
         "target extension type riscv.vector.tuple should have one "
         "type parameter and one integer parameter");
 
+  if ((TTy->Name == "riscv.ame.tile.int8" ||
+       TTy->Name == "riscv.ame.tile.int32" ||
+       TTy->Name == "riscv.ame.tile.fp8e4" ||
+       TTy->Name == "riscv.ame.tile.fp8e5" ||
+       TTy->Name == "riscv.ame.tile.fp16" ||
+       TTy->Name == "riscv.ame.tile.bf16" ||
+       TTy->Name == "riscv.ame.tile.fp32" || TTy->Name == "riscv.ame.sync") &&
+      (TTy->getNumTypeParameters() != 0 || TTy->getNumIntParameters() != 0))
+    return createStringError("target extension type " + TTy->Name +
+                             " should have no parameters");
+
   // Opaque types in the AMDGPU name space.
   if (TTy->Name == "amdgcn.named.barrier" &&
       (TTy->getNumTypeParameters() != 0 || TTy->getNumIntParameters() != 1)) {
@@ -1076,6 +1087,18 @@ static TargetTypeInfo getTargetTypeInfo(const TargetExtType *Ty) {
         ScalableVectorType::get(Type::getInt8Ty(C), TotalNumElts),
         TargetExtType::CanBeLocal, TargetExtType::HasZeroInit);
   }
+
+  if (Name == "riscv.ame.tile.int8" || Name == "riscv.ame.tile.int32" ||
+      Name == "riscv.ame.tile.fp8e4" || Name == "riscv.ame.tile.fp8e5" ||
+      Name == "riscv.ame.tile.fp16" || Name == "riscv.ame.tile.bf16" ||
+      Name == "riscv.ame.tile.fp32")
+    return TargetTypeInfo(FixedVectorType::get(Type::getInt8Ty(C), 16),
+                          TargetExtType::CanBeLocal,
+                          TargetExtType::HasZeroInit);
+
+  if (Name == "riscv.ame.sync")
+    return TargetTypeInfo(Type::getInt64Ty(C), TargetExtType::CanBeLocal,
+                          TargetExtType::HasZeroInit);
 
   // DirectX resources
   if (Name == "dx.Padding")

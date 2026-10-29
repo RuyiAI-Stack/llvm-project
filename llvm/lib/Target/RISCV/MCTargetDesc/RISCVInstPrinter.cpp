@@ -259,6 +259,14 @@ void RISCVInstPrinter::printXSfmmVType(const MCInst *MI, unsigned OpNo,
   O << ", w" << Widen;
 }
 
+void RISCVInstPrinter::printMCFGSel(const MCInst *MI, unsigned OpNo,
+                                    const MCSubtargetInfo &STI,
+                                    raw_ostream &O) {
+  unsigned Imm = MI->getOperand(OpNo).getImm();
+  assert(Imm < 8 && "Invalid MCFG selector immediate");
+  markup(O, Markup::Register) << "mcfg" << Imm;
+}
+
 // Print a Zcmp RList. If we are printing architectural register names rather
 // than ABI register names, we need to print "{x1, x8-x9, x18-x27}" for all
 // registers. Otherwise, we print "{ra, s0-s11}".

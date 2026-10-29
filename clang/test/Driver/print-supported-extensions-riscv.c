@@ -35,6 +35,7 @@
 // CHECK-NEXT:     zihpm                2.0       'Zihpm' (Hardware Performance Counters)
 // CHECK-NEXT:     zilsd                1.0       'Zilsd' (Load/Store Pair Instructions)
 // CHECK-NEXT:     zimop                1.0       'Zimop' (May-Be-Operations)
+// CHECK: zmasync{{ +}}1.0{{( +|$)}}
 // CHECK-NEXT:     zmmul                1.0       'Zmmul' (Integer Multiplication)
 // CHECK-NEXT:     za128rs              1.0       'Za128rs' (Reservation Set Size of at Most 128 Bytes)
 // CHECK-NEXT:     za64rs               1.0       'Za64rs' (Reservation Set Size of at Most 64 Bytes)
@@ -44,6 +45,7 @@
 // CHECK-NEXT:     zalasr               1.0       'Zalasr' (Load-Acquire and Store-Release Instructions)
 // CHECK-NEXT:     zalrsc               1.0       'Zalrsc' (Load-Reserved/Store-Conditional)
 // CHECK-NEXT:     zama16b              1.0       'Zama16b' (Atomic 16-byte misaligned loads, stores and AMOs)
+// CHECK: zames{{ +}}1.0{{( +|$)}}
 // CHECK-NEXT:     zawrs                1.0       'Zawrs' (Wait on Reservation Set)
 // CHECK-NEXT:     zfa                  1.0       'Zfa' (Additional Floating-Point)
 // CHECK-NEXT:     zfbfmin              1.0       'Zfbfmin' (Scalar BF16 Converts)

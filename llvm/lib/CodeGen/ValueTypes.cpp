@@ -202,6 +202,22 @@ std::string EVT::getEVTString() const {
     return "amdgpuBufferStridedPointer";
   case MVT::aarch64mfp8:
     return "aarch64mfp8";
+  case MVT::riscv_ame_tile_i8:
+    return "riscv_ame_tile_i8";
+  case MVT::riscv_ame_tile_i32:
+    return "riscv_ame_tile_i32";
+  case MVT::riscv_ame_sync:
+    return "riscv_ame_sync";
+  case MVT::riscv_ame_tile_fp8e4:
+    return "riscv_ame_tile_fp8e4";
+  case MVT::riscv_ame_tile_fp8e5:
+    return "riscv_ame_tile_fp8e5";
+  case MVT::riscv_ame_tile_f16:
+    return "riscv_ame_tile_f16";
+  case MVT::riscv_ame_tile_bf16:
+    return "riscv_ame_tile_bf16";
+  case MVT::riscv_ame_tile_f32:
+    return "riscv_ame_tile_f32";
   }
 }
 
@@ -227,6 +243,22 @@ Type *EVT::getTypeForEVT(LLVMContext &Context) const {
     return TargetExtType::get(Context, "aarch64.svcount");
   case MVT::aarch64mfp8:
     return FixedVectorType::get(IntegerType::get(Context, 8), 1);
+  case MVT::riscv_ame_tile_i8:
+    return TargetExtType::get(Context, "riscv.ame.tile.int8");
+  case MVT::riscv_ame_tile_i32:
+    return TargetExtType::get(Context, "riscv.ame.tile.int32");
+  case MVT::riscv_ame_sync:
+    return TargetExtType::get(Context, "riscv.ame.sync");
+  case MVT::riscv_ame_tile_fp8e4:
+    return TargetExtType::get(Context, "riscv.ame.tile.fp8e4");
+  case MVT::riscv_ame_tile_fp8e5:
+    return TargetExtType::get(Context, "riscv.ame.tile.fp8e5");
+  case MVT::riscv_ame_tile_f16:
+    return TargetExtType::get(Context, "riscv.ame.tile.fp16");
+  case MVT::riscv_ame_tile_bf16:
+    return TargetExtType::get(Context, "riscv.ame.tile.bf16");
+  case MVT::riscv_ame_tile_f32:
+    return TargetExtType::get(Context, "riscv.ame.tile.fp32");
   case MVT::x86amx:  return Type::getX86_AMXTy(Context);
   case MVT::i64x8:   return IntegerType::get(Context, 512);
   case MVT::amdgpuBufferFatPointer:  return IntegerType::get(Context, 160);
@@ -282,6 +314,22 @@ MVT MVT::getVT(Type *Ty, bool HandleUnknown){
 
       return MVT::getRISCVVectorTupleVT(Sz * NF, NF);
     }
+    if (TargetExtTy->getName() == "riscv.ame.tile.int8")
+      return MVT(MVT::riscv_ame_tile_i8);
+    if (TargetExtTy->getName() == "riscv.ame.tile.int32")
+      return MVT(MVT::riscv_ame_tile_i32);
+    if (TargetExtTy->getName() == "riscv.ame.sync")
+      return MVT(MVT::riscv_ame_sync);
+    if (TargetExtTy->getName() == "riscv.ame.tile.fp8e4")
+      return MVT(MVT::riscv_ame_tile_fp8e4);
+    if (TargetExtTy->getName() == "riscv.ame.tile.fp8e5")
+      return MVT(MVT::riscv_ame_tile_fp8e5);
+    if (TargetExtTy->getName() == "riscv.ame.tile.fp16")
+      return MVT(MVT::riscv_ame_tile_f16);
+    if (TargetExtTy->getName() == "riscv.ame.tile.bf16")
+      return MVT(MVT::riscv_ame_tile_bf16);
+    if (TargetExtTy->getName() == "riscv.ame.tile.fp32")
+      return MVT(MVT::riscv_ame_tile_f32);
     if (HandleUnknown)
       return MVT(MVT::Other);
     llvm_unreachable("Unknown target ext type!");

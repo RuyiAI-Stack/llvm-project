@@ -183,6 +183,18 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
       addRegisterClass(VT, &RISCV::MatrixRegRegClass);
   }
 
+  if (Subtarget.hasZames()) {
+    addRegisterClass(MVT::riscv_ame_tile_i8, &RISCV::ZamesTileRegRegClass);
+    addRegisterClass(MVT::riscv_ame_tile_i32, &RISCV::ZamesAccRegRegClass);
+    addRegisterClass(MVT::riscv_ame_tile_fp8e4, &RISCV::ZamesTileRegRegClass);
+    addRegisterClass(MVT::riscv_ame_tile_fp8e5, &RISCV::ZamesTileRegRegClass);
+    addRegisterClass(MVT::riscv_ame_tile_f16, &RISCV::ZamesTileRegRegClass);
+    addRegisterClass(MVT::riscv_ame_tile_bf16, &RISCV::ZamesTileRegRegClass);
+    addRegisterClass(MVT::riscv_ame_tile_f32, &RISCV::ZamesAccRegRegClass);
+  }
+  if (Subtarget.hasZmasync())
+    addRegisterClass(MVT::riscv_ame_sync, &RISCV::SyncRRegClass);
+
   static const MVT::SimpleValueType BoolVecVTs[] = {
       MVT::nxv1i1,  MVT::nxv2i1,  MVT::nxv4i1, MVT::nxv8i1,
       MVT::nxv16i1, MVT::nxv32i1, MVT::nxv64i1};
@@ -2260,6 +2272,41 @@ void RISCVTargetLowering::getTgtMemIntrinsic(
     Infos.push_back(Info);
   };
 
+  auto GetZamesMemoryVT = [&](bool IsStore) {
+    Type *TileTy = IsStore ? I.getArgOperand(0)->getType() : I.getType();
+    auto *TargetTy = dyn_cast<TargetExtType>(TileTy);
+    if (!TargetTy)
+      return MVT(MVT::Other);
+    return StringSwitch<MVT>(TargetTy->getName())
+        .Cases({"riscv.ame.tile.int8", "riscv.ame.tile.fp8e4",
+                "riscv.ame.tile.fp8e5"},
+               MVT::i8)
+        .Cases({"riscv.ame.tile.fp16", "riscv.ame.tile.bf16"}, MVT::i16)
+        .Cases({"riscv.ame.tile.int32", "riscv.ame.tile.fp32"}, MVT::i32)
+        .Default(MVT::Other);
+  };
+
+  auto SetZamesMemoryInfo = [&](unsigned PtrOp, bool IsStore, bool UsePtrVal) {
+    Info.opc = IsStore ? ISD::INTRINSIC_VOID : ISD::INTRINSIC_W_CHAIN;
+    Info.memVT = GetZamesMemoryVT(IsStore);
+    if (Info.memVT == MVT::Other)
+      return;
+
+    const Value *Ptr = I.getArgOperand(PtrOp);
+    if (UsePtrVal)
+      Info.ptrVal = Ptr;
+    else
+      Info.fallbackAddressSpace = Ptr->getType()->getPointerAddressSpace();
+
+    Info.offset = 0;
+    Info.size = MemoryLocation::UnknownSize;
+    if (MaybeAlign Alignment = I.getParamAlign(PtrOp))
+      Info.align = Alignment;
+    Info.flags |=
+        IsStore ? MachineMemOperand::MOStore : MachineMemOperand::MOLoad;
+    Infos.push_back(Info);
+  };
+
   if (I.hasMetadata(LLVMContext::MD_nontemporal))
     Info.flags |= MachineMemOperand::MONonTemporal;
 
@@ -2587,6 +2634,42 @@ void RISCVTargetLowering::getTgtMemIntrinsic(
     Info.size = MemoryLocation::UnknownSize;
     Info.flags |= MachineMemOperand::MOStore;
     Infos.push_back(Info);
+    return;
+  case Intrinsic::riscv_zames_mla:
+  case Intrinsic::riscv_zames_mlat:
+  case Intrinsic::riscv_zames_mlb:
+  case Intrinsic::riscv_zames_mlbt:
+    SetZamesMemoryInfo(/*PtrOp*/ 0, /*IsStore*/ false,
+                       /*UsePtrVal*/ false);
+    return;
+  case Intrinsic::riscv_zames_mlc:
+  case Intrinsic::riscv_zames_mlct:
+    SetZamesMemoryInfo(/*PtrOp*/ 0, /*IsStore*/ false,
+                       /*UsePtrVal*/ false);
+    return;
+  case Intrinsic::riscv_zames_msa:
+  case Intrinsic::riscv_zames_msat:
+  case Intrinsic::riscv_zames_msb:
+  case Intrinsic::riscv_zames_msbt:
+    SetZamesMemoryInfo(/*PtrOp*/ 1, /*IsStore*/ true,
+                       /*UsePtrVal*/ false);
+    return;
+  case Intrinsic::riscv_zames_msc:
+  case Intrinsic::riscv_zames_msct:
+    SetZamesMemoryInfo(/*PtrOp*/ 1, /*IsStore*/ true,
+                       /*UsePtrVal*/ false);
+    return;
+  case Intrinsic::riscv_zames_mla_whole:
+  case Intrinsic::riscv_zames_mlb_whole:
+  case Intrinsic::riscv_zames_mlc_whole:
+    SetZamesMemoryInfo(/*PtrOp*/ 0, /*IsStore*/ false,
+                       /*UsePtrVal*/ true);
+    return;
+  case Intrinsic::riscv_zames_msa_whole:
+  case Intrinsic::riscv_zames_msb_whole:
+  case Intrinsic::riscv_zames_msc_whole:
+    SetZamesMemoryInfo(/*PtrOp*/ 1, /*IsStore*/ true,
+                       /*UsePtrVal*/ true);
     return;
   }
 }
