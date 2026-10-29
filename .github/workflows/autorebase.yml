@@ -10,10 +10,6 @@ on:
         description: 'PR number in RuyiAI-Stack/llvm-project'
         required: true
         type: string
-      dry_run:
-        description: 'Preview the rebase without pushing'
-        default: true
-        type: boolean
 
 permissions:
   contents: write
@@ -33,7 +29,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ inputs.pr_number }}
-          DRY_RUN: ${{ inputs.dry_run }}
         shell: bash
         run: |
           python3 - <<'PYTHON'
@@ -199,7 +194,6 @@ jobs:
               token = os.environ.get("GH_TOKEN", "")
               if not token:
                   raise RuntimeError("GITHUB_TOKEN is required")
-              dry_run = os.environ.get("DRY_RUN") == "true"
               ref, old_head = validate_pr(get_pr(number), source_repo)
               with tempfile.TemporaryDirectory(prefix="manual-riscv-rebase-") as directory:
                   git = Git(directory, source_repo, token)
@@ -221,8 +215,6 @@ jobs:
                   details = f"PR #{number}: {old_head[:12]} -> {new_head[:12]}; {count} PR commits; {conflicts} extra conflict paths resolved"
                   if new_head == old_head:
                       result = "Already based on the latest riscv; no push. " + details
-                  elif dry_run:
-                      result = "Dry run; no push. " + details
                   else:
                       if validate_pr(get_pr(number), source_repo) != (ref, old_head):
                           raise RuntimeError("PR source branch changed; refusing to overwrite it")
