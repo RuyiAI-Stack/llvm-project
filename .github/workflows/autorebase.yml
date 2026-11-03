@@ -2,7 +2,10 @@ name: Manually rebase PR onto riscv
 
 # Install on the author's source repository's default branch.
 # Run manually in Actions with the target repository's PR number.
-# Uses the source repository's GITHUB_TOKEN; no custom secret or label required.
+# Set AUTOREBASE_TOKEN in the source repository's Actions secrets.
+# Fine-grained PAT: Contents and Workflows read/write on the source repository.
+# Classic PAT: repo and workflow scopes. The token owner needs source write access.
+# GITHUB_TOKEN cannot push workflow file updates inherited from a rebased base.
 on:
   workflow_dispatch:
     inputs:
@@ -12,7 +15,7 @@ on:
         type: string
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: manual-rebase-riscv-${{ github.repository }}-${{ inputs.pr_number }}
@@ -27,7 +30,7 @@ jobs:
       # Conflicts favor riscv; duplicate old-base patches are skipped.
       - name: Rebase PR source branch onto riscv
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.AUTOREBASE_TOKEN }}
           PR_NUMBER: ${{ inputs.pr_number }}
         shell: bash
         run: |
@@ -193,7 +196,10 @@ jobs:
                   raise RuntimeError("Invalid source repository name")
               token = os.environ.get("GH_TOKEN", "")
               if not token:
-                  raise RuntimeError("GITHUB_TOKEN is required")
+                  raise RuntimeError(
+                      "Set AUTOREBASE_TOKEN in the PR source repository's Actions secrets. "
+                      "The token needs Contents and Workflows write permissions."
+                  )
               ref, old_head = validate_pr(get_pr(number), source_repo)
               with tempfile.TemporaryDirectory(prefix="manual-riscv-rebase-") as directory:
                   git = Git(directory, source_repo, token)
@@ -223,7 +229,7 @@ jobs:
                           raise RuntimeError("riscv changed during rebase; rerun against the new base")
                       # Only write to this workflow's own repository, with an exact SHA lease.
                       push(git, f"https://github.com/{source_repo}.git", ref, old_head, new_head)
-                      result = f"Pushed {source_repo}:{ref}. " + details
+                      result = f"Pushed {source_repo}:{ref} with AUTOREBASE_TOKEN. " + details
               print(result.replace("::", ": :"), flush=True)
               summary = os.environ.get("GITHUB_STEP_SUMMARY")
               if summary:

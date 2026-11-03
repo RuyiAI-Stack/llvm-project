@@ -48,7 +48,7 @@ The workflow automates rebasing, conflict resolution, and pushing. It runs only 
 ### Procedure
 
 1. **Open a PR.** Target `RuyiAI-Stack/llvm-project:riscv` from the contributor's development branch.
-2. **Install the workflow.** Add [autorebase.yml](.github/workflows/autorebase.yml) to the PR source repository's default branch at `.github/workflows/autorebase.yml`, and enable GitHub Actions.
+2. **Install the workflow and configure its token.** Add [autorebase.yml](.github/workflows/autorebase.yml) to the PR source repository's default branch at `.github/workflows/autorebase.yml`, enable GitHub Actions, and configure `AUTOREBASE_TOKEN` as described below.
 3. **Run the workflow.** In the source repository, open **Actions -> Manually rebase PR onto riscv -> Run workflow**. Select a branch containing the YAML, enter the PR number from the target repository, and run it. The workflow rebases the PR and updates its source branch using `--force-with-lease` with an explicit expected SHA.
 4. **Check the result.** Inspect the Actions result, remaining commit count, and conflict resolution report. Review the updated PR diff to confirm that the required functionality is preserved.
 5. **Test and review.** Complete the relevant builds, tests, and review before a maintainer merges the PR.
@@ -62,9 +62,16 @@ The workflow must run in the **PR source repository**, because it updates the PR
 | PR from a fork, such as #33 | `OurCompArchGroup/llvm-project` | `ruyi-llvm24` |
 | PR from the same repository, such as #34 | `RuyiAI-Stack/llvm-project` | `test` |
 
-The workflow uses the automatically provided `GITHUB_TOKEN`. Do not create that secret manually; no `AUTOREBASE_TOKEN` is needed. The YAML requests `contents: write`. Repository and organization policies must allow the required access, and source branch rules must permit force-pushes.
+Create an `AUTOREBASE_TOKEN` secret in the **PR source repository**, under **Settings -> Secrets and variables -> Actions -> New repository secret**. For PR #33, this is `OurCompArchGroup/llvm-project`, not `RuyiAI-Stack/llvm-project`.
 
-The target repository's `GITHUB_TOKEN` does not grant write access to a fork. For a fork PR, the author or an authorized collaborator runs the workflow in the source repository.
+Use a token belonging to an account with source repository write access:
+
+- **Fine-grained PAT:** select the source repository, grant **Contents: Read and write** and **Workflows: Read and write**, and obtain organization approval if required.
+- **Classic PAT:** grant the `repo` and `workflow` scopes and authorize organization SSO if required.
+
+The built-in `GITHUB_TOKEN` cannot perform this push when it changes workflow files. Even if the contributor's feature never edits `.github/workflows/`, rebasing onto the latest `riscv` can bring workflow changes from the base into the source branch. GitHub checks the resulting push, including these inherited changes. Enabling **Read and write permissions** for `GITHUB_TOKEN` or adding `contents: write` to YAML does not grant the separate Workflows permission. Do not create a secret named `GITHUB_TOKEN` or add an unsupported `workflows` key to the YAML `permissions` block.
+
+For a fork PR, the author or an authorized collaborator configures the secret and runs the workflow in the source repository. Repository and organization policies must allow the token, and source branch rules must permit force-pushes. After changing the secret or YAML, start a new workflow run using the updated YAML.
 
 ### Rebase and conflict rules
 
@@ -77,6 +84,6 @@ The target repository's `GITHUB_TOKEN` does not grant write access to a fork. Fo
 
 During rebase, `ours` means the latest `riscv` plus PR commits already replayed. PR changes that conflict with this side may be discarded. Review the combined result when PR commits depend on each other. If conflict resolution removes required functionality, adapt the implementation on the updated branch and submit it for review again.
 
-The workflow does not build or execute PR code. Pushes made with `GITHUB_TOKEN` normally do not trigger subsequent push or PR workflows. Verify that CI checks apply to the updated SHA and use the project's manual CI entry point when needed.
+The workflow does not build or execute PR code. Pushes made with a PAT can trigger subsequent push and PR workflows. Verify that CI checks apply to the updated SHA and use the project's manual CI entry point when needed.
 
 After the workflow force-pushes, contributors must also synchronize their local development branch. Save uncommitted work and unpushed commits before aligning with the updated remote branch, and avoid pushing the old base history back.
