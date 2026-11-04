@@ -2,10 +2,12 @@
 ; RUN: llc -mtriple=riscv64 -mattr=+xboscame,+v -verify-machineinstrs < %s | FileCheck %s --implicit-check-not=mmve --implicit-check-not=vsetvli
 ; RUN: llc -mtriple=riscv64 -mattr=+xboscame,+v -verify-machineinstrs -filetype=obj < %s -o %t.o
 
-; Configuration stays adjacent to its consuming operation through scheduling.
-; In particular B1 must not be loaded/configured before MMA0, despite noalias.
-; The two independent output values must use independently allocated ACCs;
-; the common A tile remains live across both MMAs without a matrix copy.
+; The ordered pseudos must still be expanded with each configuration
+; immediately before its consumer. B1 must not be loaded or configured before
+; MMA0 even though the pointers do not alias. The two results use different
+; acc registers. The shared A tile stays live across both MMAs, so there is no
+; mmve and, when V is enabled, no vsetvli. The third RUN writes an object file
+; and checks that the expanded instructions pass machine verification.
 define void @two_acc(ptr noalias readonly %a, ptr noalias readonly %b0,
                      ptr noalias readonly %b1, ptr noalias %c0,
                      ptr noalias %c1) {
@@ -44,8 +46,10 @@ define void @two_acc(ptr noalias readonly %a, ptr noalias readonly %b0,
   ret void
 }
 
-; Two defining clears and two loop-carried accumulators: no initial C load,
-; hardcoded acc0 output, cross-file copy, spill, or RVV register allocation.
+; Two defining clears feed two loop-carried accumulator PHIs. There is no
+; initial C load. Each clear is mwsub.h.mm of an allocated acc with itself.
+; The PHIs stay in those acc registers across the latch, so the loop contains
+; no mmve, no spill and no hardcoded acc0. Stores happen once after the loop.
 define void @zero_two_acc_loop(ptr %a, ptr %b0, ptr %b1, ptr %c0, ptr %c1,
                               i64 %trips) {
 ; CHECK-LABEL: zero_two_acc_loop:
@@ -86,8 +90,11 @@ exit:
   ret void
 }
 
-; Branch relaxation runs before the late expansion. Counting the two pseudos
-; as 4-byte instructions would miss this out-of-range conditional branch.
+; Branch relaxation runs before pre-emit expansion. The zero and store pseudos
+; occupy 24 bytes each. Counting either as one 4-byte instruction makes this
+; conditional branch look in range. The expected sequence is a short branch
+; around an unconditional jump, then the expanded mwsub.h.mm and msce32.m,
+; then the 4048-byte pad.
 define void @relax_configured_branch(i1 %cond, ptr %c) {
 ; CHECK-LABEL: relax_configured_branch:
 ; CHECK: bnez {{.*}}, [[BODY:.LBB[0-9_]+]]

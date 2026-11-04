@@ -2206,12 +2206,20 @@ def BOSCAME_I32_TO_I64_MMA : BOSCAMEWidenInfo<BOSCAME_I64, BOSCAME_I32, "W">;
 def BOSCAME_F16_TO_F32 : BOSCAMEWidenInfo<BOSCAME_F32, BOSCAME_F16, "HF">;
 def BOSCAME_F32_TO_F64 : BOSCAMEWidenInfo<BOSCAME_F64, BOSCAME_F32, "F">;
 
-// Configured tile pseudos remain indivisible through all machine scheduling.
-// Their operands use allocatable matrix register classes, with the old and
-// new MMA accumulator tied. The conservative memory effects also serialize
-// nonaliasing input loads around the MMA's hidden configuration effects.
-// Expand only in RISCVExpandPseudoPreEmit, and account for every emitted
-// instruction here so branch relaxation sees the complete size.
+// Instruction selection lowers the ordered intrinsics to these pseudos under
+// +xboscame on RV64. The pseudos stay intact through machine scheduling and
+// register allocation. Tile and accumulator operands use the allocatable
+// register classes, so the allocator chooses tr0-tr7 and acc0-acc7 instead of
+// fixed slots. The MMA ties its result to its input accumulator, which keeps
+// mqma.b.mm in place and avoids a matrix copy. hasSideEffects plus mayLoad
+// and mayStore also order an MMA against a later input load whose addresses
+// do not alias, because the tile-shape and mtype CSRs are not represented as
+// memory. Defs names those CSRs. Expand only in RISCVExpandPseudoPreEmit.
+// Size is the byte length of every instruction that expansion emits. Branch
+// relaxation runs before that expansion and would otherwise count each pseudo
+// as 4 bytes, missing an out-of-range branch. Each emitted instruction is 4
+// bytes: a load or store or zero is two fences, three configurations and one
+// consumer (24 bytes); an MMA adds a fourth configuration (28 bytes).
 let Predicates = [HasVendorXBOSCAME, IsRV64], hasSideEffects = 1,
     mayLoad = 1, mayStore = 1,
     Defs = [MTYPE, TILEM, TILEN, TILEK] in {
@@ -2236,12 +2244,12 @@ let Predicates = [HasVendorXBOSCAME, IsRV64], hasSideEffects = 1,
       : Pseudo<(outs),
                (ins AccReg:$matrix, GPR:$base, GPR:$stride, GPR:$m,
                     GPR:$n, GPR:$mtype), []> {
-    let Size = 24;
+    let Size = 24; // two fences, three configurations, one store
   }
   def PseudoBOSCAMEOrderedZeroAcc
       : Pseudo<(outs AccReg:$matrix),
                (ins GPR:$m, GPR:$n, GPR:$mtype), []> {
-    let Size = 24;
+    let Size = 24; // two fences, three configurations, one mwsub.h.mm
   }
 }
 

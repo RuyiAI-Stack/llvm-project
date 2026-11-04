@@ -640,26 +640,31 @@ void RISCVInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     return;
   }
 
-  // AME tile/accumulator register copies.  The AME matrix register files are
-  // separate from each other and from the vector register file, and the ISA
-  // only has whole-register moves inside one file (mmve*.t.t / mmve*.a.a).
-  // The cross-file forms (mmve*.a.t / mmve*.t.a) are indexed lane moves, not
-  // register copies, so a copy spanning both files cannot be expanded here.
-  if (RISCV::TileRegRegClass.contains(DstReg, SrcReg) ||
-      RISCV::AccRegRegClass.contains(DstReg, SrcReg)) {
-    assert(RISCV::TileRegRegClass.contains(DstReg, SrcReg) ==
-               RISCV::TileRegRegClass.contains(SrcReg) &&
-           "copying between the AME tile and accumulator register files is "
-           "not representable as a single instruction");
-    // A whole-register move transfers all 128 bytes for any element width, so
-    // the widest encoding is used to move the register with the fewest lanes.
-    unsigned Opcode = RISCV::TileRegRegClass.contains(DstReg, SrcReg)
-                          ? RISCV::BOSC_AME_MMVE64_T_T
-                          : RISCV::BOSC_AME_MMVE64_A_A;
+  // The register allocator calls copyPhysReg to move a value between two
+  // physical registers. TileReg (tr0-tr7) and AccReg (acc0-acc7) are separate
+  // register files. A whole-register move exists only inside one file:
+  // mmve64.t.t for tiles and mmve64.a.a for accumulators. mmve64.a.t and
+  // mmve64.t.a address a lane; they are not register copies. The .64 encoding
+  // moves all 128 bytes in the fewest lanes, whichever element type last
+  // occupied the register. A tile/accumulator pair cannot be lowered, so
+  // report_fatal_error stops a release build as well. An assert would
+  // disappear under NDEBUG, and falling through to the vector path or
+  // llvm_unreachable would not reliably reject the copy.
+  const bool DstTile = RISCV::TileRegRegClass.contains(DstReg);
+  const bool SrcTile = RISCV::TileRegRegClass.contains(SrcReg);
+  const bool DstAcc = RISCV::AccRegRegClass.contains(DstReg);
+  const bool SrcAcc = RISCV::AccRegRegClass.contains(SrcReg);
+  if ((DstTile && SrcTile) || (DstAcc && SrcAcc)) {
+    unsigned Opcode = (DstTile && SrcTile) ? RISCV::BOSC_AME_MMVE64_T_T
+                                           : RISCV::BOSC_AME_MMVE64_A_A;
     BuildMI(MBB, MBBI, DL, get(Opcode), DstReg)
         .addReg(SrcReg, KillFlag | getRenamableRegState(RenamableSrc));
     return;
   }
+  if ((DstTile && SrcAcc) || (DstAcc && SrcTile))
+    report_fatal_error(
+        "copying between the AME tile and accumulator register files is "
+        "not representable as a single instruction");
 
   // VR->VR copies.
   const TargetRegisterClass *RegClass =

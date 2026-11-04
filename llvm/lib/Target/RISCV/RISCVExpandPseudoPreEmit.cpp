@@ -182,9 +182,16 @@ bool RISCVExpandPseudoPreEmitImpl::expandMI(
   return false;
 }
 
-// Keep hidden matrix configuration and its consuming instruction indivisible
-// until after all scheduling. Matrix registers have already been allocated;
-// expansion neither fixes their numbers nor introduces copies or temporaries.
+// Expand one ordered tile pseudo into the configuration writes and the single
+// consumer, surrounded by iorw fences. This runs after scheduling and register
+// allocation, so the matrix register numbers chosen for the pseudo are copied
+// onto the real instruction. Expansion introduces no temporaries and no
+// mmve copy. Loads configure tile shape then mtype and emit mlae8.m, mlbe8.m
+// or mlce32.m. MMA configures m, n, k and mtype, then mqma.b.mm on the tied
+// accumulator. Store configures m, n and mtype, then msce32.m. Zero configures
+// the accumulator shape and defines it with mwsub.h.mm of that register with
+// both sources undef, which does not read the previous contents. The closing
+// fence publishes the configuration and the consumer before later tile ops.
 bool RISCVExpandPseudoPreEmitImpl::expandBOSCAMEOrderedTile(
     MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI) const {
   MachineInstr &MI = *MBBI;

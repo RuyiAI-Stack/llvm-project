@@ -24,12 +24,18 @@
 
 // Matrix configuration intrinsics (with immediate)
 let TargetPrefix = "riscv" in {
-  // A configured tile operation is one ordered effect, including its hidden
-  // matrix configuration state. Deliberately do not use IntrReadMem,
-  // IntrWriteMem, IntrArgMemOnly or IntrNoMem: an MMA must order a subsequent
-  // input load even when their explicit memory ranges cannot alias. Selection
-  // keeps configuration and the instruction together until the last machine
-  // pseudo expansion, after scheduling and register allocation.
+  // Each configured tile operation is one ordered side effect. The mtype and
+  // tile-shape CSRs are hidden machine state: writing them and then executing
+  // the load, MMA, store or clear must stay together through scheduling and
+  // register allocation. Selection therefore matches these intrinsics to one
+  // pseudo, and RISCVExpandPseudoPreEmit expands that pseudo only at pre-emit.
+  // IntrReadMem, IntrWriteMem, IntrArgMemOnly and IntrNoMem are intentionally
+  // not used. An MMA has to stay ordered with a later input load even when
+  // their explicit memory ranges cannot alias; IntrHasSideEffects provides
+  // that order. Operands are (base, byte stride, dim0, dim1, mtype) for the
+  // loads. ordered_mma takes the tied accumulator plus lhs, rhs, m, n, k and
+  // mtype. ordered_store_acc writes one accumulator. ordered_zero_acc defines
+  // an accumulator from m, n and mtype and does not read the old value or C.
   // load.{a,b,acc}(base, byte_stride, dim0, dim1, mtype)
   foreach Role = ["a", "b", "acc"] in
     def int_riscv_bosc_ordered_load_#Role
