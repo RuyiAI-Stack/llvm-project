@@ -259,9 +259,9 @@ void RISCVInstPrinter::printXSfmmVType(const MCInst *MI, unsigned OpNo,
   O << ", w" << Widen;
 }
 
-void RISCVInstPrinter::printMCFGSel(const MCInst *MI, unsigned OpNo,
-                                    const MCSubtargetInfo &STI,
-                                    raw_ostream &O) {
+void RISCVInstPrinter::printXSAIZamesMCFGSel(const MCInst *MI, unsigned OpNo,
+                                             const MCSubtargetInfo &STI,
+                                             raw_ostream &O) {
   unsigned Imm = MI->getOperand(OpNo).getImm();
   assert(Imm < 8 && "Invalid MCFG selector immediate");
   markup(O, Markup::Register) << "mcfg" << Imm;

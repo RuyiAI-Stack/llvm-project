@@ -1,4 +1,4 @@
-//===-- RISCVInstrInfoZames.td - ZAMES/ZMASYNC instructions -*- tablegen -*-===//
+//===-- RISCVInstrInfoXSAIZames.td - ZAMES/ZMASYNC instructions -*- tablegen -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -11,23 +11,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-def zames_uimm10 : RISCVUImmLeafOp<10>;
+def xsai_zames_uimm10 : RISCVUImmLeafOp<10>;
 
 // mcfg0..mcfg7 select the hardware matrix configuration register configured by
 // msetcfg/mgetcfg. The value is encoded as a 3-bit immediate.
-def MCFGSelAsmOperand : AsmOperandClass {
-  let Name = "MCFGSel";
+def XSAIZamesMCFGSelAsmOperand : AsmOperandClass {
+  let Name = "XSAIZamesMCFGSel";
   let RenderMethod = "addImmOperands";
-  let ParserMethod = "parseMCFGSel";
+  let ParserMethod = "parseXSAIZamesMCFGSel";
 }
 
-def mcfgsel : RISCVUImmLeafOp<3> {
-  let ParserMatchClass = MCFGSelAsmOperand;
-  let PrintMethod = "printMCFGSel";
+def xsai_zames_mcfgsel : RISCVUImmLeafOp<3> {
+  let ParserMatchClass = XSAIZamesMCFGSelAsmOperand;
+  let PrintMethod = "printXSAIZamesMCFGSel";
 }
 
-class ZAMESInstConfigImm<bits<4> func4, string opcodestr>
-    : RVInst<(outs), (ins zames_uimm10:$imm), opcodestr, "$imm", [],
+class XSAI_ZAMES_InstConfigImm<bits<4> func4, string opcodestr>
+    : RVInst<(outs), (ins xsai_zames_uimm10:$imm), opcodestr, "$imm", [],
              InstFormatI> {
   bits<10> imm;
 
@@ -40,7 +40,7 @@ class ZAMESInstConfigImm<bits<4> func4, string opcodestr>
   let Inst{6-0} = OPC_CUSTOM_1.Value;
 }
 
-class ZAMESInstConfigReg<bits<4> func4, string opcodestr>
+class XSAI_ZAMES_InstConfigReg<bits<4> func4, string opcodestr>
     : RVInst<(outs), (ins GPR:$rs1), opcodestr, "$rs1", [],
              InstFormatI> {
   bits<5> rs1;
@@ -55,8 +55,8 @@ class ZAMESInstConfigReg<bits<4> func4, string opcodestr>
   let Inst{6-0} = OPC_CUSTOM_1.Value;
 }
 
-class ZAMESInstSetCfg<string opcodestr>
-    : RVInst<(outs), (ins mcfgsel:$cfg, GPR:$rs1), opcodestr, "$cfg, $rs1",
+class XSAI_ZAMES_InstSetCfg<string opcodestr>
+    : RVInst<(outs), (ins xsai_zames_mcfgsel:$cfg, GPR:$rs1), opcodestr, "$cfg, $rs1",
              [], InstFormatI> {
   bits<3> cfg;
   bits<5> rs1;
@@ -72,8 +72,8 @@ class ZAMESInstSetCfg<string opcodestr>
   let Inst{6-0} = OPC_CUSTOM_1.Value;
 }
 
-class ZAMESInstGetCfg<string opcodestr>
-    : RVInst<(outs GPR:$rd), (ins mcfgsel:$cfg), opcodestr, "$rd, $cfg",
+class XSAI_ZAMES_InstGetCfg<string opcodestr>
+    : RVInst<(outs GPR:$rd), (ins xsai_zames_mcfgsel:$cfg), opcodestr, "$rd, $cfg",
              [], InstFormatI> {
   bits<5> rd;
   bits<3> cfg;
@@ -89,13 +89,13 @@ class ZAMESInstGetCfg<string opcodestr>
   let Inst{6-0} = OPC_CUSTOM_1.Value;
 }
 
-class ZAMESInstInit<string opcodestr>
+class XSAI_ZAMES_InstInit<string opcodestr>
     : RVInst<(outs), (ins), opcodestr, "", [], InstFormatI> {
   let Inst{31-7} = 0;
   let Inst{6-0} = OPC_CUSTOM_1.Value;
 }
 
-class ZAMESInstLoadStore<bits<4> func4, bit ls, dag outs, dag ins,
+class XSAI_ZAMES_InstLoadStore<bits<4> func4, bit ls, dag outs, dag ins,
                          string opcodestr>
     : RVInst<outs, ins, opcodestr, "$md, $rs1, $rs2", [],
              InstFormatI> {
@@ -113,7 +113,7 @@ class ZAMESInstLoadStore<bits<4> func4, bit ls, dag outs, dag ins,
   let Inst{6-0} = OPC_CUSTOM_1.Value;
 }
 
-class ZAMESInstWholeLoadStore<bits<4> func4, bit ls, dag outs, dag ins,
+class XSAI_ZAMES_InstWholeLoadStore<bits<4> func4, bit ls, dag outs, dag ins,
                               string opcodestr>
     : RVInst<outs, ins, opcodestr, "$md, $rs1", [], InstFormatI> {
   bits<5> md;
@@ -129,7 +129,7 @@ class ZAMESInstWholeLoadStore<bits<4> func4, bit ls, dag outs, dag ins,
   let Inst{6-0} = OPC_CUSTOM_1.Value;
 }
 
-class ZAMESInstMMAcc<bits<4> func4, dag outs, dag ins,
+class XSAI_ZAMES_InstMMAcc<bits<4> func4, dag outs, dag ins,
                      string opcodestr>
     : RVInst<outs, ins, opcodestr, "$md, $ms2, $ms1", [],
              InstFormatI> {
@@ -146,7 +146,7 @@ class ZAMESInstMMAcc<bits<4> func4, dag outs, dag ins,
   let Inst{6-0} = OPC_CUSTOM_1.Value;
 }
 
-class ZAMESInstMisc<bits<4> func4, dag outs, dag ins,
+class XSAI_ZAMES_InstMisc<bits<4> func4, dag outs, dag ins,
                     string opcodestr>
     : RVInst<outs, ins, opcodestr, "$md", [], InstFormatI> {
   bits<5> md;
@@ -160,101 +160,101 @@ class ZAMESInstMisc<bits<4> func4, dag outs, dag ins,
 
 let Predicates = [HasStdExtZames], hasSideEffects = 1, mayLoad = 0,
     mayStore = 0 in {
-  def ZAMES_MSETTILEMI : ZAMESInstConfigImm<0b0010, "msettilemi">;
-  def ZAMES_MSETTILENI : ZAMESInstConfigImm<0b0011, "msettileni">;
-  def ZAMES_MSETTILEKI : ZAMESInstConfigImm<0b0001, "msettileki">;
+  def XSAI_ZAMES_MSETTILEMI : XSAI_ZAMES_InstConfigImm<0b0010, "msettilemi">;
+  def XSAI_ZAMES_MSETTILENI : XSAI_ZAMES_InstConfigImm<0b0011, "msettileni">;
+  def XSAI_ZAMES_MSETTILEKI : XSAI_ZAMES_InstConfigImm<0b0001, "msettileki">;
 
-  def ZAMES_MSETTILEM : ZAMESInstConfigReg<0b0010, "msettilem">;
-  def ZAMES_MSETTILEN : ZAMESInstConfigReg<0b0011, "msettilen">;
-  def ZAMES_MSETTILEK : ZAMESInstConfigReg<0b0001, "msettilek">;
+  def XSAI_ZAMES_MSETTILEM : XSAI_ZAMES_InstConfigReg<0b0010, "msettilem">;
+  def XSAI_ZAMES_MSETTILEN : XSAI_ZAMES_InstConfigReg<0b0011, "msettilen">;
+  def XSAI_ZAMES_MSETTILEK : XSAI_ZAMES_InstConfigReg<0b0001, "msettilek">;
 
-  def ZAMES_MSETCFG : ZAMESInstSetCfg<"msetcfg">;
-  def ZAMES_MGETCFG : ZAMESInstGetCfg<"mgetcfg">;
+  def XSAI_ZAMES_MSETCFG : XSAI_ZAMES_InstSetCfg<"msetcfg">;
+  def XSAI_ZAMES_MGETCFG : XSAI_ZAMES_InstGetCfg<"mgetcfg">;
 
-  def ZAMES_MINIT : ZAMESInstInit<"minit">;
+  def XSAI_ZAMES_MINIT : XSAI_ZAMES_InstInit<"minit">;
 }
 
 let Predicates = [HasStdExtZames], hasSideEffects = 1, mayLoad = 1,
     mayStore = 0 in {
-  def ZAMES_MLA : ZAMESInstLoadStore<0b0000, 0b0, (outs ZamesTileReg:$md),
+  def XSAI_ZAMES_MLA : XSAI_ZAMES_InstLoadStore<0b0000, 0b0, (outs XSAI_ZAMES_TileReg:$md),
                                      (ins GPRMemZeroOffset:$rs1, GPR:$rs2),
                                      "mla">;
-  def ZAMES_MLB : ZAMESInstLoadStore<0b0001, 0b0, (outs ZamesTileReg:$md),
+  def XSAI_ZAMES_MLB : XSAI_ZAMES_InstLoadStore<0b0001, 0b0, (outs XSAI_ZAMES_TileReg:$md),
                                      (ins GPRMemZeroOffset:$rs1, GPR:$rs2),
                                      "mlb">;
-  def ZAMES_MLC : ZAMESInstLoadStore<0b0010, 0b0, (outs ZamesAccReg:$md),
+  def XSAI_ZAMES_MLC : XSAI_ZAMES_InstLoadStore<0b0010, 0b0, (outs XSAI_ZAMES_AccReg:$md),
                                      (ins GPRMemZeroOffset:$rs1, GPR:$rs2),
                                      "mlc">;
-  def ZAMES_MLBT : ZAMESInstLoadStore<0b0101, 0b0, (outs ZamesTileReg:$md),
+  def XSAI_ZAMES_MLBT : XSAI_ZAMES_InstLoadStore<0b0101, 0b0, (outs XSAI_ZAMES_TileReg:$md),
                                       (ins GPRMemZeroOffset:$rs1, GPR:$rs2),
                                       "mlbt">;
-  def ZAMES_MLAT : ZAMESInstLoadStore<0b0100, 0b0, (outs ZamesTileReg:$md),
+  def XSAI_ZAMES_MLAT : XSAI_ZAMES_InstLoadStore<0b0100, 0b0, (outs XSAI_ZAMES_TileReg:$md),
                                       (ins GPRMemZeroOffset:$rs1, GPR:$rs2),
                                       "mlat">;
-  def ZAMES_MLCT : ZAMESInstLoadStore<0b0110, 0b0, (outs ZamesAccReg:$md),
+  def XSAI_ZAMES_MLCT : XSAI_ZAMES_InstLoadStore<0b0110, 0b0, (outs XSAI_ZAMES_AccReg:$md),
                                       (ins GPRMemZeroOffset:$rs1, GPR:$rs2),
                                       "mlct">;
 
-  def ZAMES_MLA_WHOLE
-      : ZAMESInstWholeLoadStore<0b1000, 0b0, (outs ZamesTileReg:$md),
+  def XSAI_ZAMES_MLA_WHOLE
+      : XSAI_ZAMES_InstWholeLoadStore<0b1000, 0b0, (outs XSAI_ZAMES_TileReg:$md),
                                 (ins GPRMemZeroOffset:$rs1), "mla.whole">;
-  def ZAMES_MLB_WHOLE
-      : ZAMESInstWholeLoadStore<0b1001, 0b0, (outs ZamesTileReg:$md),
+  def XSAI_ZAMES_MLB_WHOLE
+      : XSAI_ZAMES_InstWholeLoadStore<0b1001, 0b0, (outs XSAI_ZAMES_TileReg:$md),
                                 (ins GPRMemZeroOffset:$rs1), "mlb.whole">;
-  def ZAMES_MLC_WHOLE
-      : ZAMESInstWholeLoadStore<0b1010, 0b0, (outs ZamesAccReg:$md),
+  def XSAI_ZAMES_MLC_WHOLE
+      : XSAI_ZAMES_InstWholeLoadStore<0b1010, 0b0, (outs XSAI_ZAMES_AccReg:$md),
                                 (ins GPRMemZeroOffset:$rs1), "mlc.whole">;
 }
 
 let Predicates = [HasStdExtZames], hasSideEffects = 1, mayLoad = 0,
     mayStore = 1 in {
-  def ZAMES_MSC : ZAMESInstLoadStore<0b0010, 0b1, (outs),
-                                     (ins ZamesAccReg:$md,
+  def XSAI_ZAMES_MSC : XSAI_ZAMES_InstLoadStore<0b0010, 0b1, (outs),
+                                     (ins XSAI_ZAMES_AccReg:$md,
                                           GPRMemZeroOffset:$rs1, GPR:$rs2),
                                      "msc">;
-  def ZAMES_MSA : ZAMESInstLoadStore<0b0000, 0b1, (outs),
-                                     (ins ZamesTileReg:$md,
+  def XSAI_ZAMES_MSA : XSAI_ZAMES_InstLoadStore<0b0000, 0b1, (outs),
+                                     (ins XSAI_ZAMES_TileReg:$md,
                                           GPRMemZeroOffset:$rs1, GPR:$rs2),
                                      "msa">;
-  def ZAMES_MSB : ZAMESInstLoadStore<0b0001, 0b1, (outs),
-                                     (ins ZamesTileReg:$md,
+  def XSAI_ZAMES_MSB : XSAI_ZAMES_InstLoadStore<0b0001, 0b1, (outs),
+                                     (ins XSAI_ZAMES_TileReg:$md,
                                           GPRMemZeroOffset:$rs1, GPR:$rs2),
                                      "msb">;
-  def ZAMES_MSAT : ZAMESInstLoadStore<0b0100, 0b1, (outs),
-                                      (ins ZamesTileReg:$md,
+  def XSAI_ZAMES_MSAT : XSAI_ZAMES_InstLoadStore<0b0100, 0b1, (outs),
+                                      (ins XSAI_ZAMES_TileReg:$md,
                                            GPRMemZeroOffset:$rs1, GPR:$rs2),
                                       "msat">;
-  def ZAMES_MSBT : ZAMESInstLoadStore<0b0101, 0b1, (outs),
-                                      (ins ZamesTileReg:$md,
+  def XSAI_ZAMES_MSBT : XSAI_ZAMES_InstLoadStore<0b0101, 0b1, (outs),
+                                      (ins XSAI_ZAMES_TileReg:$md,
                                            GPRMemZeroOffset:$rs1, GPR:$rs2),
                                       "msbt">;
-  def ZAMES_MSCT : ZAMESInstLoadStore<0b0110, 0b1, (outs),
-                                      (ins ZamesAccReg:$md,
+  def XSAI_ZAMES_MSCT : XSAI_ZAMES_InstLoadStore<0b0110, 0b1, (outs),
+                                      (ins XSAI_ZAMES_AccReg:$md,
                                            GPRMemZeroOffset:$rs1, GPR:$rs2),
                                       "msct">;
 
-  def ZAMES_MSA_WHOLE
-      : ZAMESInstWholeLoadStore<0b1000, 0b1, (outs),
-                                (ins ZamesTileReg:$md, GPRMemZeroOffset:$rs1),
+  def XSAI_ZAMES_MSA_WHOLE
+      : XSAI_ZAMES_InstWholeLoadStore<0b1000, 0b1, (outs),
+                                (ins XSAI_ZAMES_TileReg:$md, GPRMemZeroOffset:$rs1),
                                 "msa.whole">;
-  def ZAMES_MSB_WHOLE
-      : ZAMESInstWholeLoadStore<0b1001, 0b1, (outs),
-                                (ins ZamesTileReg:$md, GPRMemZeroOffset:$rs1),
+  def XSAI_ZAMES_MSB_WHOLE
+      : XSAI_ZAMES_InstWholeLoadStore<0b1001, 0b1, (outs),
+                                (ins XSAI_ZAMES_TileReg:$md, GPRMemZeroOffset:$rs1),
                                 "msb.whole">;
-  def ZAMES_MSC_WHOLE
-      : ZAMESInstWholeLoadStore<0b1010, 0b1, (outs),
-                                (ins ZamesAccReg:$md, GPRMemZeroOffset:$rs1),
+  def XSAI_ZAMES_MSC_WHOLE
+      : XSAI_ZAMES_InstWholeLoadStore<0b1010, 0b1, (outs),
+                                (ins XSAI_ZAMES_AccReg:$md, GPRMemZeroOffset:$rs1),
                                 "msc.whole">;
 }
 
 let Predicates = [HasStdExtZames], hasSideEffects = 1, mayLoad = 0,
     mayStore = 0 in {
-  def ZAMES_MZERO : ZAMESInstMisc<0b0000, (outs ZamesTileOrAccReg:$md), (ins),
+  def XSAI_ZAMES_MZERO : XSAI_ZAMES_InstMisc<0b0000, (outs XSAI_ZAMES_TileOrAccReg:$md), (ins),
                                  "mzero">;
 
-  def ZAMES_MMACC : ZAMESInstMMAcc<0b0000, (outs ZamesAccReg:$md_wb),
-                                   (ins ZamesAccReg:$md, ZamesTileReg:$ms2,
-                                        ZamesTileReg:$ms1),
+  def XSAI_ZAMES_MMACC : XSAI_ZAMES_InstMMAcc<0b0000, (outs XSAI_ZAMES_AccReg:$md_wb),
+                                   (ins XSAI_ZAMES_AccReg:$md, XSAI_ZAMES_TileReg:$ms2,
+                                        XSAI_ZAMES_TileReg:$ms1),
                                    "mmacc"> {
     let Constraints = "$md_wb = $md";
   }
@@ -264,7 +264,7 @@ let Predicates = [HasStdExtZames], hasSideEffects = 1, mayLoad = 0,
 // ZMASYNC Matrix Async Synchronization Instructions
 //===----------------------------------------------------------------------===//
 
-class ZMASYNCInst<bits<4> func4, dag outs, dag ins,
+class XSAI_ZMASYNC_Inst<bits<4> func4, dag outs, dag ins,
                   string opcodestr, string argstr>
     : RVInst<outs, ins, opcodestr, argstr, [], InstFormatI> {
   bits<5> rs1;
@@ -282,26 +282,26 @@ class ZMASYNCInst<bits<4> func4, dag outs, dag ins,
 
 let Predicates = [HasStdExtZmasync], hasSideEffects = 1, mayLoad = 0,
     mayStore = 0 in {
-  def ZMASYNC_MSYNCREGRESET
-      : ZMASYNCInst<0b1000, (outs SyncR:$sync), (ins),
+  def XSAI_ZMASYNC_MSYNCREGRESET
+      : XSAI_ZMASYNC_Inst<0b1000, (outs XSAI_ZMASYNC_SyncR:$sync), (ins),
                     "msyncregreset", "$sync"> {
     let rs1 = 0b00000;
   }
 
   let Constraints = "$sync = $src" in {
-    def ZMASYNC_MRELEASE
-        : ZMASYNCInst<0b1001, (outs SyncR:$sync), (ins SyncR:$src),
+    def XSAI_ZMASYNC_MRELEASE
+        : XSAI_ZMASYNC_Inst<0b1001, (outs XSAI_ZMASYNC_SyncR:$sync), (ins XSAI_ZMASYNC_SyncR:$src),
                       "mrelease", "$sync"> {
       let rs1 = 0b00000;
     }
   }
 
-  def ZMASYNC_MACQUIRE
-      : ZMASYNCInst<0b1010, (outs), (ins SyncR:$sync, GPR:$rs1),
+  def XSAI_ZMASYNC_MACQUIRE
+      : XSAI_ZMASYNC_Inst<0b1010, (outs), (ins XSAI_ZMASYNC_SyncR:$sync, GPR:$rs1),
                     "macquire", "$sync, $rs1">;
 
-  def ZMASYNC_MFENCE
-      : ZMASYNCInst<0b1011, (outs), (ins), "mfence", ""> {
+  def XSAI_ZMASYNC_MFENCE
+      : XSAI_ZMASYNC_Inst<0b1011, (outs), (ins), "mfence", ""> {
     let rs1 = 0b00000;
     let sync = 0b00000;
   }

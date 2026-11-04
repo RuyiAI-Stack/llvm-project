@@ -319,49 +319,52 @@ static DecodeStatus DecodeYBNDSWImm(MCInst &Inst, uint64_t Imm, int64_t Address,
 }
 
 static DecodeStatus
-DecodeZamesTileRegRegisterClass(MCInst &Inst, uint32_t RegNo, uint64_t Address,
-                                const MCDisassembler *Decoder) {
+DecodeXSAI_ZAMES_TileRegRegisterClass(MCInst &Inst, uint32_t RegNo,
+                                      uint64_t Address,
+                                      const MCDisassembler *Decoder) {
   if (RegNo >= 4)
     return MCDisassembler::Fail;
 
-  MCRegister Reg = RISCV::ZAMES_TR0 + RegNo;
+  MCRegister Reg = RISCV::XSAI_ZAMES_TR0 + RegNo;
   Inst.addOperand(MCOperand::createReg(Reg));
   return MCDisassembler::Success;
 }
 
 static DecodeStatus
-DecodeZamesAccRegRegisterClass(MCInst &Inst, uint32_t RegNo, uint64_t Address,
-                               const MCDisassembler *Decoder) {
+DecodeXSAI_ZAMES_AccRegRegisterClass(MCInst &Inst, uint32_t RegNo,
+                                     uint64_t Address,
+                                     const MCDisassembler *Decoder) {
   if (RegNo < 4 || RegNo >= 8)
     return MCDisassembler::Fail;
 
-  MCRegister Reg = RISCV::ZAMES_ACC0 + (RegNo - 4);
+  MCRegister Reg = RISCV::XSAI_ZAMES_ACC0 + (RegNo - 4);
   Inst.addOperand(MCOperand::createReg(Reg));
   return MCDisassembler::Success;
 }
 
-// Union of ZamesTileReg (0-3) and ZamesAccReg (4-7) for real instructions whose
-// md field accepts either register file (e.g. mzero).
+// Union of XSAI_ZAMES_TileReg (0-3) and XSAI_ZAMES_AccReg (4-7) for real
+// instructions whose md field accepts either register file (e.g. mzero).
 static DecodeStatus
-DecodeZamesTileOrAccRegRegisterClass(MCInst &Inst, uint32_t RegNo,
-                                     uint64_t Address,
-                                     const MCDisassembler *Decoder) {
+DecodeXSAI_ZAMES_TileOrAccRegRegisterClass(MCInst &Inst, uint32_t RegNo,
+                                           uint64_t Address,
+                                           const MCDisassembler *Decoder) {
   if (RegNo >= 8)
     return MCDisassembler::Fail;
 
-  MCRegister Reg =
-      RegNo < 4 ? RISCV::ZAMES_TR0 + RegNo : RISCV::ZAMES_ACC0 + (RegNo - 4);
+  MCRegister Reg = RegNo < 4 ? RISCV::XSAI_ZAMES_TR0 + RegNo
+                             : RISCV::XSAI_ZAMES_ACC0 + (RegNo - 4);
   Inst.addOperand(MCOperand::createReg(Reg));
   return MCDisassembler::Success;
 }
 
-static DecodeStatus DecodeSyncRRegisterClass(MCInst &Inst, uint32_t RegNo,
-                                             uint64_t Address,
-                                             const MCDisassembler *Decoder) {
+static DecodeStatus
+DecodeXSAI_ZMASYNC_SyncRRegisterClass(MCInst &Inst, uint32_t RegNo,
+                                      uint64_t Address,
+                                      const MCDisassembler *Decoder) {
   if (RegNo >= 16)
     return MCDisassembler::Fail;
 
-  MCRegister Reg = RISCV::SYNC0 + RegNo;
+  MCRegister Reg = RISCV::XSAI_ZMASYNC_SYNC0 + RegNo;
   Inst.addOperand(MCOperand::createReg(Reg));
   return MCDisassembler::Success;
 }

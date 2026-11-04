@@ -3,10 +3,10 @@
 ; Without +zames, the target must not legally select ZAMES matrix intrinsics.
 
 define void @zames_requires_feature(ptr %c, i64 %stride) {
-; CHECK: Cannot select: intrinsic %llvm.riscv.zames.msc
-  call void @llvm.riscv.zames.msc.triscv.ame.tile.int32t(
-      target("riscv.ame.tile.int32") undef, ptr %c, i64 %stride)
+; CHECK: Cannot select: intrinsic %llvm.riscv.xsai.zames.msc
+  call void @llvm.riscv.xsai.zames.msc.triscv.xsai.ame.tile.int32t(
+      target("riscv.xsai.ame.tile.int32") undef, ptr %c, i64 %stride)
   ret void
 }
 
-declare void @llvm.riscv.zames.msc.triscv.ame.tile.int32t(target("riscv.ame.tile.int32"), ptr, i64)
+declare void @llvm.riscv.xsai.zames.msc.triscv.xsai.ame.tile.int32t(target("riscv.xsai.ame.tile.int32"), ptr, i64)

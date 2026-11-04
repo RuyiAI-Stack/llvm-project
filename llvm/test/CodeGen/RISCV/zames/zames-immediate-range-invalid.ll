@@ -10,46 +10,46 @@
 ; RUN: not --crash llc -mtriple=riscv64 -mattr=+zames -disable-verify %t/mgetcfg-neg.ll -o /dev/null 2>&1 | FileCheck %s --check-prefix=GETCFG-NEG
 
 ;--- settilemi-neg.ll
-declare void @llvm.riscv.zames.msettilemi(i64)
+declare void @llvm.riscv.xsai.zames.msettilemi(i64)
 
 define void @f() {
 ; MI-NEG: Cannot select
-  call void @llvm.riscv.zames.msettilemi(i64 -1)
+  call void @llvm.riscv.xsai.zames.msettilemi(i64 -1)
   ret void
 }
 
 ;--- settileni-1024.ll
-declare void @llvm.riscv.zames.msettileni(i64)
+declare void @llvm.riscv.xsai.zames.msettileni(i64)
 
 define void @f() {
 ; NI-1024: Cannot select
-  call void @llvm.riscv.zames.msettileni(i64 1024)
+  call void @llvm.riscv.xsai.zames.msettileni(i64 1024)
   ret void
 }
 
 ;--- settileki-1024.ll
-declare void @llvm.riscv.zames.msettileki(i64)
+declare void @llvm.riscv.xsai.zames.msettileki(i64)
 
 define void @f() {
 ; KI-1024: Cannot select
-  call void @llvm.riscv.zames.msettileki(i64 1024)
+  call void @llvm.riscv.xsai.zames.msettileki(i64 1024)
   ret void
 }
 
 ;--- msetcfg-8.ll
-declare void @llvm.riscv.zames.msetcfg(i64, i64)
+declare void @llvm.riscv.xsai.zames.msetcfg(i64, i64)
 
 define void @f(i64 %payload) {
 ; SETCFG-8: Cannot select
-  call void @llvm.riscv.zames.msetcfg(i64 8, i64 %payload)
+  call void @llvm.riscv.xsai.zames.msetcfg(i64 8, i64 %payload)
   ret void
 }
 
 ;--- mgetcfg-neg.ll
-declare i64 @llvm.riscv.zames.mgetcfg(i64)
+declare i64 @llvm.riscv.xsai.zames.mgetcfg(i64)
 
 define i64 @f() {
 ; GETCFG-NEG: Cannot select
-  %r = call i64 @llvm.riscv.zames.mgetcfg(i64 -1)
+  %r = call i64 @llvm.riscv.xsai.zames.mgetcfg(i64 -1)
   ret i64 %r
 }

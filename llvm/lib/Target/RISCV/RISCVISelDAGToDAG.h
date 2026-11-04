@@ -47,8 +47,8 @@ public:
         if (!II)
           continue;
         StringRef Name = Intrinsic::getBaseName(II->getIntrinsicID());
-        if (Name.starts_with("llvm.riscv.zames.") ||
-            Name.starts_with("llvm.riscv.zmasync.")) {
+        if (Name.starts_with("llvm.riscv.xsai.zames.") ||
+            Name.starts_with("llvm.riscv.xsai.zmasync.")) {
           F.getContext().diagnose(DiagnosticInfoUnsupported(
               F, "ZAMES/ZMASYNC code generation requires RV64",
               I.getDebugLoc()));

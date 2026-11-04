@@ -240,7 +240,7 @@ class RISCVAsmParser : public MCTargetAsmParser {
   }
 
   ParseStatus parseRegReg(OperandVector &Operands);
-  ParseStatus parseMCFGSel(OperandVector &Operands);
+  ParseStatus parseXSAIZamesMCFGSel(OperandVector &Operands);
   ParseStatus parseXSfmmVType(OperandVector &Operands);
   ParseStatus parseZcmpStackAdj(OperandVector &Operands,
                                 bool ExpectNegative = false);
@@ -762,7 +762,7 @@ public:
     return IsConstantImm && isUInt<N>(Imm);
   }
 
-  bool isMCFGSel() const { return isUImm<3>(); }
+  bool isXSAIZamesMCFGSel() const { return isUImm<3>(); }
 
   template <unsigned N, unsigned S> bool isUImmShifted() const {
     int64_t Imm;
@@ -1433,14 +1433,14 @@ unsigned RISCVAsmParser::validateTargetOperandClass(MCParsedAsmOperand &AsmOp,
 
   // ZAMES shares assembly names with BOSC AME, but has distinct register
   // records and accumulator encodings. Coerce only for a ZAMES operand class.
-  if ((Kind == MCK_ZamesTileReg || Kind == MCK_ZamesTileOrAccReg) &&
+  if ((Kind == MCK_XSAI_ZAMES_TileReg || Kind == MCK_XSAI_ZAMES_TileOrAccReg) &&
       Reg >= RISCV::TR0 && Reg <= RISCV::TR3) {
-    Op.Reg.Reg = RISCV::ZAMES_TR0 + (Reg - RISCV::TR0);
+    Op.Reg.Reg = RISCV::XSAI_ZAMES_TR0 + (Reg - RISCV::TR0);
     return Match_Success;
   }
-  if ((Kind == MCK_ZamesAccReg || Kind == MCK_ZamesTileOrAccReg) &&
+  if ((Kind == MCK_XSAI_ZAMES_AccReg || Kind == MCK_XSAI_ZAMES_TileOrAccReg) &&
       Reg >= RISCV::ACC0 && Reg <= RISCV::ACC3) {
-    Op.Reg.Reg = RISCV::ZAMES_ACC0 + (Reg - RISCV::ACC0);
+    Op.Reg.Reg = RISCV::XSAI_ZAMES_ACC0 + (Reg - RISCV::ACC0);
     return Match_Success;
   }
 
@@ -1905,9 +1905,9 @@ MCRegister RISCVAsmParser::matchRegisterNameHelper(StringRef Name) const {
   static_assert(RISCV::F0_D < RISCV::F0_Q, "FPR matching must be updated");
   // Shared matrix names initially resolve to BOSC AME; operand validation
   // converts them to ZAMES registers only when the instruction requires it.
-  static_assert(RISCV::TR0 < RISCV::ZAMES_TR0,
+  static_assert(RISCV::TR0 < RISCV::XSAI_ZAMES_TR0,
                 "Matrix register matching must be updated");
-  static_assert(RISCV::ACC0 < RISCV::ZAMES_ACC0,
+  static_assert(RISCV::ACC0 < RISCV::XSAI_ZAMES_ACC0,
                 "Matrix register matching must be updated");
   if (!Reg)
     Reg = MatchRegisterAltName(Name);
@@ -2595,7 +2595,7 @@ bool RISCVAsmParser::generateVTypeError(SMLoc ErrorLoc) {
                "e[8|8alt|16|16alt|32|64],m[1|2|4|8|f2|f4|f8],[ta|tu],[ma|mu]");
 }
 
-ParseStatus RISCVAsmParser::parseMCFGSel(OperandVector &Operands) {
+ParseStatus RISCVAsmParser::parseXSAIZamesMCFGSel(OperandVector &Operands) {
   const AsmToken &Tok = getLexer().getTok();
   if (!Tok.is(AsmToken::Identifier))
     return ParseStatus::NoMatch;

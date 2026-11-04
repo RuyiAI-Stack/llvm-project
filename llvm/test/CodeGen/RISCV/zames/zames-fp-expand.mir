@@ -15,40 +15,40 @@
 name:            zames_mir_cfg
 body:             |
   bb.0:
-    liveins: $zames_acc2, $zames_tr3, $zames_tr1
+    liveins: $xsai_zames_acc2, $xsai_zames_tr3, $xsai_zames_tr1
 
     ; f16 x f16 -> f32 with C = acc2, B = tr3, A = tr1
     $x10 = ADDI $x0, 12
     $x11 = ADDI $x0, 9
-    ; CHECK: ZAMES_MSETCFG 6, {{[^:]*}}$x10{{$}}
-    ; CHECK-NEXT: ZAMES_MSETCFG 3, {{[^:]*}}$x11{{$}}
-    ; CHECK-NEXT: ZAMES_MSETCFG 1, {{[^:]*}}$x11{{$}}
-    ; CHECK-NEXT: $zames_acc2 = ZAMES_MMACC {{[^:]*}}$zames_acc2, {{[^:]*}}$zames_tr3, {{[^:]*}}$zames_tr1{{$}}
-    $zames_acc2 = PSEUDO_ZAMES_MMACC_F16_F32 $zames_acc2, $zames_tr3, $zames_tr1, $x10, $x11, $x11
+    ; CHECK: XSAI_ZAMES_MSETCFG 6, {{[^:]*}}$x10{{$}}
+    ; CHECK-NEXT: XSAI_ZAMES_MSETCFG 3, {{[^:]*}}$x11{{$}}
+    ; CHECK-NEXT: XSAI_ZAMES_MSETCFG 1, {{[^:]*}}$x11{{$}}
+    ; CHECK-NEXT: $xsai_zames_acc2 = XSAI_ZAMES_MMACC {{[^:]*}}$xsai_zames_acc2, {{[^:]*}}$xsai_zames_tr3, {{[^:]*}}$xsai_zames_tr1{{$}}
+    $xsai_zames_acc2 = PSEUDO_XSAI_ZAMES_MMACC_F16_F32 $xsai_zames_acc2, $xsai_zames_tr3, $xsai_zames_tr1, $x10, $x11, $x11
 
     ; fp16 tile load into tr2
     $x12 = ADDI $x0, 9
-    ; CHECK: ZAMES_MSETCFG 2, {{[^:]*}}$x12{{$}}
-    ; CHECK-NEXT: $zames_tr2 = ZAMES_MLA
-    $zames_tr2 = PSEUDO_ZAMES_MLA_A_F16 $x10, $x11, $x12
+    ; CHECK: XSAI_ZAMES_MSETCFG 2, {{[^:]*}}$x12{{$}}
+    ; CHECK-NEXT: $xsai_zames_tr2 = XSAI_ZAMES_MLA
+    $xsai_zames_tr2 = PSEUDO_XSAI_ZAMES_MLA_A_F16 $x10, $x11, $x12
 
     ; bf16 tile store from tr3
     $x13 = ADDI $x0, 10
-    ; CHECK: ZAMES_MSETCFG 3, {{[^:]*}}$x13{{$}}
-    ; CHECK-NEXT: ZAMES_MSA
-    PSEUDO_ZAMES_MSA_A_BF16 $zames_tr3, $x10, $x11, $x13
+    ; CHECK: XSAI_ZAMES_MSETCFG 3, {{[^:]*}}$x13{{$}}
+    ; CHECK-NEXT: XSAI_ZAMES_MSA
+    PSEUDO_XSAI_ZAMES_MSA_A_BF16 $xsai_zames_tr3, $x10, $x11, $x13
 
     ; mzero into an fp16 tile register
     $x14 = ADDI $x0, 9
-    ; CHECK: ZAMES_MSETCFG 1, {{[^:]*}}$x14{{$}}
-    ; CHECK-NEXT: $zames_tr1 = ZAMES_MZERO{{$}}
-    $zames_tr1 = PSEUDO_ZAMES_MZERO_T_F16 $x14
+    ; CHECK: XSAI_ZAMES_MSETCFG 1, {{[^:]*}}$x14{{$}}
+    ; CHECK-NEXT: $xsai_zames_tr1 = XSAI_ZAMES_MZERO{{$}}
+    $xsai_zames_tr1 = PSEUDO_XSAI_ZAMES_MZERO_T_F16 $x14
 
     ; mzero into accumulator acc2
     $x15 = ADDI $x0, 12
-    ; CHECK: ZAMES_MSETCFG 6, {{[^:]*}}$x15{{$}}
-    ; CHECK-NEXT: $zames_acc2 = ZAMES_MZERO{{$}}
-    $zames_acc2 = PSEUDO_ZAMES_MZERO_C_F32 $x15
+    ; CHECK: XSAI_ZAMES_MSETCFG 6, {{[^:]*}}$x15{{$}}
+    ; CHECK-NEXT: $xsai_zames_acc2 = XSAI_ZAMES_MZERO{{$}}
+    $xsai_zames_acc2 = PSEUDO_XSAI_ZAMES_MZERO_C_F32 $x15
 
     PseudoRET
 ...

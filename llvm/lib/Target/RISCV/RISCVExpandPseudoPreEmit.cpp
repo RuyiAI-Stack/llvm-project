@@ -64,8 +64,8 @@ class RISCVExpandPseudoPreEmitImpl final : public RISCVExpandPseudoImplBase {
   bool expandBOSCAMEOrderedTile(MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator MBBI) const;
 
-  bool expandZamesMatrixPseudo(MachineBasicBlock &MBB,
-                               MachineBasicBlock::iterator MBBI) const;
+  bool expandXSAIZamesMatrixPseudo(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MBBI) const;
 };
 
 class RISCVExpandPseudoPreEmitLegacy : public MachineFunctionPass {
@@ -181,68 +181,68 @@ bool RISCVExpandPseudoPreEmitImpl::expandMI(
     return expandPseudoReadVLENBViaVSETVLIX0(MBB, MBBI);
   case RISCV::PseudoClearFPR64:
     return expandPseudoClearFPR64(MBB, MBBI);
-  case RISCV::PSEUDO_ZAMES_MLA_A_I8:
-  case RISCV::PSEUDO_ZAMES_MLB_B_I8:
-  case RISCV::PSEUDO_ZAMES_MLBT_B_I8:
-  case RISCV::PSEUDO_ZAMES_MLAT_A_I8:
-  case RISCV::PSEUDO_ZAMES_MLC_C_I32:
-  case RISCV::PSEUDO_ZAMES_MLCT_C_I32:
-  case RISCV::PSEUDO_ZAMES_MZERO_C_I32:
-  case RISCV::PSEUDO_ZAMES_MMACC_I8_I32:
-  case RISCV::PSEUDO_ZAMES_MSC_C_I32:
-  case RISCV::PSEUDO_ZAMES_MSA_A_I8:
-  case RISCV::PSEUDO_ZAMES_MSAT_A_I8:
-  case RISCV::PSEUDO_ZAMES_MSB_B_I8:
-  case RISCV::PSEUDO_ZAMES_MSBT_B_I8:
-  case RISCV::PSEUDO_ZAMES_MSCT_C_I32:
-  case RISCV::PSEUDO_ZAMES_MLA_A_FP8E4:
-  case RISCV::PSEUDO_ZAMES_MLA_A_FP8E5:
-  case RISCV::PSEUDO_ZAMES_MLA_A_F16:
-  case RISCV::PSEUDO_ZAMES_MLA_A_BF16:
-  case RISCV::PSEUDO_ZAMES_MLAT_A_FP8E4:
-  case RISCV::PSEUDO_ZAMES_MLAT_A_FP8E5:
-  case RISCV::PSEUDO_ZAMES_MLAT_A_F16:
-  case RISCV::PSEUDO_ZAMES_MLAT_A_BF16:
-  case RISCV::PSEUDO_ZAMES_MLB_B_FP8E4:
-  case RISCV::PSEUDO_ZAMES_MLB_B_FP8E5:
-  case RISCV::PSEUDO_ZAMES_MLB_B_F16:
-  case RISCV::PSEUDO_ZAMES_MLB_B_BF16:
-  case RISCV::PSEUDO_ZAMES_MLBT_B_FP8E4:
-  case RISCV::PSEUDO_ZAMES_MLBT_B_FP8E5:
-  case RISCV::PSEUDO_ZAMES_MLBT_B_F16:
-  case RISCV::PSEUDO_ZAMES_MLBT_B_BF16:
-  case RISCV::PSEUDO_ZAMES_MLC_C_F32:
-  case RISCV::PSEUDO_ZAMES_MLCT_C_F32:
-  case RISCV::PSEUDO_ZAMES_MSA_A_FP8E4:
-  case RISCV::PSEUDO_ZAMES_MSA_A_FP8E5:
-  case RISCV::PSEUDO_ZAMES_MSA_A_F16:
-  case RISCV::PSEUDO_ZAMES_MSA_A_BF16:
-  case RISCV::PSEUDO_ZAMES_MSAT_A_FP8E4:
-  case RISCV::PSEUDO_ZAMES_MSAT_A_FP8E5:
-  case RISCV::PSEUDO_ZAMES_MSAT_A_F16:
-  case RISCV::PSEUDO_ZAMES_MSAT_A_BF16:
-  case RISCV::PSEUDO_ZAMES_MSB_B_FP8E4:
-  case RISCV::PSEUDO_ZAMES_MSB_B_FP8E5:
-  case RISCV::PSEUDO_ZAMES_MSB_B_F16:
-  case RISCV::PSEUDO_ZAMES_MSB_B_BF16:
-  case RISCV::PSEUDO_ZAMES_MSBT_B_FP8E4:
-  case RISCV::PSEUDO_ZAMES_MSBT_B_FP8E5:
-  case RISCV::PSEUDO_ZAMES_MSBT_B_F16:
-  case RISCV::PSEUDO_ZAMES_MSBT_B_BF16:
-  case RISCV::PSEUDO_ZAMES_MSC_C_F32:
-  case RISCV::PSEUDO_ZAMES_MSCT_C_F32:
-  case RISCV::PSEUDO_ZAMES_MZERO_T_I8:
-  case RISCV::PSEUDO_ZAMES_MZERO_T_FP8E4:
-  case RISCV::PSEUDO_ZAMES_MZERO_T_FP8E5:
-  case RISCV::PSEUDO_ZAMES_MZERO_T_F16:
-  case RISCV::PSEUDO_ZAMES_MZERO_T_BF16:
-  case RISCV::PSEUDO_ZAMES_MZERO_C_F32:
-  case RISCV::PSEUDO_ZAMES_MMACC_I8_F32:
-  case RISCV::PSEUDO_ZAMES_MMACC_FP8E4_F32:
-  case RISCV::PSEUDO_ZAMES_MMACC_FP8E5_F32:
-  case RISCV::PSEUDO_ZAMES_MMACC_F16_F32:
-  case RISCV::PSEUDO_ZAMES_MMACC_BF16_F32:
-    return expandZamesMatrixPseudo(MBB, MBBI);
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_I8:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_I8:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_I8:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_I8:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLC_C_I32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLCT_C_I32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_C_I32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_I8_I32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSC_C_I32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_I8:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_I8:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_I8:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_I8:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSCT_C_I32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_FP8E4:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_FP8E5:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_F16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_BF16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_FP8E4:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_FP8E5:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_F16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_BF16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_FP8E4:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_FP8E5:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_F16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_BF16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_FP8E4:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_FP8E5:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_F16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_BF16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLC_C_F32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLCT_C_F32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_FP8E4:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_FP8E5:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_F16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_BF16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_FP8E4:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_FP8E5:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_F16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_BF16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_FP8E4:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_FP8E5:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_F16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_BF16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_FP8E4:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_FP8E5:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_F16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_BF16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSC_C_F32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSCT_C_F32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_I8:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_FP8E4:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_FP8E5:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_F16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_BF16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_C_F32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_I8_F32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_FP8E4_F32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_FP8E5_F32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_F16_F32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_BF16_F32:
+    return expandXSAIZamesMatrixPseudo(MBB, MBBI);
   }
 
   return false;
@@ -340,23 +340,23 @@ bool RISCVExpandPseudoPreEmitImpl::expandBOSCAMEOrderedTile(
   return true;
 }
 
-static unsigned getZamesMcfgSelector(Register Reg) {
+static unsigned getXSAIZamesMcfgSelector(Register Reg) {
   switch (Reg) {
-  case RISCV::ZAMES_TR0:
+  case RISCV::XSAI_ZAMES_TR0:
     return 0;
-  case RISCV::ZAMES_TR1:
+  case RISCV::XSAI_ZAMES_TR1:
     return 1;
-  case RISCV::ZAMES_TR2:
+  case RISCV::XSAI_ZAMES_TR2:
     return 2;
-  case RISCV::ZAMES_TR3:
+  case RISCV::XSAI_ZAMES_TR3:
     return 3;
-  case RISCV::ZAMES_ACC0:
+  case RISCV::XSAI_ZAMES_ACC0:
     return 4;
-  case RISCV::ZAMES_ACC1:
+  case RISCV::XSAI_ZAMES_ACC1:
     return 5;
-  case RISCV::ZAMES_ACC2:
+  case RISCV::XSAI_ZAMES_ACC2:
     return 6;
-  case RISCV::ZAMES_ACC3:
+  case RISCV::XSAI_ZAMES_ACC3:
     return 7;
   default:
     report_fatal_error(
@@ -364,16 +364,17 @@ static unsigned getZamesMcfgSelector(Register Reg) {
   }
 }
 
-static void emitZamesConfig(const RISCVInstrInfo *TII, MachineBasicBlock &MBB,
-                            MachineBasicBlock::iterator MBBI, DebugLoc DL,
-                            Register MatrixReg, Register ConfigReg) {
-  unsigned Selector = getZamesMcfgSelector(MatrixReg);
-  BuildMI(MBB, MBBI, DL, TII->get(RISCV::ZAMES_MSETCFG))
+static void emitXSAIZamesConfig(const RISCVInstrInfo *TII,
+                                MachineBasicBlock &MBB,
+                                MachineBasicBlock::iterator MBBI, DebugLoc DL,
+                                Register MatrixReg, Register ConfigReg) {
+  unsigned Selector = getXSAIZamesMcfgSelector(MatrixReg);
+  BuildMI(MBB, MBBI, DL, TII->get(RISCV::XSAI_ZAMES_MSETCFG))
       .addImm(Selector)
       .addReg(ConfigReg);
 }
 
-bool RISCVExpandPseudoPreEmitImpl::expandZamesMatrixPseudo(
+bool RISCVExpandPseudoPreEmitImpl::expandXSAIZamesMatrixPseudo(
     MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI) const {
   MachineInstr &MI = *MBBI;
   DebugLoc DL = MI.getDebugLoc();
@@ -382,187 +383,188 @@ bool RISCVExpandPseudoPreEmitImpl::expandZamesMatrixPseudo(
   switch (Opc) {
   default:
     llvm_unreachable("Unexpected ZAMES pseudo opcode");
-  case RISCV::PSEUDO_ZAMES_MLA_A_I8:
-  case RISCV::PSEUDO_ZAMES_MLA_A_FP8E4:
-  case RISCV::PSEUDO_ZAMES_MLA_A_FP8E5:
-  case RISCV::PSEUDO_ZAMES_MLA_A_F16:
-  case RISCV::PSEUDO_ZAMES_MLA_A_BF16: {
-    emitZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
-                    MI.getOperand(3).getReg());
-    BuildMI(MBB, MBBI, DL, TII->get(RISCV::ZAMES_MLA))
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_I8:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_FP8E4:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_FP8E5:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_F16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_BF16: {
+    emitXSAIZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
+                        MI.getOperand(3).getReg());
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::XSAI_ZAMES_MLA))
         .add(MI.getOperand(0))
         .add(MI.getOperand(1))
         .add(MI.getOperand(2))
         .cloneMemRefs(MI);
     break;
   }
-  case RISCV::PSEUDO_ZAMES_MLB_B_I8:
-  case RISCV::PSEUDO_ZAMES_MLB_B_FP8E4:
-  case RISCV::PSEUDO_ZAMES_MLB_B_FP8E5:
-  case RISCV::PSEUDO_ZAMES_MLB_B_F16:
-  case RISCV::PSEUDO_ZAMES_MLB_B_BF16: {
-    emitZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
-                    MI.getOperand(3).getReg());
-    BuildMI(MBB, MBBI, DL, TII->get(RISCV::ZAMES_MLB))
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_I8:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_FP8E4:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_FP8E5:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_F16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_BF16: {
+    emitXSAIZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
+                        MI.getOperand(3).getReg());
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::XSAI_ZAMES_MLB))
         .add(MI.getOperand(0))
         .add(MI.getOperand(1))
         .add(MI.getOperand(2))
         .cloneMemRefs(MI);
     break;
   }
-  case RISCV::PSEUDO_ZAMES_MLBT_B_I8:
-  case RISCV::PSEUDO_ZAMES_MLBT_B_FP8E4:
-  case RISCV::PSEUDO_ZAMES_MLBT_B_FP8E5:
-  case RISCV::PSEUDO_ZAMES_MLBT_B_F16:
-  case RISCV::PSEUDO_ZAMES_MLBT_B_BF16: {
-    emitZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
-                    MI.getOperand(3).getReg());
-    BuildMI(MBB, MBBI, DL, TII->get(RISCV::ZAMES_MLBT))
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_I8:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_FP8E4:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_FP8E5:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_F16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_BF16: {
+    emitXSAIZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
+                        MI.getOperand(3).getReg());
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::XSAI_ZAMES_MLBT))
         .add(MI.getOperand(0))
         .add(MI.getOperand(1))
         .add(MI.getOperand(2))
         .cloneMemRefs(MI);
     break;
   }
-  case RISCV::PSEUDO_ZAMES_MLAT_A_I8:
-  case RISCV::PSEUDO_ZAMES_MLAT_A_FP8E4:
-  case RISCV::PSEUDO_ZAMES_MLAT_A_FP8E5:
-  case RISCV::PSEUDO_ZAMES_MLAT_A_F16:
-  case RISCV::PSEUDO_ZAMES_MLAT_A_BF16: {
-    emitZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
-                    MI.getOperand(3).getReg());
-    BuildMI(MBB, MBBI, DL, TII->get(RISCV::ZAMES_MLAT))
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_I8:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_FP8E4:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_FP8E5:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_F16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_BF16: {
+    emitXSAIZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
+                        MI.getOperand(3).getReg());
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::XSAI_ZAMES_MLAT))
         .add(MI.getOperand(0))
         .add(MI.getOperand(1))
         .add(MI.getOperand(2))
         .cloneMemRefs(MI);
     break;
   }
-  case RISCV::PSEUDO_ZAMES_MLC_C_I32:
-  case RISCV::PSEUDO_ZAMES_MLC_C_F32: {
-    emitZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
-                    MI.getOperand(3).getReg());
-    BuildMI(MBB, MBBI, DL, TII->get(RISCV::ZAMES_MLC))
+  case RISCV::PSEUDO_XSAI_ZAMES_MLC_C_I32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLC_C_F32: {
+    emitXSAIZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
+                        MI.getOperand(3).getReg());
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::XSAI_ZAMES_MLC))
         .add(MI.getOperand(0))
         .add(MI.getOperand(1))
         .add(MI.getOperand(2))
         .cloneMemRefs(MI);
     break;
   }
-  case RISCV::PSEUDO_ZAMES_MLCT_C_I32:
-  case RISCV::PSEUDO_ZAMES_MLCT_C_F32: {
-    emitZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
-                    MI.getOperand(3).getReg());
-    BuildMI(MBB, MBBI, DL, TII->get(RISCV::ZAMES_MLCT))
+  case RISCV::PSEUDO_XSAI_ZAMES_MLCT_C_I32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLCT_C_F32: {
+    emitXSAIZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
+                        MI.getOperand(3).getReg());
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::XSAI_ZAMES_MLCT))
         .add(MI.getOperand(0))
         .add(MI.getOperand(1))
         .add(MI.getOperand(2))
         .cloneMemRefs(MI);
     break;
   }
-  case RISCV::PSEUDO_ZAMES_MZERO_C_I32:
-  case RISCV::PSEUDO_ZAMES_MZERO_T_I8:
-  case RISCV::PSEUDO_ZAMES_MZERO_T_FP8E4:
-  case RISCV::PSEUDO_ZAMES_MZERO_T_FP8E5:
-  case RISCV::PSEUDO_ZAMES_MZERO_T_F16:
-  case RISCV::PSEUDO_ZAMES_MZERO_T_BF16:
-  case RISCV::PSEUDO_ZAMES_MZERO_C_F32: {
-    emitZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
-                    MI.getOperand(1).getReg());
-    BuildMI(MBB, MBBI, DL, TII->get(RISCV::ZAMES_MZERO)).add(MI.getOperand(0));
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_C_I32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_I8:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_FP8E4:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_FP8E5:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_F16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_BF16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_C_F32: {
+    emitXSAIZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
+                        MI.getOperand(1).getReg());
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::XSAI_ZAMES_MZERO))
+        .add(MI.getOperand(0));
     break;
   }
-  case RISCV::PSEUDO_ZAMES_MMACC_I8_I32:
-  case RISCV::PSEUDO_ZAMES_MMACC_I8_F32:
-  case RISCV::PSEUDO_ZAMES_MMACC_FP8E4_F32:
-  case RISCV::PSEUDO_ZAMES_MMACC_FP8E5_F32:
-  case RISCV::PSEUDO_ZAMES_MMACC_F16_F32:
-  case RISCV::PSEUDO_ZAMES_MMACC_BF16_F32: {
-    emitZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(1).getReg(),
-                    MI.getOperand(4).getReg());
-    emitZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(2).getReg(),
-                    MI.getOperand(5).getReg());
-    emitZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(3).getReg(),
-                    MI.getOperand(6).getReg());
-    BuildMI(MBB, MBBI, DL, TII->get(RISCV::ZAMES_MMACC))
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_I8_I32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_I8_F32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_FP8E4_F32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_FP8E5_F32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_F16_F32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_BF16_F32: {
+    emitXSAIZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(1).getReg(),
+                        MI.getOperand(4).getReg());
+    emitXSAIZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(2).getReg(),
+                        MI.getOperand(5).getReg());
+    emitXSAIZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(3).getReg(),
+                        MI.getOperand(6).getReg());
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::XSAI_ZAMES_MMACC))
         .add(MI.getOperand(0))
         .add(MI.getOperand(1))
         .add(MI.getOperand(2))
         .add(MI.getOperand(3));
     break;
   }
-  case RISCV::PSEUDO_ZAMES_MSC_C_I32:
-  case RISCV::PSEUDO_ZAMES_MSC_C_F32: {
-    emitZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
-                    MI.getOperand(3).getReg());
-    BuildMI(MBB, MBBI, DL, TII->get(RISCV::ZAMES_MSC))
+  case RISCV::PSEUDO_XSAI_ZAMES_MSC_C_I32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSC_C_F32: {
+    emitXSAIZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
+                        MI.getOperand(3).getReg());
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::XSAI_ZAMES_MSC))
         .add(MI.getOperand(0))
         .add(MI.getOperand(1))
         .add(MI.getOperand(2))
         .cloneMemRefs(MI);
     break;
   }
-  case RISCV::PSEUDO_ZAMES_MSA_A_I8:
-  case RISCV::PSEUDO_ZAMES_MSA_A_FP8E4:
-  case RISCV::PSEUDO_ZAMES_MSA_A_FP8E5:
-  case RISCV::PSEUDO_ZAMES_MSA_A_F16:
-  case RISCV::PSEUDO_ZAMES_MSA_A_BF16: {
-    emitZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
-                    MI.getOperand(3).getReg());
-    BuildMI(MBB, MBBI, DL, TII->get(RISCV::ZAMES_MSA))
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_I8:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_FP8E4:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_FP8E5:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_F16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_BF16: {
+    emitXSAIZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
+                        MI.getOperand(3).getReg());
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::XSAI_ZAMES_MSA))
         .add(MI.getOperand(0))
         .add(MI.getOperand(1))
         .add(MI.getOperand(2))
         .cloneMemRefs(MI);
     break;
   }
-  case RISCV::PSEUDO_ZAMES_MSAT_A_I8:
-  case RISCV::PSEUDO_ZAMES_MSAT_A_FP8E4:
-  case RISCV::PSEUDO_ZAMES_MSAT_A_FP8E5:
-  case RISCV::PSEUDO_ZAMES_MSAT_A_F16:
-  case RISCV::PSEUDO_ZAMES_MSAT_A_BF16: {
-    emitZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
-                    MI.getOperand(3).getReg());
-    BuildMI(MBB, MBBI, DL, TII->get(RISCV::ZAMES_MSAT))
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_I8:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_FP8E4:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_FP8E5:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_F16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_BF16: {
+    emitXSAIZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
+                        MI.getOperand(3).getReg());
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::XSAI_ZAMES_MSAT))
         .add(MI.getOperand(0))
         .add(MI.getOperand(1))
         .add(MI.getOperand(2))
         .cloneMemRefs(MI);
     break;
   }
-  case RISCV::PSEUDO_ZAMES_MSB_B_I8:
-  case RISCV::PSEUDO_ZAMES_MSB_B_FP8E4:
-  case RISCV::PSEUDO_ZAMES_MSB_B_FP8E5:
-  case RISCV::PSEUDO_ZAMES_MSB_B_F16:
-  case RISCV::PSEUDO_ZAMES_MSB_B_BF16: {
-    emitZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
-                    MI.getOperand(3).getReg());
-    BuildMI(MBB, MBBI, DL, TII->get(RISCV::ZAMES_MSB))
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_I8:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_FP8E4:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_FP8E5:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_F16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_BF16: {
+    emitXSAIZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
+                        MI.getOperand(3).getReg());
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::XSAI_ZAMES_MSB))
         .add(MI.getOperand(0))
         .add(MI.getOperand(1))
         .add(MI.getOperand(2))
         .cloneMemRefs(MI);
     break;
   }
-  case RISCV::PSEUDO_ZAMES_MSBT_B_I8:
-  case RISCV::PSEUDO_ZAMES_MSBT_B_FP8E4:
-  case RISCV::PSEUDO_ZAMES_MSBT_B_FP8E5:
-  case RISCV::PSEUDO_ZAMES_MSBT_B_F16:
-  case RISCV::PSEUDO_ZAMES_MSBT_B_BF16: {
-    emitZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
-                    MI.getOperand(3).getReg());
-    BuildMI(MBB, MBBI, DL, TII->get(RISCV::ZAMES_MSBT))
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_I8:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_FP8E4:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_FP8E5:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_F16:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_BF16: {
+    emitXSAIZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
+                        MI.getOperand(3).getReg());
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::XSAI_ZAMES_MSBT))
         .add(MI.getOperand(0))
         .add(MI.getOperand(1))
         .add(MI.getOperand(2))
         .cloneMemRefs(MI);
     break;
   }
-  case RISCV::PSEUDO_ZAMES_MSCT_C_I32:
-  case RISCV::PSEUDO_ZAMES_MSCT_C_F32: {
-    emitZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
-                    MI.getOperand(3).getReg());
-    BuildMI(MBB, MBBI, DL, TII->get(RISCV::ZAMES_MSCT))
+  case RISCV::PSEUDO_XSAI_ZAMES_MSCT_C_I32:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSCT_C_F32: {
+    emitXSAIZamesConfig(TII, MBB, MBBI, DL, MI.getOperand(0).getReg(),
+                        MI.getOperand(3).getReg());
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::XSAI_ZAMES_MSCT))
         .add(MI.getOperand(0))
         .add(MI.getOperand(1))
         .add(MI.getOperand(2))
