@@ -197,23 +197,23 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
   }
 
   if (Subtarget.hasZames()) {
-    addRegisterClass(MVT::riscv_xsai_ame_tile_i8,
+    addRegisterClass(MVT::riscv_xsai_zames_tile_i8,
                      &RISCV::XSAI_ZAMES_TileRegRegClass);
-    addRegisterClass(MVT::riscv_xsai_ame_tile_i32,
+    addRegisterClass(MVT::riscv_xsai_zames_tile_i32,
                      &RISCV::XSAI_ZAMES_AccRegRegClass);
-    addRegisterClass(MVT::riscv_xsai_ame_tile_fp8e4,
+    addRegisterClass(MVT::riscv_xsai_zames_tile_fp8e4,
                      &RISCV::XSAI_ZAMES_TileRegRegClass);
-    addRegisterClass(MVT::riscv_xsai_ame_tile_fp8e5,
+    addRegisterClass(MVT::riscv_xsai_zames_tile_fp8e5,
                      &RISCV::XSAI_ZAMES_TileRegRegClass);
-    addRegisterClass(MVT::riscv_xsai_ame_tile_f16,
+    addRegisterClass(MVT::riscv_xsai_zames_tile_f16,
                      &RISCV::XSAI_ZAMES_TileRegRegClass);
-    addRegisterClass(MVT::riscv_xsai_ame_tile_bf16,
+    addRegisterClass(MVT::riscv_xsai_zames_tile_bf16,
                      &RISCV::XSAI_ZAMES_TileRegRegClass);
-    addRegisterClass(MVT::riscv_xsai_ame_tile_f32,
+    addRegisterClass(MVT::riscv_xsai_zames_tile_f32,
                      &RISCV::XSAI_ZAMES_AccRegRegClass);
   }
   if (Subtarget.hasZmasync())
-    addRegisterClass(MVT::riscv_xsai_ame_sync,
+    addRegisterClass(MVT::riscv_xsai_zmasync_sync,
                      &RISCV::XSAI_ZMASYNC_SyncRRegClass);
 
   static const MVT::SimpleValueType BoolVecVTs[] = {
@@ -2302,12 +2302,12 @@ void RISCVTargetLowering::getTgtMemIntrinsic(
     if (!TargetTy)
       return MVT(MVT::Other);
     return StringSwitch<MVT>(TargetTy->getName())
-        .Cases({"riscv.xsai.ame.tile.int8", "riscv.xsai.ame.tile.fp8e4",
-                "riscv.xsai.ame.tile.fp8e5"},
+        .Cases({"riscv.xsai.zames.tile.int8", "riscv.xsai.zames.tile.fp8e4",
+                "riscv.xsai.zames.tile.fp8e5"},
                MVT::i8)
-        .Cases({"riscv.xsai.ame.tile.fp16", "riscv.xsai.ame.tile.bf16"},
+        .Cases({"riscv.xsai.zames.tile.fp16", "riscv.xsai.zames.tile.bf16"},
                MVT::i16)
-        .Cases({"riscv.xsai.ame.tile.int32", "riscv.xsai.ame.tile.fp32"},
+        .Cases({"riscv.xsai.zames.tile.int32", "riscv.xsai.zames.tile.fp32"},
                MVT::i32)
         .Default(MVT::Other);
   };

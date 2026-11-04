@@ -56,14 +56,14 @@ foreach Index = 0-15 in {
 
 } // End Namespace = "RISCV"
 
-defvar xsai_mi8_t = riscv_xsai_ame_tile_i8;
-defvar xsai_mi32_t = riscv_xsai_ame_tile_i32;
-defvar xsai_msync_t = riscv_xsai_ame_sync;
-defvar xsai_mf8e4_t = riscv_xsai_ame_tile_fp8e4;
-defvar xsai_mf8e5_t = riscv_xsai_ame_tile_fp8e5;
-defvar xsai_mf16_t = riscv_xsai_ame_tile_f16;
-defvar xsai_mbf16_t = riscv_xsai_ame_tile_bf16;
-defvar xsai_mf32_t = riscv_xsai_ame_tile_f32;
+defvar xsai_mi8_t = riscv_xsai_zames_tile_i8;
+defvar xsai_mi32_t = riscv_xsai_zames_tile_i32;
+defvar xsai_msync_t = riscv_xsai_zmasync_sync;
+defvar xsai_mf8e4_t = riscv_xsai_zames_tile_fp8e4;
+defvar xsai_mf8e5_t = riscv_xsai_zames_tile_fp8e5;
+defvar xsai_mf16_t = riscv_xsai_zames_tile_f16;
+defvar xsai_mbf16_t = riscv_xsai_zames_tile_bf16;
+defvar xsai_mf32_t = riscv_xsai_zames_tile_f32;
 
 // Tile Register class (tr0-tr3)
 // Note: Size is set to 256 as a placeholder; actual size depends on MLEN

@@ -981,14 +981,14 @@ Expected<TargetExtType *> TargetExtType::checkParams(TargetExtType *TTy) {
         "target extension type riscv.vector.tuple should have one "
         "type parameter and one integer parameter");
 
-  if ((TTy->Name == "riscv.xsai.ame.tile.int8" ||
-       TTy->Name == "riscv.xsai.ame.tile.int32" ||
-       TTy->Name == "riscv.xsai.ame.tile.fp8e4" ||
-       TTy->Name == "riscv.xsai.ame.tile.fp8e5" ||
-       TTy->Name == "riscv.xsai.ame.tile.fp16" ||
-       TTy->Name == "riscv.xsai.ame.tile.bf16" ||
-       TTy->Name == "riscv.xsai.ame.tile.fp32" ||
-       TTy->Name == "riscv.xsai.ame.sync") &&
+  if ((TTy->Name == "riscv.xsai.zames.tile.int8" ||
+       TTy->Name == "riscv.xsai.zames.tile.int32" ||
+       TTy->Name == "riscv.xsai.zames.tile.fp8e4" ||
+       TTy->Name == "riscv.xsai.zames.tile.fp8e5" ||
+       TTy->Name == "riscv.xsai.zames.tile.fp16" ||
+       TTy->Name == "riscv.xsai.zames.tile.bf16" ||
+       TTy->Name == "riscv.xsai.zames.tile.fp32" ||
+       TTy->Name == "riscv.xsai.zmasync.sync") &&
       (TTy->getNumTypeParameters() != 0 || TTy->getNumIntParameters() != 0))
     return createStringError("target extension type " + TTy->Name +
                              " should have no parameters");
@@ -1089,17 +1089,18 @@ static TargetTypeInfo getTargetTypeInfo(const TargetExtType *Ty) {
         TargetExtType::CanBeLocal, TargetExtType::HasZeroInit);
   }
 
-  if (Name == "riscv.xsai.ame.tile.int8" ||
-      Name == "riscv.xsai.ame.tile.int32" ||
-      Name == "riscv.xsai.ame.tile.fp8e4" ||
-      Name == "riscv.xsai.ame.tile.fp8e5" ||
-      Name == "riscv.xsai.ame.tile.fp16" ||
-      Name == "riscv.xsai.ame.tile.bf16" || Name == "riscv.xsai.ame.tile.fp32")
+  if (Name == "riscv.xsai.zames.tile.int8" ||
+      Name == "riscv.xsai.zames.tile.int32" ||
+      Name == "riscv.xsai.zames.tile.fp8e4" ||
+      Name == "riscv.xsai.zames.tile.fp8e5" ||
+      Name == "riscv.xsai.zames.tile.fp16" ||
+      Name == "riscv.xsai.zames.tile.bf16" ||
+      Name == "riscv.xsai.zames.tile.fp32")
     return TargetTypeInfo(FixedVectorType::get(Type::getInt8Ty(C), 16),
                           TargetExtType::CanBeLocal,
                           TargetExtType::HasZeroInit);
 
-  if (Name == "riscv.xsai.ame.sync")
+  if (Name == "riscv.xsai.zmasync.sync")
     return TargetTypeInfo(Type::getInt64Ty(C), TargetExtType::CanBeLocal,
                           TargetExtType::HasZeroInit);
 
