@@ -18,7 +18,7 @@
 ; RUN: not llvm-as %t/range-mgetcfg-neg.ll -o /dev/null
 
 ; Note: an overload suffix that disagrees with the argument types (e.g.
-; msa.triscv.xsai.ame.tile.int8t taking an int32 tile) is NOT a verifier error —
+; msa.triscv.xsai.zames.tile.int8t taking an int32 tile) is NOT a verifier error —
 ; the parser re-mangles the name from the argument types. Signature
 ; violations must therefore probe arity/type/immarg constraints.
 
@@ -33,28 +33,28 @@ define i64 @f(i64 %m) {
 
 ;--- whole-load-stride.ll
 ; .whole loads are pointer-only; a stride operand is not allowed.
-declare target("riscv.xsai.ame.tile.int8") @llvm.riscv.xsai.zames.mla.whole.triscv.xsai.ame.tile.int8t(ptr, i64)
+declare target("riscv.xsai.zames.tile.int8") @llvm.riscv.xsai.zames.mla.whole.triscv.xsai.zames.tile.int8t(ptr, i64)
 
-define target("riscv.xsai.ame.tile.int8") @f(ptr %p, i64 %s) {
-  %r = call target("riscv.xsai.ame.tile.int8") @llvm.riscv.xsai.zames.mla.whole.triscv.xsai.ame.tile.int8t(ptr %p, i64 %s)
-  ret target("riscv.xsai.ame.tile.int8") %r
+define target("riscv.xsai.zames.tile.int8") @f(ptr %p, i64 %s) {
+  %r = call target("riscv.xsai.zames.tile.int8") @llvm.riscv.xsai.zames.mla.whole.triscv.xsai.zames.tile.int8t(ptr %p, i64 %s)
+  ret target("riscv.xsai.zames.tile.int8") %r
 }
 
 ;--- acquire-wrong-ret.ll
 ; macquire returns void.
-declare target("riscv.xsai.ame.sync") @llvm.riscv.xsai.zmasync.macquire.triscv.xsai.ame.synct(target("riscv.xsai.ame.sync"), i64)
+declare target("riscv.xsai.zmasync.sync") @llvm.riscv.xsai.zmasync.macquire.triscv.xsai.zmasync.synct(target("riscv.xsai.zmasync.sync"), i64)
 
-define target("riscv.xsai.ame.sync") @f(target("riscv.xsai.ame.sync") %s, i64 %sem) {
-  %r = call target("riscv.xsai.ame.sync") @llvm.riscv.xsai.zmasync.macquire.triscv.xsai.ame.synct(target("riscv.xsai.ame.sync") %s, i64 %sem)
-  ret target("riscv.xsai.ame.sync") %r
+define target("riscv.xsai.zmasync.sync") @f(target("riscv.xsai.zmasync.sync") %s, i64 %sem) {
+  %r = call target("riscv.xsai.zmasync.sync") @llvm.riscv.xsai.zmasync.macquire.triscv.xsai.zmasync.synct(target("riscv.xsai.zmasync.sync") %s, i64 %sem)
+  ret target("riscv.xsai.zmasync.sync") %r
 }
 
 ;--- whole-store-stride.ll
 ; .whole stores take tile + pointer only.
-declare void @llvm.riscv.xsai.zames.msa.whole.triscv.xsai.ame.tile.int8t(target("riscv.xsai.ame.tile.int8"), ptr, i64)
+declare void @llvm.riscv.xsai.zames.msa.whole.triscv.xsai.zames.tile.int8t(target("riscv.xsai.zames.tile.int8"), ptr, i64)
 
-define void @f(target("riscv.xsai.ame.tile.int8") %t, ptr %p, i64 %s) {
-  call void @llvm.riscv.xsai.zames.msa.whole.triscv.xsai.ame.tile.int8t(target("riscv.xsai.ame.tile.int8") %t, ptr %p, i64 %s)
+define void @f(target("riscv.xsai.zames.tile.int8") %t, ptr %p, i64 %s) {
+  call void @llvm.riscv.xsai.zames.msa.whole.triscv.xsai.zames.tile.int8t(target("riscv.xsai.zames.tile.int8") %t, ptr %p, i64 %s)
   ret void
 }
 
