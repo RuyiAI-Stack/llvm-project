@@ -10,17 +10,17 @@
 ; CHECK: error: {{.*}}ZAMES/ZMASYNC code generation requires RV64
 ; CHECK-NOT: Cannot select
 
-define target("riscv.ame.tile.int8") @rv32_zames(ptr %p, i64 %stride) {
-  %t = call target("riscv.ame.tile.int8") @llvm.riscv.zames.mla.triscv.ame.tile.int8t(ptr %p, i64 %stride)
-  ret target("riscv.ame.tile.int8") %t
+define target("riscv.xsai.ame.tile.int8") @rv32_zames(ptr %p, i64 %stride) {
+  %t = call target("riscv.xsai.ame.tile.int8") @llvm.riscv.xsai.zames.mla.triscv.xsai.ame.tile.int8t(ptr %p, i64 %stride)
+  ret target("riscv.xsai.ame.tile.int8") %t
 }
 
 define void @rv32_zmasync() {
-  %s = call target("riscv.ame.sync") @llvm.riscv.zmasync.msyncregreset()
-  call void @llvm.riscv.zmasync.mfence()
+  %s = call target("riscv.xsai.ame.sync") @llvm.riscv.xsai.zmasync.msyncregreset()
+  call void @llvm.riscv.xsai.zmasync.mfence()
   ret void
 }
 
-declare target("riscv.ame.tile.int8") @llvm.riscv.zames.mla.triscv.ame.tile.int8t(ptr, i64)
-declare target("riscv.ame.sync") @llvm.riscv.zmasync.msyncregreset()
-declare void @llvm.riscv.zmasync.mfence()
+declare target("riscv.xsai.ame.tile.int8") @llvm.riscv.xsai.zames.mla.triscv.xsai.ame.tile.int8t(ptr, i64)
+declare target("riscv.xsai.ame.sync") @llvm.riscv.xsai.zmasync.msyncregreset()
+declare void @llvm.riscv.xsai.zmasync.mfence()

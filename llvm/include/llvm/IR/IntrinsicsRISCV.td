@@ -2500,6 +2500,6 @@ include "llvm/IR/IntrinsicsRISCVXAME.td"
 include "llvm/IR/IntrinsicsRISCVXTExt.td"
 include "llvm/IR/IntrinsicsRISCVBuckyballExt.td"
 
-// ZAMES/ZMASYNC extensions
+// XSAI ZAMES/ZMASYNC extensions
 //===----------------------------------------------------------------------===//
-include "llvm/IR/IntrinsicsRISCVZamesZmasync.td"
+include "llvm/IR/IntrinsicsRISCVXSAIZamesZmasync.td"
