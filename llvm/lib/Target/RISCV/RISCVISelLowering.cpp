@@ -142,7 +142,20 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
       addRegisterClass(VT, &RISCV::TileRegRegClass);
 
     static const MVT::SimpleValueType BOSCAccExtraTypes[] = {
-      MVT::nxv32i64, MVT::nxv64i64, MVT::nxv128i64, MVT::nxv64bf16,
+        // nxv32i32 is also in BOSCIntTypes, so the loop above first records
+        // TileReg. addRegisterClass overwrites that default, and repeating the
+        // type here makes AccReg the class used when a value is created from
+        // its type alone. The important case is the PHI of a loop-carried i32
+        // accumulator. mlce32.m, mqma.* and msce32.m already constrain their
+        // accumulator operands and results to AccReg, so a TileReg default
+        // inserted a copy between the two register files on every loop edge.
+        // That cross-file copy is not one AME instruction. nxv32i32 is wider
+        // than RVV's largest i32 type (nxv16i32), so enabling V does not
+        // register it again and does not replace this AccReg default. Types
+        // that RVV does register are recorded later and keep their VR default.
+        // The remaining entries are accumulator-only and are unchanged.
+        MVT::nxv32i32,  MVT::nxv32i64,  MVT::nxv64i64,
+        MVT::nxv128i64, MVT::nxv64bf16,
     };
     for (MVT VT : BOSCAccExtraTypes)
       addRegisterClass(VT, &RISCV::AccRegRegClass);

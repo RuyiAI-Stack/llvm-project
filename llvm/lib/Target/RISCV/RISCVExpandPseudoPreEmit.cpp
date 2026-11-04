@@ -59,6 +59,9 @@ class RISCVExpandPseudoPreEmitImpl final : public RISCVExpandPseudoImplBase {
 
   bool expandPseudoClearFPR64(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator MBBI) const;
+
+  bool expandBOSCAMEOrderedTile(MachineBasicBlock &MBB,
+                                MachineBasicBlock::iterator MBBI) const;
 };
 
 class RISCVExpandPseudoPreEmitLegacy : public MachineFunctionPass {
@@ -85,6 +88,13 @@ bool RISCVExpandPseudoPreEmitImpl::expandMI(
   // expanded instructions for each pseudo is correct in the Size field of the
   // tablegen definition for the pseudo.
   switch (MBBI->getOpcode()) {
+  case RISCV::PseudoBOSCAMEOrderedLoadA:
+  case RISCV::PseudoBOSCAMEOrderedLoadB:
+  case RISCV::PseudoBOSCAMEOrderedLoadAcc:
+  case RISCV::PseudoBOSCAMEOrderedMMA:
+  case RISCV::PseudoBOSCAMEOrderedStoreAcc:
+  case RISCV::PseudoBOSCAMEOrderedZeroAcc:
+    return expandBOSCAMEOrderedTile(MBB, MBBI);
   case RISCV::PseudoMV_FPR16INX:
     return expandMV_FPR16INX(MBB, MBBI);
   case RISCV::PseudoMV_FPR32INX:
@@ -170,6 +180,98 @@ bool RISCVExpandPseudoPreEmitImpl::expandMI(
   }
 
   return false;
+}
+
+// Expand one ordered tile pseudo into the configuration writes and the single
+// consumer, surrounded by iorw fences. This runs after scheduling and register
+// allocation, so the matrix register numbers chosen for the pseudo are copied
+// onto the real instruction. Expansion introduces no temporaries and no
+// mmve copy. Loads configure tile shape then mtype and emit mlae8.m, mlbe8.m
+// or mlce32.m. MMA configures m, n, k and mtype, then mqma.b.mm on the tied
+// accumulator. Store configures m, n and mtype, then msce32.m. Zero configures
+// the accumulator shape and defines it with mwsub.h.mm of that register with
+// both sources undef, which does not read the previous contents. The closing
+// fence publishes the configuration and the consumer before later tile ops.
+bool RISCVExpandPseudoPreEmitImpl::expandBOSCAMEOrderedTile(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI) const {
+  MachineInstr &MI = *MBBI;
+  DebugLoc DL = MI.getDebugLoc();
+  auto fence = [&] {
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::FENCE)).addImm(3).addImm(3);
+  };
+  auto config = [&](unsigned Opcode, unsigned Operand) {
+    BuildMI(MBB, MBBI, DL, TII->get(Opcode), RISCV::X0)
+        .addReg(MI.getOperand(Operand).getReg());
+  };
+
+  fence();
+  switch (MI.getOpcode()) {
+  case RISCV::PseudoBOSCAMEOrderedLoadA:
+  case RISCV::PseudoBOSCAMEOrderedLoadB:
+  case RISCV::PseudoBOSCAMEOrderedLoadAcc: {
+    unsigned Opcode = MI.getOpcode();
+    config(Opcode == RISCV::PseudoBOSCAMEOrderedLoadB
+               ? RISCV::BOSC_AME_MSETTILEN
+               : RISCV::BOSC_AME_MSETTILEM,
+           3);
+    config(Opcode == RISCV::PseudoBOSCAMEOrderedLoadAcc
+               ? RISCV::BOSC_AME_MSETTILEN
+               : RISCV::BOSC_AME_MSETTILEK,
+           4);
+    config(RISCV::BOSC_AME_MSETTYPE, 5);
+    unsigned LoadOpcode =
+        Opcode == RISCV::PseudoBOSCAMEOrderedLoadA   ? RISCV::BOSC_AME_MLAE8_M
+        : Opcode == RISCV::PseudoBOSCAMEOrderedLoadB ? RISCV::BOSC_AME_MLBE8_M
+                                                     : RISCV::BOSC_AME_MLCE32_M;
+    BuildMI(MBB, MBBI, DL, TII->get(LoadOpcode))
+        .add(MI.getOperand(0))
+        .addReg(MI.getOperand(1).getReg())
+        .addReg(MI.getOperand(2).getReg())
+        .cloneMemRefs(MI);
+    break;
+  }
+  case RISCV::PseudoBOSCAMEOrderedMMA:
+    config(RISCV::BOSC_AME_MSETTILEM, 4);
+    config(RISCV::BOSC_AME_MSETTILEN, 5);
+    config(RISCV::BOSC_AME_MSETTILEK, 6);
+    config(RISCV::BOSC_AME_MSETTYPE, 7);
+    assert(MI.getOperand(0).getReg() == MI.getOperand(1).getReg() &&
+           "ordered MMA must use its tied accumulator");
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::BOSC_AME_MQMA_B_MM))
+        .add(MI.getOperand(0))
+        .add(MI.getOperand(1))
+        .add(MI.getOperand(2))
+        .add(MI.getOperand(3));
+    break;
+  case RISCV::PseudoBOSCAMEOrderedStoreAcc:
+    config(RISCV::BOSC_AME_MSETTILEM, 3);
+    config(RISCV::BOSC_AME_MSETTILEN, 4);
+    config(RISCV::BOSC_AME_MSETTYPE, 5);
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::BOSC_AME_MSCE32_M))
+        .add(MI.getOperand(0))
+        .addReg(MI.getOperand(1).getReg())
+        .addReg(MI.getOperand(2).getReg())
+        .cloneMemRefs(MI);
+    break;
+  case RISCV::PseudoBOSCAMEOrderedZeroAcc: {
+    config(RISCV::BOSC_AME_MSETTILEM, 1);
+    config(RISCV::BOSC_AME_MSETTILEN, 2);
+    config(RISCV::BOSC_AME_MSETTYPE, 3);
+    Register Acc = MI.getOperand(0).getReg();
+    // The board-supported widening self-subtraction defines the register;
+    // neither source reads the previous (possibly uninitialized) contents.
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::BOSC_AME_MWSUB_H_MM))
+        .add(MI.getOperand(0))
+        .addReg(Acc, RegState::Undef)
+        .addReg(Acc, RegState::Undef);
+    break;
+  }
+  default:
+    llvm_unreachable("not a configured BOSCAME tile pseudo");
+  }
+  fence();
+  MI.eraseFromParent();
+  return true;
 }
 
 bool RISCVExpandPseudoPreEmitImpl::expandCCOp(

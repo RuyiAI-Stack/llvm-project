@@ -2206,6 +2206,80 @@ def BOSCAME_I32_TO_I64_MMA : BOSCAMEWidenInfo<BOSCAME_I64, BOSCAME_I32, "W">;
 def BOSCAME_F16_TO_F32 : BOSCAMEWidenInfo<BOSCAME_F32, BOSCAME_F16, "HF">;
 def BOSCAME_F32_TO_F64 : BOSCAMEWidenInfo<BOSCAME_F64, BOSCAME_F32, "F">;
 
+// Instruction selection lowers the ordered intrinsics to these pseudos under
+// +xboscame on RV64. The pseudos stay intact through machine scheduling and
+// register allocation. Tile and accumulator operands use the allocatable
+// register classes, so the allocator chooses tr0-tr7 and acc0-acc7 instead of
+// fixed slots. The MMA ties its result to its input accumulator, which keeps
+// mqma.b.mm in place and avoids a matrix copy. hasSideEffects plus mayLoad
+// and mayStore also order an MMA against a later input load whose addresses
+// do not alias, because the tile-shape and mtype CSRs are not represented as
+// memory. Defs names those CSRs. Expand only in RISCVExpandPseudoPreEmit.
+// Size is the byte length of every instruction that expansion emits. Branch
+// relaxation runs before that expansion and would otherwise count each pseudo
+// as 4 bytes, missing an out-of-range branch. Each emitted instruction is 4
+// bytes: a load or store or zero is two fences, three configurations and one
+// consumer (24 bytes); an MMA adds a fourth configuration (28 bytes).
+let Predicates = [HasVendorXBOSCAME, IsRV64], hasSideEffects = 1,
+    mayLoad = 1, mayStore = 1,
+    Defs = [MTYPE, TILEM, TILEN, TILEK] in {
+  class BOSCAMEOrderedLoad<RegisterClass RC>
+      : Pseudo<(outs RC:$matrix),
+               (ins GPR:$base, GPR:$stride, GPR:$dim0, GPR:$dim1,
+                    GPR:$mtype), []> {
+    let Size = 24; // two fences, three configurations, one load
+  }
+  def PseudoBOSCAMEOrderedLoadA : BOSCAMEOrderedLoad<TileReg>;
+  def PseudoBOSCAMEOrderedLoadB : BOSCAMEOrderedLoad<TileReg>;
+  def PseudoBOSCAMEOrderedLoadAcc : BOSCAMEOrderedLoad<AccReg>;
+
+  def PseudoBOSCAMEOrderedMMA
+      : Pseudo<(outs AccReg:$matrix),
+               (ins AccReg:$acc, TileReg:$lhs, TileReg:$rhs, GPR:$m,
+                    GPR:$n, GPR:$k, GPR:$mtype), []> {
+    let Constraints = "$matrix = $acc";
+    let Size = 28; // two fences, four configurations, one MMA
+  }
+  def PseudoBOSCAMEOrderedStoreAcc
+      : Pseudo<(outs),
+               (ins AccReg:$matrix, GPR:$base, GPR:$stride, GPR:$m,
+                    GPR:$n, GPR:$mtype), []> {
+    let Size = 24; // two fences, three configurations, one store
+  }
+  def PseudoBOSCAMEOrderedZeroAcc
+      : Pseudo<(outs AccReg:$matrix),
+               (ins GPR:$m, GPR:$n, GPR:$mtype), []> {
+    let Size = 24; // two fences, three configurations, one mwsub.h.mm
+  }
+}
+
+let Predicates = [HasVendorXBOSCAME, IsRV64] in {
+  foreach Role = ["A", "B"] in
+    def : Pat<(nxv128i8
+                (!cast<SDPatternOperator>("int_riscv_bosc_ordered_load_" #
+                                           !tolower(Role))
+                  iPTR:$base, i64:$stride, i64:$dim0, i64:$dim1, i64:$mtype)),
+              (!cast<Instruction>("PseudoBOSCAMEOrderedLoad" # Role)
+                iPTR:$base, i64:$stride, i64:$dim0, i64:$dim1, i64:$mtype)>;
+  def : Pat<(nxv32i32 (int_riscv_bosc_ordered_load_acc iPTR:$base,
+                      i64:$stride, i64:$m, i64:$n, i64:$mtype)),
+            (PseudoBOSCAMEOrderedLoadAcc iPTR:$base, i64:$stride,
+                                        i64:$m, i64:$n, i64:$mtype)>;
+  def : Pat<(nxv32i32 (int_riscv_bosc_ordered_mma
+                        (nxv32i32 AccReg:$acc),
+                        (nxv128i8 TileReg:$lhs), (nxv128i8 TileReg:$rhs),
+                        i64:$m, i64:$n, i64:$k, i64:$mtype)),
+            (PseudoBOSCAMEOrderedMMA AccReg:$acc, TileReg:$lhs, TileReg:$rhs,
+                                    i64:$m, i64:$n, i64:$k, i64:$mtype)>;
+  def : Pat<(int_riscv_bosc_ordered_store_acc (nxv32i32 AccReg:$matrix),
+              iPTR:$base, i64:$stride, i64:$m, i64:$n, i64:$mtype),
+            (PseudoBOSCAMEOrderedStoreAcc AccReg:$matrix, iPTR:$base,
+                i64:$stride, i64:$m, i64:$n, i64:$mtype)>;
+  def : Pat<(nxv32i32 (int_riscv_bosc_ordered_zero_acc i64:$m, i64:$n,
+                                                    i64:$mtype)),
+            (PseudoBOSCAMEOrderedZeroAcc i64:$m, i64:$n, i64:$mtype)>;
+}
+
 // Immediate operands marked ImmArg in the LLVM intrinsic are lowered to
 // TargetConstant nodes.  Use TImmLeaf for the DAG pattern so the matcher
 // accepts those target constants (uimm10 is an ImmLeaf used by asm operands).

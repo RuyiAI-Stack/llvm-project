@@ -24,6 +24,42 @@
 
 // Matrix configuration intrinsics (with immediate)
 let TargetPrefix = "riscv" in {
+  // Each configured tile operation is one ordered side effect. The mtype and
+  // tile-shape CSRs are hidden machine state: writing them and then executing
+  // the load, MMA, store or clear must stay together through scheduling and
+  // register allocation. Selection therefore matches these intrinsics to one
+  // pseudo, and RISCVExpandPseudoPreEmit expands that pseudo only at pre-emit.
+  // IntrReadMem, IntrWriteMem, IntrArgMemOnly and IntrNoMem are intentionally
+  // not used. An MMA has to stay ordered with a later input load even when
+  // their explicit memory ranges cannot alias; IntrHasSideEffects provides
+  // that order. Operands are (base, byte stride, dim0, dim1, mtype) for the
+  // loads. ordered_mma takes the tied accumulator plus lhs, rhs, m, n, k and
+  // mtype. ordered_store_acc writes one accumulator. ordered_zero_acc defines
+  // an accumulator from m, n and mtype and does not read the old value or C.
+  // load.{a,b,acc}(base, byte_stride, dim0, dim1, mtype)
+  foreach Role = ["a", "b", "acc"] in
+    def int_riscv_bosc_ordered_load_#Role
+        : Intrinsic<[llvm_anymatrix_ty],
+                    [llvm_ptr_ty, llvm_i64_ty, llvm_i64_ty, llvm_i64_ty,
+                     llvm_i64_ty], [IntrHasSideEffects]>;
+
+  def int_riscv_bosc_ordered_mma
+      : Intrinsic<[llvm_anymatrix_ty],
+                  [LLVMMatchType<0>, llvm_anymatrix_ty, LLVMMatchType<1>,
+                   llvm_i64_ty, llvm_i64_ty, llvm_i64_ty, llvm_i64_ty],
+                  [IntrHasSideEffects]>;
+
+  def int_riscv_bosc_ordered_store_acc
+      : Intrinsic<[], [llvm_anymatrix_ty, llvm_ptr_ty, llvm_i64_ty,
+                       llvm_i64_ty, llvm_i64_ty, llvm_i64_ty],
+                  [IntrHasSideEffects]>;
+
+  // A defining self-clear: no input accumulator and no memory read of C.
+  def int_riscv_bosc_ordered_zero_acc
+      : Intrinsic<[llvm_anymatrix_ty],
+                  [llvm_i64_ty, llvm_i64_ty, llvm_i64_ty],
+                  [IntrHasSideEffects]>;
+
   // Configuration Register Instructions
   // msettype - Set the mtype CSR based on register value
   def int_riscv_bosc_msettype : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>],
