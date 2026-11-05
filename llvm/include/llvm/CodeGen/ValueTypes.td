@@ -409,6 +409,15 @@ def amdgpuBufferStridedPointer : ValueType<192>;
 
 def aarch64mfp8 : ValueType<8>; // 8-bit value in FPR (AArch64)
 
+def riscv_xsai_zames_tile_i8  : ValueType<0>; // XSAI ZAMES tile with i8 elements
+def riscv_xsai_zames_tile_i32 : ValueType<0>; // XSAI ZAMES tile with i32 elements
+def riscv_xsai_zmasync_sync     : ValueType<0>; // XSAI ZMASYNC sync register
+def riscv_xsai_zames_tile_fp8e4 : ValueType<0>; // XSAI ZAMES tile with fp8e4m3 elements
+def riscv_xsai_zames_tile_fp8e5 : ValueType<0>; // XSAI ZAMES tile with fp8e5m2 elements
+def riscv_xsai_zames_tile_f16   : ValueType<0>; // XSAI ZAMES tile with fp16 elements
+def riscv_xsai_zames_tile_bf16  : ValueType<0>; // XSAI ZAMES tile with bf16 elements
+def riscv_xsai_zames_tile_f32   : ValueType<0>; // XSAI ZAMES tile with fp32 elements
+
 // CHERI capabilities. Pointer-like values that carry additional metadata
 // for enforcing safety guarantees on CHERI-enabled targets.
 def c64 : VTCheriCapability<64>;   // 64-bit CHERI capability value

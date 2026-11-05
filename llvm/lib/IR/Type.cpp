@@ -981,6 +981,18 @@ Expected<TargetExtType *> TargetExtType::checkParams(TargetExtType *TTy) {
         "target extension type riscv.vector.tuple should have one "
         "type parameter and one integer parameter");
 
+  if ((TTy->Name == "riscv.xsai.zames.tile.int8" ||
+       TTy->Name == "riscv.xsai.zames.tile.int32" ||
+       TTy->Name == "riscv.xsai.zames.tile.fp8e4" ||
+       TTy->Name == "riscv.xsai.zames.tile.fp8e5" ||
+       TTy->Name == "riscv.xsai.zames.tile.fp16" ||
+       TTy->Name == "riscv.xsai.zames.tile.bf16" ||
+       TTy->Name == "riscv.xsai.zames.tile.fp32" ||
+       TTy->Name == "riscv.xsai.zmasync.sync") &&
+      (TTy->getNumTypeParameters() != 0 || TTy->getNumIntParameters() != 0))
+    return createStringError("target extension type " + TTy->Name +
+                             " should have no parameters");
+
   // Opaque types in the AMDGPU name space.
   if (TTy->Name == "amdgcn.named.barrier" &&
       (TTy->getNumTypeParameters() != 0 || TTy->getNumIntParameters() != 1)) {
@@ -1076,6 +1088,19 @@ static TargetTypeInfo getTargetTypeInfo(const TargetExtType *Ty) {
         ScalableVectorType::get(Type::getInt8Ty(C), TotalNumElts),
         TargetExtType::CanBeLocal, TargetExtType::HasZeroInit);
   }
+
+  // Native XSAI values are register-only SSA resources with no memory layout.
+  if (Name == "riscv.xsai.zames.tile.int8" ||
+      Name == "riscv.xsai.zames.tile.int32" ||
+      Name == "riscv.xsai.zames.tile.fp8e4" ||
+      Name == "riscv.xsai.zames.tile.fp8e5" ||
+      Name == "riscv.xsai.zames.tile.fp16" ||
+      Name == "riscv.xsai.zames.tile.bf16" ||
+      Name == "riscv.xsai.zames.tile.fp32")
+    return TargetTypeInfo(Type::getVoidTy(C));
+
+  if (Name == "riscv.xsai.zmasync.sync")
+    return TargetTypeInfo(Type::getVoidTy(C));
 
   // DirectX resources
   if (Name == "dx.Padding")

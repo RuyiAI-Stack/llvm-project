@@ -196,6 +196,26 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
       addRegisterClass(VT, &RISCV::MatrixRegRegClass);
   }
 
+  if (Subtarget.hasZames()) {
+    addRegisterClass(MVT::riscv_xsai_zames_tile_i8,
+                     &RISCV::XSAI_ZAMES_TileRegRegClass);
+    addRegisterClass(MVT::riscv_xsai_zames_tile_i32,
+                     &RISCV::XSAI_ZAMES_AccRegRegClass);
+    addRegisterClass(MVT::riscv_xsai_zames_tile_fp8e4,
+                     &RISCV::XSAI_ZAMES_TileRegRegClass);
+    addRegisterClass(MVT::riscv_xsai_zames_tile_fp8e5,
+                     &RISCV::XSAI_ZAMES_TileRegRegClass);
+    addRegisterClass(MVT::riscv_xsai_zames_tile_f16,
+                     &RISCV::XSAI_ZAMES_TileRegRegClass);
+    addRegisterClass(MVT::riscv_xsai_zames_tile_bf16,
+                     &RISCV::XSAI_ZAMES_TileRegRegClass);
+    addRegisterClass(MVT::riscv_xsai_zames_tile_f32,
+                     &RISCV::XSAI_ZAMES_AccRegRegClass);
+  }
+  if (Subtarget.hasZmasync())
+    addRegisterClass(MVT::riscv_xsai_zmasync_sync,
+                     &RISCV::XSAI_ZMASYNC_SyncRRegClass);
+
   static const MVT::SimpleValueType BoolVecVTs[] = {
       MVT::nxv1i1,  MVT::nxv2i1,  MVT::nxv4i1, MVT::nxv8i1,
       MVT::nxv16i1, MVT::nxv32i1, MVT::nxv64i1};
@@ -2276,6 +2296,44 @@ void RISCVTargetLowering::getTgtMemIntrinsic(
     Infos.push_back(Info);
   };
 
+  auto GetXSAIZamesMemoryVT = [&](bool IsStore) {
+    Type *TileTy = IsStore ? I.getArgOperand(0)->getType() : I.getType();
+    auto *TargetTy = dyn_cast<TargetExtType>(TileTy);
+    if (!TargetTy)
+      return MVT(MVT::Other);
+    return StringSwitch<MVT>(TargetTy->getName())
+        .Cases({"riscv.xsai.zames.tile.int8", "riscv.xsai.zames.tile.fp8e4",
+                "riscv.xsai.zames.tile.fp8e5"},
+               MVT::i8)
+        .Cases({"riscv.xsai.zames.tile.fp16", "riscv.xsai.zames.tile.bf16"},
+               MVT::i16)
+        .Cases({"riscv.xsai.zames.tile.int32", "riscv.xsai.zames.tile.fp32"},
+               MVT::i32)
+        .Default(MVT::Other);
+  };
+
+  auto SetXSAIZamesMemoryInfo = [&](unsigned PtrOp, bool IsStore,
+                                    bool UsePtrVal) {
+    Info.opc = IsStore ? ISD::INTRINSIC_VOID : ISD::INTRINSIC_W_CHAIN;
+    Info.memVT = GetXSAIZamesMemoryVT(IsStore);
+    if (Info.memVT == MVT::Other)
+      return;
+
+    const Value *Ptr = I.getArgOperand(PtrOp);
+    if (UsePtrVal)
+      Info.ptrVal = Ptr;
+    else
+      Info.fallbackAddressSpace = Ptr->getType()->getPointerAddressSpace();
+
+    Info.offset = 0;
+    Info.size = MemoryLocation::UnknownSize;
+    if (MaybeAlign Alignment = I.getParamAlign(PtrOp))
+      Info.align = Alignment;
+    Info.flags |=
+        IsStore ? MachineMemOperand::MOStore : MachineMemOperand::MOLoad;
+    Infos.push_back(Info);
+  };
+
   if (I.hasMetadata(LLVMContext::MD_nontemporal))
     Info.flags |= MachineMemOperand::MONonTemporal;
 
@@ -2603,6 +2661,42 @@ void RISCVTargetLowering::getTgtMemIntrinsic(
     Info.size = MemoryLocation::UnknownSize;
     Info.flags |= MachineMemOperand::MOStore;
     Infos.push_back(Info);
+    return;
+  case Intrinsic::riscv_xsai_zames_mla:
+  case Intrinsic::riscv_xsai_zames_mlat:
+  case Intrinsic::riscv_xsai_zames_mlb:
+  case Intrinsic::riscv_xsai_zames_mlbt:
+    SetXSAIZamesMemoryInfo(/*PtrOp*/ 0, /*IsStore*/ false,
+                           /*UsePtrVal*/ false);
+    return;
+  case Intrinsic::riscv_xsai_zames_mlc:
+  case Intrinsic::riscv_xsai_zames_mlct:
+    SetXSAIZamesMemoryInfo(/*PtrOp*/ 0, /*IsStore*/ false,
+                           /*UsePtrVal*/ false);
+    return;
+  case Intrinsic::riscv_xsai_zames_msa:
+  case Intrinsic::riscv_xsai_zames_msat:
+  case Intrinsic::riscv_xsai_zames_msb:
+  case Intrinsic::riscv_xsai_zames_msbt:
+    SetXSAIZamesMemoryInfo(/*PtrOp*/ 1, /*IsStore*/ true,
+                           /*UsePtrVal*/ false);
+    return;
+  case Intrinsic::riscv_xsai_zames_msc:
+  case Intrinsic::riscv_xsai_zames_msct:
+    SetXSAIZamesMemoryInfo(/*PtrOp*/ 1, /*IsStore*/ true,
+                           /*UsePtrVal*/ false);
+    return;
+  case Intrinsic::riscv_xsai_zames_mla_whole:
+  case Intrinsic::riscv_xsai_zames_mlb_whole:
+  case Intrinsic::riscv_xsai_zames_mlc_whole:
+    SetXSAIZamesMemoryInfo(/*PtrOp*/ 0, /*IsStore*/ false,
+                           /*UsePtrVal*/ true);
+    return;
+  case Intrinsic::riscv_xsai_zames_msa_whole:
+  case Intrinsic::riscv_xsai_zames_msb_whole:
+  case Intrinsic::riscv_xsai_zames_msc_whole:
+    SetXSAIZamesMemoryInfo(/*PtrOp*/ 1, /*IsStore*/ true,
+                           /*UsePtrVal*/ true);
     return;
   }
 }

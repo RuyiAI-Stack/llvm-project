@@ -1008,6 +1008,27 @@ def HasStdExtZvfbdota32f
       AssemblerPredicate<(all_of FeatureStdExtZvfbdota32f),
                          "'Zvfbdota32f' (FP32 batched dot-product extension)">;
 
+// Buddy matrix extensions
+
+def FeatureStdExtZames
+    : RISCVExtension<1, 0, "Buddy simplified matrix extension", [],
+                     "HasZames">;
+
+def FeatureStdExtZmasync
+    : RISCVExtension<1, 0, "Buddy matrix async sync extension",
+                     [FeatureStdExtZames],
+                     "HasZmasync">;
+
+def HasStdExtZames
+    : Predicate<"Subtarget->hasZames()">,
+      AssemblerPredicate<(all_of FeatureStdExtZames),
+                         "'ZAMES' (simplified matrix extension)">;
+
+def HasStdExtZmasync
+    : Predicate<"Subtarget->hasZmasync()">,
+      AssemblerPredicate<(all_of FeatureStdExtZmasync),
+                         "'ZMASYNC' (matrix async sync extension)">;
+
 // Vector instruction predicates
 
 def HasVInstructions    : Predicate<"Subtarget->hasVInstructions()">,

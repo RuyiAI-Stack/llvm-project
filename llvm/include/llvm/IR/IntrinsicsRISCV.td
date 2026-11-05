@@ -2498,3 +2498,7 @@ include "llvm/IR/IntrinsicsRISCVExt.td"
 include "llvm/IR/IntrinsicsRISCVBOSCExt.td"
 include "llvm/IR/IntrinsicsRISCVXTExt.td"
 include "llvm/IR/IntrinsicsRISCVBuckyballExt.td"
+
+// XSAI ZAMES/ZMASYNC extensions
+//===----------------------------------------------------------------------===//
+include "llvm/IR/IntrinsicsRISCVXSAIZamesZmasync.td"

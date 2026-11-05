@@ -17,7 +17,9 @@
 #include "RISCVSubtarget.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
 
@@ -48,6 +50,9 @@ class RISCVExpandPseudoPreRAImpl final : public RISCVExpandPseudoImplBase {
 
   bool expandLoadTLSDescAddress(MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator MBBI) const;
+
+  bool expandXSAIZamesConfigPseudo(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MBBI) const;
 };
 
 class RISCVExpandPseudoPreRALegacy : public MachineFunctionPass {
@@ -90,9 +95,538 @@ bool RISCVExpandPseudoPreRAImpl::expandMI(
     return expandLoadTLSGDAddress(MBB, MBBI);
   case RISCV::PseudoLA_TLSDESC:
     return expandLoadTLSDescAddress(MBB, MBBI);
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_I8_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_I8_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_I8_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_I8_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLC_C_I32_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLCT_C_I32_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_C_I32_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_I8_I32_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSC_C_I32_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_I8_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_I8_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_I8_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_I8_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSCT_C_I32_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_FP8E4_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_FP8E5_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_F16_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_BF16_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_FP8E4_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_FP8E5_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_F16_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_BF16_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_FP8E4_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_FP8E5_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_F16_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_BF16_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_FP8E4_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_FP8E5_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_F16_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_BF16_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLC_C_F32_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MLCT_C_F32_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_FP8E4_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_FP8E5_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_F16_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_BF16_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_FP8E4_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_FP8E5_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_F16_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_BF16_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_FP8E4_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_FP8E5_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_F16_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_BF16_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_FP8E4_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_FP8E5_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_F16_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_BF16_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSC_C_F32_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MSCT_C_F32_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_I8_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_FP8E4_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_FP8E5_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_F16_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_BF16_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_C_F32_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_I8_F32_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_FP8E4_F32_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_FP8E5_F32_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_F16_F32_PRE:
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_BF16_F32_PRE:
+    return expandXSAIZamesConfigPseudo(MBB, MBBI);
   }
 
   return false;
+}
+
+static constexpr int64_t XSAIZamesCfgI8 = 0x02;
+static constexpr int64_t XSAIZamesCfgI32 = 0x04;
+static constexpr int64_t XSAIZamesCfgF8E5 = 0x07;
+static constexpr int64_t XSAIZamesCfgF8E4 = 0x08;
+static constexpr int64_t XSAIZamesCfgF16 = 0x09;
+static constexpr int64_t XSAIZamesCfgBF16 = 0x0a;
+static constexpr int64_t XSAIZamesCfgF32 = 0x0c;
+
+static Register createXSAIZamesConfigPayload(const RISCVInstrInfo *TII,
+                                             MachineBasicBlock &MBB,
+                                             MachineBasicBlock::iterator MBBI,
+                                             DebugLoc DL, int64_t Payload) {
+  MachineFunction *MF = MBB.getParent();
+  Register ConfigReg =
+      MF->getRegInfo().createVirtualRegister(&RISCV::GPRRegClass);
+  BuildMI(MBB, MBBI, DL, TII->get(RISCV::ADDI), ConfigReg)
+      .addReg(RISCV::X0)
+      .addImm(Payload);
+  return ConfigReg;
+}
+
+// Expand a single-config _PRE pseudo: materialize the payload GPR, rebuild
+// the second-level pseudo with all original operands plus the payload
+// register, and carry the memory operands over.
+static void expandXSAIZamesPreRASingleConfig(const RISCVInstrInfo *TII,
+                                             MachineBasicBlock &MBB,
+                                             MachineBasicBlock::iterator MBBI,
+                                             MachineInstr &MI, unsigned NewOpc,
+                                             int64_t Payload) {
+  Register ConfigReg =
+      createXSAIZamesConfigPayload(TII, MBB, MBBI, MI.getDebugLoc(), Payload);
+  auto MIB = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(NewOpc));
+  for (const MachineOperand &MO : MI.operands())
+    MIB.add(MO);
+  MIB.addReg(ConfigReg);
+  MIB.cloneMemRefs(MI);
+}
+
+// Expand an mmacc _PRE pseudo: materialize the accumulator and matrix
+// payload GPRs and rebuild the second-level pseudo. The B and A matrices
+// always share the element type in every supported combination, so one
+// payload register feeds both config operands.
+static void expandXSAIZamesPreRAMMAcc(const RISCVInstrInfo *TII,
+                                      MachineBasicBlock &MBB,
+                                      MachineBasicBlock::iterator MBBI,
+                                      MachineInstr &MI, unsigned NewOpc,
+                                      int64_t AccPayload, int64_t MatPayload) {
+  DebugLoc DL = MI.getDebugLoc();
+  Register AccConfigReg =
+      createXSAIZamesConfigPayload(TII, MBB, MBBI, DL, AccPayload);
+  Register MatConfigReg =
+      createXSAIZamesConfigPayload(TII, MBB, MBBI, DL, MatPayload);
+  BuildMI(MBB, MBBI, DL, TII->get(NewOpc))
+      .add(MI.getOperand(0))
+      .add(MI.getOperand(1))
+      .add(MI.getOperand(2))
+      .add(MI.getOperand(3))
+      .addReg(AccConfigReg)
+      .addReg(MatConfigReg)
+      .addReg(MatConfigReg);
+}
+
+bool RISCVExpandPseudoPreRAImpl::expandXSAIZamesConfigPseudo(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI) const {
+  MachineInstr &MI = *MBBI;
+  DebugLoc DL = MI.getDebugLoc();
+  unsigned Opc = MI.getOpcode();
+
+  switch (Opc) {
+  default:
+    llvm_unreachable("Unexpected ZAMES pre-RA pseudo opcode");
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_I8_PRE: {
+    Register ConfigReg =
+        createXSAIZamesConfigPayload(TII, MBB, MBBI, DL, XSAIZamesCfgI8);
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::PSEUDO_XSAI_ZAMES_MLA_A_I8))
+        .add(MI.getOperand(0))
+        .add(MI.getOperand(1))
+        .add(MI.getOperand(2))
+        .addReg(ConfigReg)
+        .cloneMemRefs(MI);
+    break;
+  }
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_I8_PRE: {
+    Register ConfigReg =
+        createXSAIZamesConfigPayload(TII, MBB, MBBI, DL, XSAIZamesCfgI8);
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::PSEUDO_XSAI_ZAMES_MLB_B_I8))
+        .add(MI.getOperand(0))
+        .add(MI.getOperand(1))
+        .add(MI.getOperand(2))
+        .addReg(ConfigReg)
+        .cloneMemRefs(MI);
+    break;
+  }
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_I8_PRE: {
+    Register ConfigReg =
+        createXSAIZamesConfigPayload(TII, MBB, MBBI, DL, XSAIZamesCfgI8);
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_I8))
+        .add(MI.getOperand(0))
+        .add(MI.getOperand(1))
+        .add(MI.getOperand(2))
+        .addReg(ConfigReg)
+        .cloneMemRefs(MI);
+    break;
+  }
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_I8_PRE: {
+    Register ConfigReg =
+        createXSAIZamesConfigPayload(TII, MBB, MBBI, DL, XSAIZamesCfgI8);
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_I8))
+        .add(MI.getOperand(0))
+        .add(MI.getOperand(1))
+        .add(MI.getOperand(2))
+        .addReg(ConfigReg)
+        .cloneMemRefs(MI);
+    break;
+  }
+  case RISCV::PSEUDO_XSAI_ZAMES_MLC_C_I32_PRE: {
+    Register ConfigReg =
+        createXSAIZamesConfigPayload(TII, MBB, MBBI, DL, XSAIZamesCfgI32);
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::PSEUDO_XSAI_ZAMES_MLC_C_I32))
+        .add(MI.getOperand(0))
+        .add(MI.getOperand(1))
+        .add(MI.getOperand(2))
+        .addReg(ConfigReg)
+        .cloneMemRefs(MI);
+    break;
+  }
+  case RISCV::PSEUDO_XSAI_ZAMES_MLCT_C_I32_PRE: {
+    Register ConfigReg =
+        createXSAIZamesConfigPayload(TII, MBB, MBBI, DL, XSAIZamesCfgI32);
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::PSEUDO_XSAI_ZAMES_MLCT_C_I32))
+        .add(MI.getOperand(0))
+        .add(MI.getOperand(1))
+        .add(MI.getOperand(2))
+        .addReg(ConfigReg)
+        .cloneMemRefs(MI);
+    break;
+  }
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_C_I32_PRE: {
+    Register ConfigReg =
+        createXSAIZamesConfigPayload(TII, MBB, MBBI, DL, XSAIZamesCfgI32);
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::PSEUDO_XSAI_ZAMES_MZERO_C_I32))
+        .add(MI.getOperand(0))
+        .addReg(ConfigReg);
+    break;
+  }
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_I8_I32_PRE: {
+    Register AccConfigReg =
+        createXSAIZamesConfigPayload(TII, MBB, MBBI, DL, XSAIZamesCfgI32);
+    Register MatConfigReg =
+        createXSAIZamesConfigPayload(TII, MBB, MBBI, DL, XSAIZamesCfgI8);
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::PSEUDO_XSAI_ZAMES_MMACC_I8_I32))
+        .add(MI.getOperand(0))
+        .add(MI.getOperand(1))
+        .add(MI.getOperand(2))
+        .add(MI.getOperand(3))
+        .addReg(AccConfigReg)
+        .addReg(MatConfigReg)
+        .addReg(MatConfigReg);
+    break;
+  }
+  case RISCV::PSEUDO_XSAI_ZAMES_MSC_C_I32_PRE: {
+    Register ConfigReg =
+        createXSAIZamesConfigPayload(TII, MBB, MBBI, DL, XSAIZamesCfgI32);
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::PSEUDO_XSAI_ZAMES_MSC_C_I32))
+        .add(MI.getOperand(0))
+        .add(MI.getOperand(1))
+        .add(MI.getOperand(2))
+        .addReg(ConfigReg)
+        .cloneMemRefs(MI);
+    break;
+  }
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_I8_PRE: {
+    Register ConfigReg =
+        createXSAIZamesConfigPayload(TII, MBB, MBBI, DL, XSAIZamesCfgI8);
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::PSEUDO_XSAI_ZAMES_MSA_A_I8))
+        .add(MI.getOperand(0))
+        .add(MI.getOperand(1))
+        .add(MI.getOperand(2))
+        .addReg(ConfigReg)
+        .cloneMemRefs(MI);
+    break;
+  }
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_I8_PRE: {
+    Register ConfigReg =
+        createXSAIZamesConfigPayload(TII, MBB, MBBI, DL, XSAIZamesCfgI8);
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_I8))
+        .add(MI.getOperand(0))
+        .add(MI.getOperand(1))
+        .add(MI.getOperand(2))
+        .addReg(ConfigReg)
+        .cloneMemRefs(MI);
+    break;
+  }
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_I8_PRE: {
+    Register ConfigReg =
+        createXSAIZamesConfigPayload(TII, MBB, MBBI, DL, XSAIZamesCfgI8);
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::PSEUDO_XSAI_ZAMES_MSB_B_I8))
+        .add(MI.getOperand(0))
+        .add(MI.getOperand(1))
+        .add(MI.getOperand(2))
+        .addReg(ConfigReg)
+        .cloneMemRefs(MI);
+    break;
+  }
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_I8_PRE: {
+    Register ConfigReg =
+        createXSAIZamesConfigPayload(TII, MBB, MBBI, DL, XSAIZamesCfgI8);
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_I8))
+        .add(MI.getOperand(0))
+        .add(MI.getOperand(1))
+        .add(MI.getOperand(2))
+        .addReg(ConfigReg)
+        .cloneMemRefs(MI);
+    break;
+  }
+  case RISCV::PSEUDO_XSAI_ZAMES_MSCT_C_I32_PRE: {
+    Register ConfigReg =
+        createXSAIZamesConfigPayload(TII, MBB, MBBI, DL, XSAIZamesCfgI32);
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::PSEUDO_XSAI_ZAMES_MSCT_C_I32))
+        .add(MI.getOperand(0))
+        .add(MI.getOperand(1))
+        .add(MI.getOperand(2))
+        .addReg(ConfigReg)
+        .cloneMemRefs(MI);
+    break;
+  }
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_FP8E4_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MLA_A_FP8E4,
+                                     XSAIZamesCfgF8E4);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_FP8E5_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MLA_A_FP8E5,
+                                     XSAIZamesCfgF8E5);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_F16_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MLA_A_F16,
+                                     XSAIZamesCfgF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MLA_A_BF16_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MLA_A_BF16,
+                                     XSAIZamesCfgBF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_FP8E4_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_FP8E4,
+                                     XSAIZamesCfgF8E4);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_FP8E5_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_FP8E5,
+                                     XSAIZamesCfgF8E5);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_F16_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_F16,
+                                     XSAIZamesCfgF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_BF16_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MLAT_A_BF16,
+                                     XSAIZamesCfgBF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_FP8E4_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MLB_B_FP8E4,
+                                     XSAIZamesCfgF8E4);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_FP8E5_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MLB_B_FP8E5,
+                                     XSAIZamesCfgF8E5);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_F16_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MLB_B_F16,
+                                     XSAIZamesCfgF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MLB_B_BF16_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MLB_B_BF16,
+                                     XSAIZamesCfgBF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_FP8E4_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_FP8E4,
+                                     XSAIZamesCfgF8E4);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_FP8E5_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_FP8E5,
+                                     XSAIZamesCfgF8E5);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_F16_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_F16,
+                                     XSAIZamesCfgF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_BF16_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MLBT_B_BF16,
+                                     XSAIZamesCfgBF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MLC_C_F32_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MLC_C_F32,
+                                     XSAIZamesCfgF32);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MLCT_C_F32_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MLCT_C_F32,
+                                     XSAIZamesCfgF32);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_FP8E4_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MSA_A_FP8E4,
+                                     XSAIZamesCfgF8E4);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_FP8E5_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MSA_A_FP8E5,
+                                     XSAIZamesCfgF8E5);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_F16_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MSA_A_F16,
+                                     XSAIZamesCfgF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MSA_A_BF16_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MSA_A_BF16,
+                                     XSAIZamesCfgBF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_FP8E4_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_FP8E4,
+                                     XSAIZamesCfgF8E4);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_FP8E5_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_FP8E5,
+                                     XSAIZamesCfgF8E5);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_F16_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_F16,
+                                     XSAIZamesCfgF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_BF16_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MSAT_A_BF16,
+                                     XSAIZamesCfgBF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_FP8E4_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MSB_B_FP8E4,
+                                     XSAIZamesCfgF8E4);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_FP8E5_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MSB_B_FP8E5,
+                                     XSAIZamesCfgF8E5);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_F16_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MSB_B_F16,
+                                     XSAIZamesCfgF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MSB_B_BF16_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MSB_B_BF16,
+                                     XSAIZamesCfgBF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_FP8E4_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_FP8E4,
+                                     XSAIZamesCfgF8E4);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_FP8E5_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_FP8E5,
+                                     XSAIZamesCfgF8E5);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_F16_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_F16,
+                                     XSAIZamesCfgF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_BF16_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MSBT_B_BF16,
+                                     XSAIZamesCfgBF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MSC_C_F32_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MSC_C_F32,
+                                     XSAIZamesCfgF32);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MSCT_C_F32_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MSCT_C_F32,
+                                     XSAIZamesCfgF32);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_I8_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_I8,
+                                     XSAIZamesCfgI8);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_FP8E4_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_FP8E4,
+                                     XSAIZamesCfgF8E4);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_FP8E5_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_FP8E5,
+                                     XSAIZamesCfgF8E5);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_F16_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_F16,
+                                     XSAIZamesCfgF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_BF16_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MZERO_T_BF16,
+                                     XSAIZamesCfgBF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MZERO_C_F32_PRE:
+    expandXSAIZamesPreRASingleConfig(TII, MBB, MBBI, MI,
+                                     RISCV::PSEUDO_XSAI_ZAMES_MZERO_C_F32,
+                                     XSAIZamesCfgF32);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_I8_F32_PRE:
+    expandXSAIZamesPreRAMMAcc(TII, MBB, MBBI, MI,
+                              RISCV::PSEUDO_XSAI_ZAMES_MMACC_I8_F32,
+                              XSAIZamesCfgF32, XSAIZamesCfgI8);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_FP8E4_F32_PRE:
+    expandXSAIZamesPreRAMMAcc(TII, MBB, MBBI, MI,
+                              RISCV::PSEUDO_XSAI_ZAMES_MMACC_FP8E4_F32,
+                              XSAIZamesCfgF32, XSAIZamesCfgF8E4);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_FP8E5_F32_PRE:
+    expandXSAIZamesPreRAMMAcc(TII, MBB, MBBI, MI,
+                              RISCV::PSEUDO_XSAI_ZAMES_MMACC_FP8E5_F32,
+                              XSAIZamesCfgF32, XSAIZamesCfgF8E5);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_F16_F32_PRE:
+    expandXSAIZamesPreRAMMAcc(TII, MBB, MBBI, MI,
+                              RISCV::PSEUDO_XSAI_ZAMES_MMACC_F16_F32,
+                              XSAIZamesCfgF32, XSAIZamesCfgF16);
+    break;
+  case RISCV::PSEUDO_XSAI_ZAMES_MMACC_BF16_F32_PRE:
+    expandXSAIZamesPreRAMMAcc(TII, MBB, MBBI, MI,
+                              RISCV::PSEUDO_XSAI_ZAMES_MMACC_BF16_F32,
+                              XSAIZamesCfgF32, XSAIZamesCfgBF16);
+    break;
+  }
+
+  MI.eraseFromParent();
+  return true;
 }
 
 bool RISCVExpandPseudoPreRAImpl::expandAuipcInstPair(

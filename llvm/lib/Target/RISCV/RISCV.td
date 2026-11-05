@@ -31,6 +31,7 @@ include "RISCVSystemOperands.td"
 //===----------------------------------------------------------------------===//
 
 include "RISCVRegisterInfo.td"
+include "RISCVRegisterInfoXSAIZames.td"
 include "RISCVSchedule.td"
 include "RISCVCallingConv.td"
 include "RISCVInstrInfo.td"

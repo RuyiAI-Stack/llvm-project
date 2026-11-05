@@ -318,6 +318,57 @@ static DecodeStatus DecodeYBNDSWImm(MCInst &Inst, uint64_t Imm, int64_t Address,
   return MCDisassembler::Success;
 }
 
+static DecodeStatus
+DecodeXSAI_ZAMES_TileRegRegisterClass(MCInst &Inst, uint32_t RegNo,
+                                      uint64_t Address,
+                                      const MCDisassembler *Decoder) {
+  if (RegNo >= 4)
+    return MCDisassembler::Fail;
+
+  MCRegister Reg = RISCV::XSAI_ZAMES_TR0 + RegNo;
+  Inst.addOperand(MCOperand::createReg(Reg));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus
+DecodeXSAI_ZAMES_AccRegRegisterClass(MCInst &Inst, uint32_t RegNo,
+                                     uint64_t Address,
+                                     const MCDisassembler *Decoder) {
+  if (RegNo < 4 || RegNo >= 8)
+    return MCDisassembler::Fail;
+
+  MCRegister Reg = RISCV::XSAI_ZAMES_ACC0 + (RegNo - 4);
+  Inst.addOperand(MCOperand::createReg(Reg));
+  return MCDisassembler::Success;
+}
+
+// Union of XSAI_ZAMES_TileReg (0-3) and XSAI_ZAMES_AccReg (4-7) for real
+// instructions whose md field accepts either register file (e.g. mzero).
+static DecodeStatus
+DecodeXSAI_ZAMES_TileOrAccRegRegisterClass(MCInst &Inst, uint32_t RegNo,
+                                           uint64_t Address,
+                                           const MCDisassembler *Decoder) {
+  if (RegNo >= 8)
+    return MCDisassembler::Fail;
+
+  MCRegister Reg = RegNo < 4 ? RISCV::XSAI_ZAMES_TR0 + RegNo
+                             : RISCV::XSAI_ZAMES_ACC0 + (RegNo - 4);
+  Inst.addOperand(MCOperand::createReg(Reg));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus
+DecodeXSAI_ZMASYNC_SyncRRegisterClass(MCInst &Inst, uint32_t RegNo,
+                                      uint64_t Address,
+                                      const MCDisassembler *Decoder) {
+  if (RegNo >= 16)
+    return MCDisassembler::Fail;
+
+  MCRegister Reg = RISCV::XSAI_ZMASYNC_SYNC0 + RegNo;
+  Inst.addOperand(MCOperand::createReg(Reg));
+  return MCDisassembler::Success;
+}
+
 static DecodeStatus decodeVMaskReg(MCInst &Inst, uint32_t RegNo,
                                    uint64_t Address,
                                    const MCDisassembler *Decoder) {
