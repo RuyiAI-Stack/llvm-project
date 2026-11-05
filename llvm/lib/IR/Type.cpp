@@ -1089,6 +1089,8 @@ static TargetTypeInfo getTargetTypeInfo(const TargetExtType *Ty) {
         TargetExtType::CanBeLocal, TargetExtType::HasZeroInit);
   }
 
+  // Native XSAI values represent register resources. The sized layouts are
+  // placeholders, not matrix memory representations or a spilling ABI.
   if (Name == "riscv.xsai.zames.tile.int8" ||
       Name == "riscv.xsai.zames.tile.int32" ||
       Name == "riscv.xsai.zames.tile.fp8e4" ||
@@ -1096,13 +1098,10 @@ static TargetTypeInfo getTargetTypeInfo(const TargetExtType *Ty) {
       Name == "riscv.xsai.zames.tile.fp16" ||
       Name == "riscv.xsai.zames.tile.bf16" ||
       Name == "riscv.xsai.zames.tile.fp32")
-    return TargetTypeInfo(FixedVectorType::get(Type::getInt8Ty(C), 16),
-                          TargetExtType::CanBeLocal,
-                          TargetExtType::HasZeroInit);
+    return TargetTypeInfo(FixedVectorType::get(Type::getInt8Ty(C), 16));
 
   if (Name == "riscv.xsai.zmasync.sync")
-    return TargetTypeInfo(Type::getInt64Ty(C), TargetExtType::CanBeLocal,
-                          TargetExtType::HasZeroInit);
+    return TargetTypeInfo(Type::getInt64Ty(C));
 
   // DirectX resources
   if (Name == "dx.Padding")
