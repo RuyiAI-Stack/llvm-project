@@ -256,6 +256,7 @@ Expected<bool> RISCVCodeGenPassBuilder::addRegAssignAndRewriteOptimized(
 }
 
 void RISCVCodeGenPassBuilder::addPostRegAlloc(PassManagerWrapper &PMW) {
+  addMachineFunctionPass(RISCVXAMEStatePass(), PMW);
   if (getOptLevel() != CodeGenOptLevel::None &&
       getTM().getCLOpts().enable_copyelim)
     addMachineFunctionPass(RISCVRedundantCopyEliminationPass(), PMW);

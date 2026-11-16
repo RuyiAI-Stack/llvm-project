@@ -45,6 +45,7 @@
 ; CHECK-NEXT:     regallocfast<filter=rvv;no-clear-vregs>
 ; CHECK-NEXT:     riscv-insert-vsetvli
 ; CHECK-NEXT:     regallocfast
+; CHECK-NEXT:     RISCVXAMEStatePass
 ; CHECK-NEXT:     remove-redundant-debug-values
 ; CHECK-NEXT:     fixup-statepoint-caller-saved
 ; CHECK-NEXT:     prolog-epilog

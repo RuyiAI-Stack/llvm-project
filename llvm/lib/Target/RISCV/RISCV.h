@@ -361,6 +361,15 @@ public:
 FunctionPass *createRISCVVMV0EliminationLegacyPass();
 void initializeRISCVVMV0EliminationLegacyPass(PassRegistry &);
 
+FunctionPass *createRISCVXAMEStatePass();
+void initializeRISCVXAMEStatePass(PassRegistry &);
+
+class RISCVXAMEStatePass : public OptionalPassInfoMixin<RISCVXAMEStatePass> {
+public:
+  PreservedAnalyses run(MachineFunction &MF,
+                        MachineFunctionAnalysisManager &MFAM);
+};
+
 class RISCVQCRelaxMarkingPass
     : public OptionalPassInfoMixin<RISCVQCRelaxMarkingPass> {
 public:

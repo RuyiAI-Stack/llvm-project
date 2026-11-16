@@ -17,11 +17,15 @@
 #include "RISCVISelLowering.h"
 #include "RISCVInstrInfo.h"
 #include "RISCVSelectionDAGInfo.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicsRISCV.h"
 #include "llvm/Support/Alignment.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/RISCVXAME.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -31,6 +35,49 @@ using namespace llvm;
 
 #define GET_DAGISEL_BODY RISCVDAGToDAGISel
 #include "RISCVGenDAGISel.inc"
+
+bool RISCVDAGToDAGISel::runOnMachineFunction(MachineFunction &MF) {
+  Subtarget = &MF.getSubtarget<RISCVSubtarget>();
+  const auto Profile = RISCV::getXAMEProfile(Subtarget->hasXAMEGem5());
+
+  // MVT only records the packed register count. Validate the original
+  // target-extension parameters before SelectionDAG erases the profile shape.
+  SmallPtrSet<Type *, 16> Seen;
+  auto CheckType = [&](auto &&Self, Type *Ty) -> void {
+    if (!Seen.insert(Ty).second)
+      return;
+    if (auto *MT = dyn_cast<TargetExtType>(Ty)) {
+      if (MT->getName() == "riscv.ztt.matrix" ||
+          MT->getName() == "riscv.ztt.acc") {
+        if (!Subtarget->hasVendorXAME())
+          report_fatal_error("ZTT matrix values require xame");
+        if (MT->getNumIntParameters() < 2 ||
+            MT->getIntParameter(0) != Profile.TileSide ||
+            MT->getIntParameter(1) != Profile.TileSide)
+          report_fatal_error("ZTT matrix shape does not match the selected "
+                             "xame profile");
+        if (MT->getTypeParameter(0)->getPrimitiveSizeInBits() >
+            Profile.MaxElementBits)
+          report_fatal_error("ZTT element width exceeds the selected xame "
+                             "profile");
+      }
+      return;
+    }
+    for (Type *Part : Ty->subtypes())
+      Self(Self, Part);
+  };
+
+  const Function &F = MF.getFunction();
+  CheckType(CheckType, F.getFunctionType());
+  for (const BasicBlock &BB : F)
+    for (const Instruction &I : BB) {
+      CheckType(CheckType, I.getType());
+      for (const Use &U : I.operands())
+        CheckType(CheckType, U->getType());
+    }
+
+  return SelectionDAGISel::runOnMachineFunction(MF);
+}
 
 void RISCVDAGToDAGISel::PreprocessISelDAG() {
   SelectionDAG::allnodes_iterator Position = CurDAG->allnodes_end();
@@ -1191,6 +1238,32 @@ void RISCVDAGToDAGISel::Select(SDNode *Node) {
   MVT VT = Node->getSimpleValueType(0);
 
   bool HasBitTest = Subtarget->hasBEXTILike();
+
+  if (Opcode == ISD::INTRINSIC_W_CHAIN || Opcode == ISD::INTRINSIC_VOID) {
+    // XAME intrinsics lower directly to their matching instruction.  The
+    // intrinsic definitions carry explicit passthrough operands for tied
+    // matrix destinations; TableGen supplies the register-class constraints.
+    unsigned XAMEOpcode = 0;
+    switch (Node->getConstantOperandVal(1)) {
+    default:
+      break;
+#define RISCV_ZTT_INTRINSIC(NAME, OPCODE, FORM, SIG)                           \
+  case Intrinsic::riscv_ztt_##NAME:                                            \
+    XAMEOpcode = RISCV::OPCODE;                                                \
+    break;
+#include "llvm/IR/IntrinsicsRISCVXAME.def"
+#undef RISCV_ZTT_INTRINSIC
+    }
+    if (XAMEOpcode) {
+      SmallVector<SDValue, 8> Ops;
+      Ops.append(Node->op_begin() + 2, Node->op_end());
+      Ops.push_back(Node->getOperand(0));
+      SDNode *Selected =
+          CurDAG->SelectNodeTo(Node, XAMEOpcode, Node->getVTList(), Ops);
+      (void)Selected;
+      return;
+    }
+  }
 
   switch (Opcode) {
   case ISD::Constant: {

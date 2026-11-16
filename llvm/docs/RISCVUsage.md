@@ -502,6 +502,54 @@ The current vendor extensions supported are:
   Instruction semantics and parameter layouts are described in the
   [SpacemiT IME specification](https://github.com/spacemit-com/docs-ai/blob/main/en/architecture/ime_extension.md).
 
+`XAME` (provisional Attached Matrix Extension, ZTT v0.6)
+
+: This downstream implementation uses the local extension name `xame` for
+  the provisional ZTT v0.6 instruction set. Enable assembly and SelectionDAG
+  code generation with `-mattr=+xame`. The additional `xame-gem5` subtarget
+  feature selects an implementation profile; it is not a separate ISA
+  extension. The fixed profiles are:
+
+  | Features | Square dimensions | M registers | ACC registers | Maximum element width |
+  | --- | --- | --- | --- | --- |
+  | `+xame` | 8 by 8 | 16 | 8 | 64 bits |
+  | `+xame,+xame-gem5` | 4 by 4 | 32 | 4 | 128 bits |
+
+  Both profiles use 32-bit register units. LLVM IR represents register values
+  using `target("riscv.ztt.matrix", element, rows, columns[, squares])` and
+  `target("riscv.ztt.acc", element, rows, columns[, squares])`. Here the
+  brackets denote an optional integer parameter, rather than literal IR
+  syntax. For example, `target("riscv.ztt.matrix", i32, 4, 4)` requires
+  `+xame,+xame-gem5`. Both dimensions must match the selected profile.
+
+  Integer element widths must be powers of two within the profile limit;
+  the floating-point element types are `half`, `bfloat`, `float`, and
+  `double`. The optional square count describes a complete packed register
+  group and must be a power of two that fits the selected register file.
+  For matrix values it defaults to `max(1, 32 / element-width)`; for
+  accumulator values it defaults to one. These are opaque register types:
+  use the matrix intrinsics to transfer their data to and from memory,
+  rather than ordinary LLVM IR loads and stores.
+
+  Intrinsic names retain the `llvm.riscv.ztt.*` prefix, including
+  `llvm.riscv.ztt.madd.ew` and `llvm.riscv.ztt.mmulacc.2d`. Destination
+  register values are explicit passthrough operands, preserving descriptors
+  and any data that the instruction leaves unchanged. Frontends must emit
+  the acquire, descriptor configuration, and release operations required
+  by the instruction sequence; the IR element type does not configure the
+  architectural descriptors automatically.
+
+  Scalar integer overloads represent unsigned bit patterns: operands are
+  zero-extended or truncated to XLEN, and scalar results are zero-extended or
+  truncated from XLEN to the result type. Frontends that need signed XLEN
+  operands, such as negative strides, must explicitly sign-extend them to
+  XLEN before calling the intrinsic.
+
+  Matrix arguments and results use a compiler-local register calling
+  convention, not a standardized RISC-V psABI. Callers and callees must
+  agree on the profile and register types. Arguments exceeding the available
+  register file are rejected; pass additional matrices through memory.
+
 `XAIFET`
 
 : LLVM implements [the AIFET (AI Foundry's ET) vendor-defined instructions specified in](https://github.com/aifoundry-org/et-man/blob/main/ET%20Programmer's%20Reference%20Manual.pdf) originally defined by Esperanto Technologies (and now under the AI Foundry non-profit). Instructions are prefixed with `aif.` as described in the specification.

@@ -1422,6 +1422,44 @@ unsigned RISCVAsmParser::validateTargetOperandClass(MCParsedAsmOperand &AsmOp,
     return Match_InvalidOperand;
 
   MCRegister Reg = Op.getReg();
+  // XAME and the RVV mask register file both use the m0-m7 spelling.  The
+  // operand class disambiguates the spelling for ZTT instructions.
+  bool IsXAMEMClass = false;
+  switch (Kind) {
+  case MCK_ZTTMR:
+  case MCK_ZTTMR2:
+  case MCK_ZTTMR4:
+  case MCK_ZTTMR8:
+  case MCK_ZTTMR16:
+  case MCK_ZTTMR32:
+  case MCK_ZTTMAny:
+    IsXAMEMClass = true;
+    break;
+  default:
+    break;
+  }
+  if (IsXAMEMClass && Reg >= RISCV::M0 && Reg <= RISCV::M7) {
+    Op.Reg.Reg = RISCV::ZTTM0 + (Reg - RISCV::M0);
+    return Match_Success;
+  }
+  // The ZTT accumulator names overlap with the legacy BOSC AME aliases.
+  // Resolve them according to the operand class requested by the matcher.
+  bool IsXAMEAClass = false;
+  switch (Kind) {
+  case MCK_ZTTAR:
+  case MCK_ZTTAR2:
+  case MCK_ZTTAR4:
+  case MCK_ZTTAR8:
+  case MCK_ZTTAAny:
+    IsXAMEAClass = true;
+    break;
+  default:
+    break;
+  }
+  if (IsXAMEAClass && Reg >= RISCV::ACC0 && Reg <= RISCV::ACC7) {
+    Op.Reg.Reg = RISCV::ZTTA0 + (Reg - RISCV::ACC0);
+    return Match_Success;
+  }
   bool IsRegFPR64 =
       getRISCVMCRegisterClass(RISCV::FPR64RegClassID).contains(Reg);
   bool IsRegFPR64C =
@@ -4229,6 +4267,21 @@ static bool isZvvfmmScaleOpcode(unsigned Opcode) {
 bool RISCVAsmParser::validateInstruction(MCInst &Inst,
                                          OperandVector &Operands) {
   unsigned Opcode = Inst.getOpcode();
+
+  // The XAME profile fixes the architectural register-file shape.  Keep
+  // this check here as well as in the register decoder so hand-written
+  // assembly cannot name registers that the selected implementation does not
+  // provide.
+  bool XAMEGem5 = STI->hasFeature(RISCV::FeatureXAMEGem5);
+  for (const MCOperand &Op : Inst) {
+    if (!Op.isReg())
+      continue;
+    MCRegister Reg = Op.getReg();
+    if ((!XAMEGem5 && Reg >= RISCV::ZTTM16 && Reg <= RISCV::ZTTM31) ||
+        (XAMEGem5 && Reg >= RISCV::ZTTA4 && Reg <= RISCV::ZTTA7))
+      return Error(Operands.front()->getStartLoc(),
+                   "invalid operand for selected XAME profile");
+  }
 
   if (Opcode == RISCV::PseudoVMSGEU_VX_M_T ||
       Opcode == RISCV::PseudoVMSGE_VX_M_T) {

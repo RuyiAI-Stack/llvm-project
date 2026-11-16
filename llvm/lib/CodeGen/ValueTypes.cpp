@@ -13,6 +13,8 @@
 #include "llvm/IR/Type.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MathExtras.h"
+#include "llvm/Support/RISCVXAME.h"
 #include "llvm/Support/TypeSize.h"
 #include "llvm/Support/WithColor.h"
 using namespace llvm;
@@ -242,6 +244,36 @@ void EVT::print(raw_ostream &OS) const {
   case MVT::aarch64mfp8:
     OS << "aarch64mfp8";
     return;
+  case MVT::riscv_ztt_m1:
+    OS << "riscv_ztt_m1";
+    return;
+  case MVT::riscv_ztt_m2:
+    OS << "riscv_ztt_m2";
+    return;
+  case MVT::riscv_ztt_m4:
+    OS << "riscv_ztt_m4";
+    return;
+  case MVT::riscv_ztt_m8:
+    OS << "riscv_ztt_m8";
+    return;
+  case MVT::riscv_ztt_m16:
+    OS << "riscv_ztt_m16";
+    return;
+  case MVT::riscv_ztt_m32:
+    OS << "riscv_ztt_m32";
+    return;
+  case MVT::riscv_ztt_a1:
+    OS << "riscv_ztt_a1";
+    return;
+  case MVT::riscv_ztt_a2:
+    OS << "riscv_ztt_a2";
+    return;
+  case MVT::riscv_ztt_a4:
+    OS << "riscv_ztt_a4";
+    return;
+  case MVT::riscv_ztt_a8:
+    OS << "riscv_ztt_a8";
+    return;
   }
 }
 
@@ -267,6 +299,36 @@ Type *EVT::getTypeForEVT(LLVMContext &Context) const {
     return TargetExtType::get(Context, "aarch64.svcount");
   case MVT::aarch64mfp8:
     return FixedVectorType::get(IntegerType::get(Context, 8), 1);
+  case MVT::riscv_ztt_m1:
+    return TargetExtType::get(Context, "riscv.ztt.matrix",
+                              Type::getInt32Ty(Context), {8, 8, 1});
+  case MVT::riscv_ztt_m2:
+    return TargetExtType::get(Context, "riscv.ztt.matrix",
+                              Type::getInt32Ty(Context), {8, 8, 2});
+  case MVT::riscv_ztt_m4:
+    return TargetExtType::get(Context, "riscv.ztt.matrix",
+                              Type::getInt32Ty(Context), {8, 8, 4});
+  case MVT::riscv_ztt_m8:
+    return TargetExtType::get(Context, "riscv.ztt.matrix",
+                              Type::getInt32Ty(Context), {8, 8, 8});
+  case MVT::riscv_ztt_m16:
+    return TargetExtType::get(Context, "riscv.ztt.matrix",
+                              Type::getInt32Ty(Context), {8, 8, 16});
+  case MVT::riscv_ztt_m32:
+    return TargetExtType::get(Context, "riscv.ztt.matrix",
+                              Type::getInt32Ty(Context), {4, 4, 32});
+  case MVT::riscv_ztt_a1:
+    return TargetExtType::get(Context, "riscv.ztt.acc",
+                              Type::getInt32Ty(Context), {8, 8, 1});
+  case MVT::riscv_ztt_a2:
+    return TargetExtType::get(Context, "riscv.ztt.acc",
+                              Type::getIntNTy(Context, 16), {8, 8, 2});
+  case MVT::riscv_ztt_a4:
+    return TargetExtType::get(Context, "riscv.ztt.acc",
+                              Type::getIntNTy(Context, 8), {8, 8, 4});
+  case MVT::riscv_ztt_a8:
+    return TargetExtType::get(Context, "riscv.ztt.acc",
+                              Type::getIntNTy(Context, 4), {8, 8, 8});
   case MVT::x86amx:  return Type::getX86_AMXTy(Context);
   case MVT::i64x8:   return IntegerType::get(Context, 512);
   case MVT::amdgpuBufferFatPointer:  return IntegerType::get(Context, 160);
@@ -306,6 +368,35 @@ MVT MVT::getVT(Type *Ty, bool HandleUnknown){
     return MVT(MVT::f80);
   case Type::TargetExtTyID: {
     TargetExtType *TargetExtTy = cast<TargetExtType>(Ty);
+    if (TargetExtTy->getName() == "riscv.ztt.matrix" ||
+        TargetExtTy->getName() == "riscv.ztt.acc") {
+      bool IsAcc = TargetExtTy->getName() == "riscv.ztt.acc";
+      unsigned Width =
+          TargetExtTy->getTypeParameter(0)->getPrimitiveSizeInBits();
+      unsigned Squares = TargetExtTy->getNumIntParameters() == 3
+                             ? TargetExtTy->getIntParameter(2)
+                             : (IsAcc ? 1U : std::max(1U, 32 / Width));
+      unsigned Count = IsAcc ? std::max(Squares, 32 / Width)
+                             : divideCeil(Squares * Width, 32U);
+      switch (Count) {
+      case 1:
+        return IsAcc ? MVT::riscv_ztt_a1 : MVT::riscv_ztt_m1;
+      case 2:
+        return IsAcc ? MVT::riscv_ztt_a2 : MVT::riscv_ztt_m2;
+      case 4:
+        return IsAcc ? MVT::riscv_ztt_a4 : MVT::riscv_ztt_m4;
+      case 8:
+        return IsAcc ? MVT::riscv_ztt_a8 : MVT::riscv_ztt_m8;
+      case 16:
+        assert(!IsAcc && "ACC groups cannot exceed eight registers");
+        return MVT::riscv_ztt_m16;
+      case 32:
+        assert(!IsAcc && "ACC groups cannot exceed eight registers");
+        return MVT::riscv_ztt_m32;
+      default:
+        llvm_unreachable("Invalid ZTT register group");
+      }
+    }
     if (TargetExtTy->getName() == "aarch64.svcount")
       return MVT(MVT::aarch64svcount);
     else if (TargetExtTy->getName() == "wasm.externref")

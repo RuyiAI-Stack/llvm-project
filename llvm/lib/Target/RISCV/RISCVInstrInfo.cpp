@@ -640,6 +640,28 @@ void RISCVInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     return;
   }
 
+  // ZTT matrix groups are copied with the architectural matrix move.  The
+  // instruction has a tied destination passthrough operand, so keep the
+  // destination live through the copy.
+  const bool DstZTTM = RISCV::ZTTMAnyRegClass.contains(DstReg);
+  const bool SrcZTTM = RISCV::ZTTMAnyRegClass.contains(SrcReg);
+  const bool DstZTTA = RISCV::ZTTAAnyRegClass.contains(DstReg);
+  const bool SrcZTTA = RISCV::ZTTAAnyRegClass.contains(SrcReg);
+  if (DstZTTM && SrcZTTM) {
+    BuildMI(MBB, MBBI, DL, get(RISCV::ZTT_MMOV_M_M), DstReg)
+        .addReg(DstReg)
+        .addReg(SrcReg, KillFlag | getRenamableRegState(RenamableSrc));
+    return;
+  }
+  if ((DstZTTM && SrcZTTA) || (DstZTTA && SrcZTTM) || (DstZTTA && SrcZTTA)) {
+    // These moves carry descriptor and raw register state, so they cannot be
+    // represented by a single architectural move. Keep a physical COPY for
+    // RISCVXAMEState to expand into a descriptor-aware spill/reload sequence.
+    BuildMI(MBB, MBBI, DL, get(TargetOpcode::COPY), DstReg)
+        .addReg(SrcReg, KillFlag | getRenamableRegState(RenamableSrc));
+    return;
+  }
+
   // The register allocator calls copyPhysReg to move a value between two
   // physical registers. TileReg (tr0-tr7) and AccReg (acc0-acc7) are separate
   // register files. A whole-register move exists only inside one file:
@@ -688,7 +710,11 @@ void RISCVInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   Align Alignment = MFI.getObjectAlign(FI);
 
   unsigned Opcode;
-  if (RISCV::GPRRegClass.hasSubClassEq(RC)) {
+  if (RISCV::ZTTMAnyRegClass.hasSubClassEq(RC)) {
+    Opcode = RISCV::ZTT_SPILL_M;
+  } else if (RISCV::ZTTAAnyRegClass.hasSubClassEq(RC)) {
+    Opcode = RISCV::ZTT_SPILL_A;
+  } else if (RISCV::GPRRegClass.hasSubClassEq(RC)) {
     Opcode = RegInfo.getRegSizeInBits(RISCV::GPRRegClass) == 32 ? RISCV::SW
                                                                 : RISCV::SD;
   } else if (RISCV::GPRF16RegClass.hasSubClassEq(RC)) {
@@ -780,7 +806,11 @@ void RISCVInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
       Flags & MachineInstr::FrameDestroy ? MBB.findDebugLoc(I) : DebugLoc();
 
   unsigned Opcode;
-  if (RISCV::GPRRegClass.hasSubClassEq(RC)) {
+  if (RISCV::ZTTMAnyRegClass.hasSubClassEq(RC)) {
+    Opcode = RISCV::ZTT_RELOAD_M;
+  } else if (RISCV::ZTTAAnyRegClass.hasSubClassEq(RC)) {
+    Opcode = RISCV::ZTT_RELOAD_A;
+  } else if (RISCV::GPRRegClass.hasSubClassEq(RC)) {
     Opcode = RegInfo.getRegSizeInBits(RISCV::GPRRegClass) == 32 ? RISCV::LW
                                                                 : RISCV::LD;
   } else if (RISCV::GPRF16RegClass.hasSubClassEq(RC)) {

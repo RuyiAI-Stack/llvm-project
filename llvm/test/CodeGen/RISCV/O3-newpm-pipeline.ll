@@ -95,6 +95,7 @@
 ; CHECK-NEXT:     stack-slot-coloring
 ; CHECK-NEXT:     machine-cp
 ; CHECK-NEXT:     machinelicm
+; CHECK-NEXT:     RISCVXAMEStatePass
 ; CHECK-NEXT:     riscv-redundant-copy-elimination
 ; CHECK-NEXT:     remove-redundant-debug-values
 ; CHECK-NEXT:     fixup-statepoint-caller-saved

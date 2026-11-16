@@ -166,6 +166,30 @@ BitVector RISCVRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   auto &Subtarget = MF.getSubtarget<RISCVSubtarget>();
 
+  // RISCVXAMEState expands matrix/accumulator copies after register
+  // allocation and uses these caller-saved GPRs as fixed address, descriptor,
+  // and CSR-state scratch registers. Reserve them for the whole function so
+  // values live across a cross-file COPY cannot be silently clobbered.
+  if (Subtarget.hasVendorXAME()) {
+    markSuperRegs(Reserved, RISCV::X5_H);
+    markSuperRegs(Reserved, RISCV::X6_H);
+    markSuperRegs(Reserved, RISCV::X7_H);
+    if (Subtarget.hasXAMEGem5()) {
+      for (MCPhysReg Reg = RISCV::ZTTA4; Reg <= RISCV::ZTTA7; ++Reg)
+        markSuperRegs(Reserved, Reg);
+    } else {
+      for (MCPhysReg Reg = RISCV::ZTTM16; Reg <= RISCV::ZTTM31; ++Reg)
+        markSuperRegs(Reserved, Reg);
+    }
+  }
+
+  // ZTT state and descriptor registers are architectural state, not
+  // allocatable registers.  They appear as implicit operands on XAME
+  // instructions and must be treated as reserved physical registers.
+  markSuperRegs(Reserved, RISCV::ZTT_STATE);
+  for (MCPhysReg Reg : RISCV::ZTTDescriptorsRegClass)
+    markSuperRegs(Reserved, Reg);
+
   for (size_t Reg = 0; Reg < getNumRegs(); Reg++) {
     // Mark any GPRs requested to be reserved as such
     if (Subtarget.isRegisterReservedByUser(Reg)) {

@@ -2559,3 +2559,5 @@ include "RISCVInstrGISel.td"
 include "RISCVInstrInfoXBOSCAME.td"
 // Matrix(XT)
 include "RISCVInstrInfoXTHeadAME.td"
+// Matrix(ZTT)
+include "RISCVInstrInfoXAME.td"

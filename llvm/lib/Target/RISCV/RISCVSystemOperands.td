@@ -580,6 +580,18 @@ def : SysReg<"qc.itba", 0x800, RV32Only=true>;
 def : SysReg<"qc.itdec", 0x801, RV32Only=true>;
 }
 
+// Provisional XAME/ZTT v0.6 CSR addresses, including the draft read-only-range
+// allocations for amestype/amefflags/amexsat. Keep the values from the draft.
+let FeaturesRequired = [{ {RISCV::FeatureVendorXAME} }] in {
+  def : SysReg<"amenlen", 0xcc0>;
+  def : SysReg<"ameudsz", 0xcc1>;
+  def : SysReg<"amestype", 0xcc2>;
+  def : SysReg<"ameown", 0xcc3>;
+  def : SysReg<"amefflags", 0xcc4>;
+  def : SysReg<"amexsat", 0xcc5>;
+  def SysRegAMEStatus : SysReg<"amestatus", 0x800>;
+}
+
 // XAIFET
 let FeaturesRequired = [{ {RISCV::FeatureVendorXAIFET} }] in {
   def : SysReg<"aif.cache_invalidate", 0x7d0>;

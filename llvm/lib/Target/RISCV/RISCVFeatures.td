@@ -1434,6 +1434,20 @@ def HasVendorXBOSCAME
       AssemblerPredicate<(all_of FeatureVendorXBOSCAME),
           "'XBOSCAME' (BOSC AME extension)">;
 
+// Local name for the provisional Attached Matrix Extension v0.6.
+def FeatureVendorXAME
+    : RISCVExtension<0, 6, "Attached Matrix Extension (Ztt v0.6)">;
+def HasVendorXAME : Predicate<"Subtarget->hasVendorXAME()">,
+    AssemblerPredicate<(all_of FeatureVendorXAME),
+                       "'XAME' (Attached Matrix Extension v0.6)">;
+
+// Compatibility profile used by the AME_gem5 implementation. This changes
+// the fixed register-file shape and element-width limit, not the instruction
+// extension itself.
+def FeatureXAMEGem5
+    : SubtargetFeature<"xame-gem5", "HasXAMEGem5", "true",
+                       "Use 4x4 squares, 32 M and 4 ACC registers">;
+
 def FeatureVendorXBBPebble
     : RISCVExtension<1, 0, "Buckyball Pebble core extension">;
 def HasVendorXBBPebble
