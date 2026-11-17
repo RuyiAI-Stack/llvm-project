@@ -225,6 +225,8 @@
 ; CHECK-NEXT:   vl-dependent-latency             - Latency of vector instructions is dependent on the dynamic value of vl.
 ; CHECK-NEXT:   vxrm-pipeline-flush              - VXRM writes causes pipeline flush.
 ; CHECK-NEXT:   xaifet                           - 'XAIFET' (AI Foundry ET Extension).
+; CHECK-NEXT:   xame                             - 'XAME' (Attached Matrix Extension (Ztt v0.6)).
+; CHECK-NEXT:   xame-gem5                        - Use 4x4 squares, 32 M and 4 ACC registers.
 ; CHECK-NEXT:   xandesbfhcvt                     - 'XAndesBFHCvt' (Andes Scalar BFLOAT16 Conversion Extension).
 ; CHECK-NEXT:   xandesperf                       - 'XAndesPerf' (Andes Performance Extension).
 ; CHECK-NEXT:   xandesvbfhcvt                    - 'XAndesVBFHCvt' (Andes Vector BFLOAT16 Conversion Extension).

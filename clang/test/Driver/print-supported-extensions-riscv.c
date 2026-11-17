@@ -168,6 +168,7 @@
 // CHECK-NEXT:     svrsw60t59b          1.0       'Svrsw60t59b' (PTE Reserved-for-Software Bits 60-59)
 // CHECK-NEXT:     svvptc               1.0       'Svvptc' (Obviating Memory-Management Instructions after Marking PTEs Valid)
 // CHECK-NEXT:     xaifet               1.0       'XAIFET' (AI Foundry ET Extension)
+// CHECK-NEXT:     xame                 0.6       'XAME' (Attached Matrix Extension (Ztt v0.6))
 // CHECK-NEXT:     xandesbfhcvt         5.0       'XAndesBFHCvt' (Andes Scalar BFLOAT16 Conversion Extension)
 // CHECK-NEXT:     xandesperf           5.0       'XAndesPerf' (Andes Performance Extension)
 // CHECK-NEXT:     xandesvbfhcvt        5.0       'XAndesVBFHCvt' (Andes Vector BFLOAT16 Conversion Extension)

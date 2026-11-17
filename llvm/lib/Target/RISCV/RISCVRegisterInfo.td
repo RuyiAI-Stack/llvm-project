@@ -1006,6 +1006,126 @@ def : RISCVRegisterClass<[XLenVT], 32, (add SF_VCIX_STATE)> {
 }
 
 //===----------------------------------------------------------------------===//
+// AME matrix registers (ZTT v0.6)
+//===----------------------------------------------------------------------===//
+
+let Namespace = "RISCV" in {
+  def ZTT_STATE : Register<"ztt_state">;
+
+  foreach I = 0-31 in {
+    def ZTTM#I : RISCVReg<I, "m"#I>;
+    def ZTTMD#I : RISCVReg<I, "md"#I>;
+  }
+
+  foreach I = 0-7 in {
+    def ZTTA#I : RISCVReg<I, "acc"#I>;
+    def ZTTAD#I : RISCVReg<I, "ad"#I>;
+  }
+
+  // M register index.
+  foreach I = 0-31 in
+    def sub_ztt_m#I : SubRegIndex<2048, !mul(I, 2048)>;
+
+  // M register group: G2, G4, G8, G16, G32.
+  foreach GroupSize = [2, 4, 8, 16, 32] in {
+    foreach Base = !range(0, 32, GroupSize) in {
+      def ZTTM#Base#G#GroupSize
+          : RISCVRegWithSubRegs<Base, "m"#Base,
+              !foreach(I, !range(GroupSize),
+                       !cast<Register>("ZTTM" # !add(Base, I)))> {
+        let SubRegIndices =
+            !foreach(I, !range(GroupSize),
+                     !cast<SubRegIndex>("sub_ztt_m" # I));
+      }
+    }
+  }
+
+  // ACC sub-register index.
+  foreach I = 0-7 in
+    def sub_ztt_a#I : SubRegIndex<4096, !mul(I, 4096)>;
+
+  // ACC register groups: G2, G4, G8, starting points aligned according to group size.
+  foreach GroupSize = [2, 4, 8] in {
+    foreach Base = !range(0, 8, GroupSize) in {
+      def ZTTA#Base#G#GroupSize
+          : RISCVRegWithSubRegs<Base, "acc"#Base,
+              !foreach(I, !range(GroupSize),
+                       !cast<Register>("ZTTA" # !add(Base, I)))> {
+        let SubRegIndices =
+            !foreach(I, !range(GroupSize),
+                     !cast<SubRegIndex>("sub_ztt_a" # I));
+      }
+    }
+  }
+}
+
+// Single M register class.
+def ZTTMR : RISCVRegisterClass<[riscv_ztt_m1], 64,
+    (add (sequence "ZTTM%u", 0, 31))> {
+  let RegInfos =
+      RegInfoByHwMode<[DefaultMode], [RegInfo<2048, 2112, 64>]>;
+  let DecoderMethod = "DecodeXAMEZttMRegisterClass";
+}
+
+// M register group types: ZTTMR2, ZTTMR4, ZTTMR8, ZTTMR16, ZTTMR32.
+foreach GroupSize = [2, 4, 8, 16, 32] in {
+  def ZTTMR#GroupSize
+      : RISCVRegisterClass<
+          [!cast<ValueType>("riscv_ztt_m" # GroupSize)], 64,
+          (add (sequence "ZTTM%uG" # GroupSize,
+                         0, !sub(32, GroupSize), GroupSize))> {
+    let RegInfos = RegInfoByHwMode<[DefaultMode],
+        [RegInfo<!mul(2048, GroupSize), !mul(2112, GroupSize), 64>]>;
+  }
+}
+
+def ZTTMAny : RISCVRegisterClass<
+    [riscv_ztt_m1, riscv_ztt_m2, riscv_ztt_m4,
+     riscv_ztt_m8, riscv_ztt_m16, riscv_ztt_m32],
+    64, (add ZTTMR, ZTTMR2, ZTTMR4, ZTTMR8, ZTTMR16, ZTTMR32)> {
+  let RegInfos =
+      RegInfoByHwMode<[DefaultMode], [RegInfo<0, 0, 64>]>;
+  let isAllocatable = 0;
+  let DecoderMethod = "DecodeXAMEZttMRegisterClass";
+}
+
+// Single ACC register class.
+def ZTTAR : RISCVRegisterClass<[riscv_ztt_a1], 64,
+    (add (sequence "ZTTA%u", 0, 7))> {
+  let RegInfos =
+      RegInfoByHwMode<[DefaultMode], [RegInfo<4096, 8384, 64>]>;
+  let DecoderMethod = "DecodeXAMEZttARegisterClass";
+}
+
+// ACC register group types: ZTTAR2, ZTTAR4, ZTTAR8
+foreach GroupSize = [2, 4, 8] in {
+  def ZTTAR#GroupSize
+      : RISCVRegisterClass<
+          [!cast<ValueType>("riscv_ztt_a" # GroupSize)], 64,
+          (add (sequence "ZTTA%uG" # GroupSize,
+                         0, !sub(8, GroupSize), GroupSize))> {
+    let RegInfos = RegInfoByHwMode<[DefaultMode],
+        [RegInfo<!mul(4096, GroupSize),
+                 !add(!mul(4160, GroupSize), 4224), 64>]>;
+  }
+}
+
+def ZTTAAny : RISCVRegisterClass<
+    [riscv_ztt_a1, riscv_ztt_a2, riscv_ztt_a4, riscv_ztt_a8],
+    64, (add ZTTAR, ZTTAR2, ZTTAR4, ZTTAR8)> {
+  let RegInfos =
+      RegInfoByHwMode<[DefaultMode], [RegInfo<0, 0, 64>]>;
+  let isAllocatable = 0;
+  let DecoderMethod = "DecodeXAMEZttARegisterClass";
+}
+
+def ZTTDescriptors : RISCVRegisterClass<[i32], 32,
+    (add (sequence "ZTTMD%u", 0, 31),
+         (sequence "ZTTAD%u", 0, 7), ZTT_STATE)> {
+  let isAllocatable = 0;
+}
+
+//===----------------------------------------------------------------------===//
 // BOSC AME matrix registers
 //===----------------------------------------------------------------------===//
 

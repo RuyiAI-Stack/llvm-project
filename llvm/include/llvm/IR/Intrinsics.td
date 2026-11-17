@@ -292,6 +292,9 @@ def AnyKindElementConstraint {
   int Integer = 1;
   int Float   = 2;
   int Pointer = 3;
+  // Match the named RISC-V ZTT target extension types.
+  int RISCVZttMatrix = 4;
+  int RISCVZttAccumulator = 5;
 }
 
 // Intrinsic argument kinds. The current IIT representation encodes overload
@@ -657,6 +660,15 @@ def llvm_anyvector_ty  : LLVMAnyType<vAny,
 def llvm_anymatrix_ty  : LLVMAnyType<mAny,
                                      AnyKindVectorConstraint.Vector,
                                      AnyKindElementConstraint.None>;
+
+// ZTT values are target extension types rather than ordinary vectors.  Keep
+// the two register files distinct so intrinsic signatures constrain matrix and
+// accumulator operands independently.
+def llvm_any_ztt_matrix_ty : LLVMAnyType<Any,
+    AnyKindVectorConstraint.Scalar, AnyKindElementConstraint.RISCVZttMatrix>;
+def llvm_any_ztt_acc_ty : LLVMAnyType<Any,
+    AnyKindVectorConstraint.Scalar,
+    AnyKindElementConstraint.RISCVZttAccumulator>;
 
 def llvm_i1_ty         : LLVMType<i1>;
 def llvm_i8_ty         : LLVMType<i8>;

@@ -201,8 +201,8 @@ void InstrEmitter::CreateVirtualRegisters(SDNode *Node,
     // is a vreg in the same register class, use the CopyToReg'd destination
     // register instead of creating a new vreg.
     Register VRBase;
-    const TargetRegisterClass *RC =
-        TRI->getAllocatableClass(TII->getRegClass(II, i));
+    const TargetRegisterClass *InstrRC = TII->getRegClass(II, i);
+    const TargetRegisterClass *RC = TRI->getAllocatableClass(InstrRC);
     // Always let the value type influence the used register class. The
     // constraints on the instruction may be too lax to represent the value
     // type correctly. For example, a 64-bit float (X86::FR64) can't live in
@@ -211,7 +211,13 @@ void InstrEmitter::CreateVirtualRegisters(SDNode *Node,
       const TargetRegisterClass *VTRC = TLI->getRegClassFor(
           Node->getSimpleValueType(i),
           (Node->isDivergent() || (RC && TRI->isDivergentRegClass(RC))));
-      if (RC)
+      // Aggregate instruction classes can be non-allocatable while their
+      // concrete value-type subclasses are allocatable.  Keep the value type
+      // class when it is accepted by the aggregate constraint instead of
+      // collapsing it to the first allocatable subclass.
+      if (InstrRC && InstrRC->hasSubClassEq(VTRC))
+        RC = VTRC;
+      else if (RC)
         VTRC = TRI->getCommonSubClass(RC, VTRC);
       if (VTRC)
         RC = VTRC;
@@ -308,6 +314,17 @@ void InstrEmitter::AddRegisterOperand(MachineInstrBuilder &MIB, SDValue Op,
     if (IIOpNum < II->getNumOperands())
       OpRC = TII->getRegClass(*II, IIOpNum);
 
+    // The instruction operand may be an aggregate register class (for
+    // example, XAME's ZTTMAny).  A value already in one of its concrete
+    // subclasses satisfies the operand constraint directly; forcing it
+    // through getAllocatableClass would otherwise create a copy in the first
+    // subclass and lose the matrix register-group width.
+    if (OpRC && VReg.isVirtual()) {
+      const TargetRegisterClass *ValueRC = MRI->getRegClass(VReg);
+      if (OpRC->hasSubClassEq(ValueRC))
+        OpRC = nullptr;
+    }
+
     if (OpRC) {
       unsigned MinNumRegs = MinRCSize;
       // Don't apply any RC size limit for IMPLICIT_DEF. Each use has a unique
@@ -328,7 +345,8 @@ void InstrEmitter::AddRegisterOperand(MachineInstrBuilder &MIB, SDValue Op,
         VReg = NewVReg;
       } else {
         assert(ConstrainedRC->isAllocatable() &&
-           "Constraining an allocatable VReg produced an unallocatable class?");
+               "Constraining an allocatable VReg produced an unallocatable "
+               "class?");
       }
     }
   }

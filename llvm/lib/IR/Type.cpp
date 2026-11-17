@@ -24,6 +24,8 @@
 #include "llvm/IR/Value.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
+#include "llvm/Support/MathExtras.h"
+#include "llvm/Support/RISCVXAME.h"
 #include "llvm/Support/TypeSize.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/TargetParser/RISCVTargetParser.h"
@@ -968,6 +970,43 @@ Expected<TargetExtType *> TargetExtType::getOrError(LLVMContext &C,
 }
 
 Expected<TargetExtType *> TargetExtType::checkParams(TargetExtType *TTy) {
+  if (TTy->Name == "riscv.ztt.matrix" || TTy->Name == "riscv.ztt.acc") {
+    if (TTy->getNumTypeParameters() != 1 ||
+        (TTy->getNumIntParameters() != 2 && TTy->getNumIntParameters() != 3))
+      return createStringError(
+          "ZTT types require an element type, rows, columns, and an optional "
+          "square count");
+
+    Type *Elt = TTy->getTypeParameter(0);
+    unsigned Width = Elt->getPrimitiveSizeInBits();
+    unsigned Side = TTy->getIntParameter(0);
+    auto Profile = RISCV::getXAMEProfile(Side == 4);
+    if (!(Elt->isIntegerTy() || Elt->isHalfTy() || Elt->isBFloatTy() ||
+          Elt->isFloatTy() || Elt->isDoubleTy()) ||
+        !isPowerOf2_32(Width) || Width > Profile.MaxElementBits)
+      return createStringError(
+          "ZTT element width must be a power of two up to the profile limit");
+
+    if ((Side != 4 && Side != 8) || TTy->getIntParameter(1) != Side)
+      return createStringError(
+          "ZTT requires a 4 by 4 or 8 by 8 element square");
+
+    bool IsAcc = TTy->Name == "riscv.ztt.acc";
+    unsigned Pack = std::max(1U, 32 / Width);
+    unsigned MinSquares = IsAcc ? 1U : Pack;
+    unsigned Squares =
+        TTy->getNumIntParameters() == 3 ? TTy->getIntParameter(2) : MinSquares;
+    // ZTT register groups are measured in 32-bit units, independent of the
+    // profile's matrix side. The side controls logical transfer size only.
+    unsigned Registers =
+        IsAcc ? std::max(Squares, Pack) : divideCeil(Squares * Width, 32U);
+    unsigned MaxRegisters = IsAcc ? Profile.AccRegisters : Profile.MRegisters;
+    if (!isPowerOf2_32(Squares) || Squares < MinSquares ||
+        Registers > MaxRegisters || (IsAcc && Squares != 1 && Squares != Pack))
+      return createStringError(
+          "ZTT square count must form a complete packed register group");
+  }
+
   // Opaque types in the AArch64 name space.
   if (TTy->Name == "aarch64.svcount" &&
       (TTy->getNumTypeParameters() != 0 || TTy->getNumIntParameters() != 0))
@@ -1016,6 +1055,21 @@ struct TargetTypeInfo {
 static TargetTypeInfo getTargetTypeInfo(const TargetExtType *Ty) {
   LLVMContext &C = Ty->getContext();
   StringRef Name = Ty->getName();
+  if (Name == "riscv.ztt.matrix" || Name == "riscv.ztt.acc") {
+    unsigned Width = Ty->getTypeParameter(0)->getPrimitiveSizeInBits();
+    bool IsAcc = Name == "riscv.ztt.acc";
+    unsigned Pack = std::max(1U, 32 / Width);
+    unsigned Squares = Ty->getNumIntParameters() == 3 ? Ty->getIntParameter(2)
+                                                      : (IsAcc ? 1U : Pack);
+    unsigned SquareBits =
+        Ty->getIntParameter(0) * Ty->getIntParameter(1) * Width;
+    unsigned SquareBytes = divideCeil(SquareBits, 8U);
+    // ZTT values are opaque register values.  This byte layout gives LLVM a
+    // sized representation for data-layout queries while the target type
+    // itself remains non-global and cannot be loaded with ordinary IR loads.
+    return TargetTypeInfo(ArrayType::get(
+        ArrayType::get(Type::getInt8Ty(C), SquareBytes), Squares));
+  }
   if (Name == "spirv.Image" || Name == "spirv.SignedImage")
     return TargetTypeInfo(PointerType::get(C, 0), TargetExtType::CanBeGlobal,
                           TargetExtType::CanBeLocal);

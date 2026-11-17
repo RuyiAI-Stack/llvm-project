@@ -49,6 +49,7 @@
 #include "llvm/Support/InstructionCost.h"
 #include "llvm/Support/KnownBits.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/RISCVXAME.h"
 #include "llvm/Support/raw_ostream.h"
 #include <optional>
 
@@ -111,6 +112,45 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
       addRegisterClass(MVT::f64, &RISCV::GPRRegClass);
     else
       addRegisterClass(MVT::f64, &RISCV::GPRPairRegClass);
+  }
+
+  // ZTT values are target extension values whose MVT encodes the register
+  // group size.  Register each concrete type with its matching register class;
+  // the aggregate ZTTMAny/ZTTAAny classes are reserved for instruction
+  // operands and are intentionally not allocatable.
+  if (Subtarget.hasVendorXAME()) {
+    addRegisterClass(MVT::riscv_ztt_m1, &RISCV::ZTTMRRegClass);
+    addRegisterClass(MVT::riscv_ztt_m2, &RISCV::ZTTMR2RegClass);
+    addRegisterClass(MVT::riscv_ztt_m4, &RISCV::ZTTMR4RegClass);
+    addRegisterClass(MVT::riscv_ztt_m8, &RISCV::ZTTMR8RegClass);
+    addRegisterClass(MVT::riscv_ztt_m16, &RISCV::ZTTMR16RegClass);
+    addRegisterClass(MVT::riscv_ztt_m32, &RISCV::ZTTMR32RegClass);
+    addRegisterClass(MVT::riscv_ztt_a1, &RISCV::ZTTARRegClass);
+    addRegisterClass(MVT::riscv_ztt_a2, &RISCV::ZTTAR2RegClass);
+    addRegisterClass(MVT::riscv_ztt_a4, &RISCV::ZTTAR4RegClass);
+    addRegisterClass(MVT::riscv_ztt_a8, &RISCV::ZTTAR8RegClass);
+
+    for (MVT VT : {MVT::riscv_ztt_m1, MVT::riscv_ztt_m2, MVT::riscv_ztt_m4,
+                   MVT::riscv_ztt_m8, MVT::riscv_ztt_m16, MVT::riscv_ztt_m32,
+                   MVT::riscv_ztt_a1, MVT::riscv_ztt_a2, MVT::riscv_ztt_a4,
+                   MVT::riscv_ztt_a8}) {
+      setOperationAction(ISD::SELECT, VT, Custom);
+      setOperationAction(ISD::SELECT_CC, VT, Expand);
+    }
+
+    // XAME's scalar operands and results use the target's XLEN in the
+    // instruction encoding.  The intrinsic declarations remain overloaded so
+    // that RV32 can use i32 while RV64 frontends may use narrower C/MLIR
+    // integer types.  Rewrite those non-XLEN scalar values before instruction
+    // selection; otherwise the generic DAG type legalizer has no way to
+    // promote an intrinsic with a chain result.
+    SmallVector<MVT, 3> XAMEScalarVTs;
+    if (Subtarget.is64Bit())
+      XAMEScalarVTs = {MVT::i8, MVT::i16, MVT::i32};
+    else
+      XAMEScalarVTs = {MVT::i8, MVT::i16, MVT::i64};
+    setOperationAction({ISD::INTRINSIC_W_CHAIN, ISD::INTRINSIC_VOID},
+                       XAMEScalarVTs, Custom);
   }
 
   // BOSC AME matrix values default to TileReg. TableGen patterns constrain
@@ -5869,7 +5909,8 @@ static SDValue lowerVECTOR_SHUFFLEAsVSlide1(const SDLoc &DL, MVT VT,
     return SDValue();
 
   const int InsertIdx = Mask[IsVSlidedown ? (NumElts - 1) : 0];
-  // Inserted lane must come from splat, undef scalar is legal but not profitable.
+  // Inserted lane must come from splat, undef scalar is legal but not
+  // profitable.
   if (InsertIdx < 0 || InsertIdx / NumElts != (unsigned)OpsSwapped)
     return SDValue();
 
@@ -7343,8 +7384,8 @@ SDValue RISCVTargetLowering::lowerVECTOR_SHUFFLE(SDValue Op,
     unsigned GatherVVOpc = RISCVISD::VRGATHER_VV_VL;
     MVT IndexVT = VT.changeTypeToInteger();
     // Since we can't introduce illegal index types at this stage, use i16 and
-    // vrgatherei16 if the corresponding index type for plain vrgather is greater
-    // than XLenVT.
+    // vrgatherei16 if the corresponding index type for plain vrgather is
+    // greater than XLenVT.
     if (IndexVT.getScalarType().bitsGT(XLenVT)) {
       GatherVVOpc = RISCVISD::VRGATHEREI16_VV_VL;
       IndexVT = IndexVT.changeVectorElementType(MVT::i16);
@@ -12303,6 +12344,92 @@ static SDValue lowerVectorIntrinsicScalars(SDValue Op, SelectionDAG &DAG,
   return DAG.getNode(Op->getOpcode(), DL, Op->getVTList(), Operands);
 }
 
+// XAME GPR operands are always represented by one XLEN register, while the
+// intrinsic type is intentionally overloaded to match the source language.
+// Keep the overloaded IR surface and normalize only XAME nodes here.  This is
+// needed for both result promotion (e.g. ame.acquire.i32 on RV64) and operand
+// promotion (e.g. msettyp(..., i8)); the generic legalizer cannot promote a
+// chain intrinsic by itself.
+static bool isXAMEIntrinsic(unsigned IntNo) {
+  switch (IntNo) {
+  default:
+    return false;
+#define RISCV_ZTT_INTRINSIC(NAME, OPCODE, FORM, SIG)                           \
+  case Intrinsic::riscv_ztt_##NAME:                                            \
+    return true;
+#include "llvm/IR/IntrinsicsRISCVXAME.def"
+#undef RISCV_ZTT_INTRINSIC
+  }
+}
+
+static SDValue lowerXAMEScalarOperands(SDValue Op, SelectionDAG &DAG,
+                                       const RISCVSubtarget &Subtarget) {
+  assert((Op.getOpcode() == ISD::INTRINSIC_VOID ||
+          Op.getOpcode() == ISD::INTRINSIC_W_CHAIN) &&
+         "Unexpected opcode");
+
+  const bool HasResult = Op.getOpcode() == ISD::INTRINSIC_W_CHAIN;
+  const bool HasChain = HasResult || Op.getOpcode() == ISD::INTRINSIC_VOID;
+  const unsigned IntNo = Op.getConstantOperandVal(1);
+  if (!isXAMEIntrinsic(IntNo))
+    return SDValue();
+
+  const MVT XLenVT = Subtarget.getXLenVT();
+  const unsigned FirstExplicitOperand = HasChain ? 2 : 1;
+  SmallVector<SDValue, 8> Operands(Op->ops());
+  bool Changed = false;
+  const SDLoc DL(Op);
+
+  for (unsigned I = FirstExplicitOperand, E = Operands.size(); I != E; ++I) {
+    EVT VT = Operands[I].getValueType();
+    if (!VT.isScalarInteger() || VT == XLenVT)
+      continue;
+
+    SDValue Scalar = Operands[I];
+    if (VT.bitsLT(XLenVT)) {
+      // XAME instructions consume the complete XLEN scalar, including the
+      // high bits of descriptors and indices. Treat the overloaded integer
+      // as an unsigned bit pattern; callers explicitly extend signed values
+      // to XLEN when needed. ANY_EXTEND would expose unrelated high bits of
+      // an incoming GPR after, for example, an i64-to-i8 truncation.
+      Scalar = DAG.getNode(ISD::ZERO_EXTEND, DL, XLenVT, Scalar);
+    } else {
+      // RV32 has no wider GPR operand. Keep the low XLEN bits, which is what
+      // the instruction encoding consumes.
+      Scalar = DAG.getNode(ISD::TRUNCATE, DL, XLenVT, Scalar);
+    }
+    Operands[I] = Scalar;
+    Changed = true;
+  }
+
+  EVT ResultVT = HasResult ? Op.getValueType() : MVT::Other;
+  const bool WidenResult =
+      HasResult && ResultVT.isScalarInteger() && ResultVT != XLenVT;
+  if (!Changed && !WidenResult)
+    return SDValue();
+
+  SmallVector<EVT, 2> ValueTypes;
+  if (HasResult)
+    ValueTypes.push_back(WidenResult ? EVT(XLenVT) : ResultVT);
+  if (HasChain)
+    ValueTypes.push_back(MVT::Other);
+  SDValue Widened =
+      DAG.getNode(Op.getOpcode(), DL, DAG.getVTList(ValueTypes), Operands);
+
+  if (!WidenResult)
+    return Widened;
+
+  SDValue Result = Widened.getValue(0);
+  if (ResultVT.bitsLT(XLenVT))
+    Result = DAG.getNode(ISD::TRUNCATE, DL, ResultVT, Result);
+  else
+    Result = DAG.getNode(ISD::ZERO_EXTEND, DL, ResultVT, Result);
+
+  if (!HasResult)
+    return Result;
+  return DAG.getMergeValues({Result, Widened.getValue(1)}, DL);
+}
+
 // Lower the llvm.get.vector.length intrinsic to vsetvli. We only support
 // scalable vector llvm.get.vector.length for now.
 //
@@ -14260,6 +14387,10 @@ lowerFixedVectorSegLoadIntrinsics(unsigned IntNo, SDValue Op,
 
 SDValue RISCVTargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op,
                                                     SelectionDAG &DAG) const {
+  if (Subtarget.hasVendorXAME())
+    if (SDValue Lowered = lowerXAMEScalarOperands(Op, DAG, Subtarget))
+      return Lowered;
+
   unsigned IntNo = Op.getConstantOperandVal(1);
   switch (IntNo) {
   default:
@@ -14404,6 +14535,10 @@ lowerFixedVectorSegStoreIntrinsics(unsigned IntNo, SDValue Op,
 
 SDValue RISCVTargetLowering::LowerINTRINSIC_VOID(SDValue Op,
                                                  SelectionDAG &DAG) const {
+  if (Subtarget.hasVendorXAME())
+    if (SDValue Lowered = lowerXAMEScalarOperands(Op, DAG, Subtarget))
+      return Lowered;
+
   unsigned IntNo = Op.getConstantOperandVal(1);
   switch (IntNo) {
   default:
@@ -17257,6 +17392,17 @@ void RISCVTargetLowering::ReplaceNodeResults(SDNode *N,
                                              SmallVectorImpl<SDValue> &Results,
                                              SelectionDAG &DAG) const {
   SDLoc DL(N);
+
+  if (Subtarget.hasVendorXAME() && (N->getOpcode() == ISD::INTRINSIC_W_CHAIN ||
+                                    N->getOpcode() == ISD::INTRINSIC_VOID)) {
+    if (SDValue Lowered =
+            lowerXAMEScalarOperands(SDValue(N, 0), DAG, Subtarget)) {
+      for (unsigned I = 0, E = N->getNumValues(); I != E; ++I)
+        Results.push_back(Lowered.getValue(I));
+      return;
+    }
+  }
+
   switch (N->getOpcode()) {
   default:
     llvm_unreachable("Don't know how to custom type legalize this operation!");
@@ -28393,6 +28539,16 @@ RISCVTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   case RISCV::Select_FPR64_Using_CC_GPR:
   case RISCV::Select_FPR64INX_Using_CC_GPR:
   case RISCV::Select_FPR64IN32X_Using_CC_GPR:
+  case RISCV::Select_ZTTMR_Using_CC_GPR:
+  case RISCV::Select_ZTTMR2_Using_CC_GPR:
+  case RISCV::Select_ZTTMR4_Using_CC_GPR:
+  case RISCV::Select_ZTTMR8_Using_CC_GPR:
+  case RISCV::Select_ZTTMR16_Using_CC_GPR:
+  case RISCV::Select_ZTTMR32_Using_CC_GPR:
+  case RISCV::Select_ZTTAR_Using_CC_GPR:
+  case RISCV::Select_ZTTAR2_Using_CC_GPR:
+  case RISCV::Select_ZTTAR4_Using_CC_GPR:
+  case RISCV::Select_ZTTAR8_Using_CC_GPR:
     return emitSelectPseudo(MI, BB, Subtarget);
   case RISCV::BuildPairF64Pseudo:
     return emitBuildPairF64Pseudo(MI, BB, Subtarget);
@@ -29745,6 +29901,25 @@ std::pair<unsigned, const TargetRegisterClass *>
 RISCVTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
                                                   StringRef Constraint,
                                                   MVT VT) const {
+  // Clobbers must resolve to the XAME bank explicitly: the XAIFET mask
+  // registers and legacy AME accumulators use the same assembly spellings.
+  if (Subtarget.hasVendorXAME() && Constraint.starts_with("{") &&
+      Constraint.ends_with("}")) {
+    std::string Lower = Constraint.drop_front().drop_back().lower();
+    StringRef Name(Lower);
+    bool Acc = Name.consume_front("acc");
+    bool Matrix = !Acc && Name.consume_front("m");
+    unsigned Index;
+    if ((Acc || Matrix) && !Name.getAsInteger(10, Index)) {
+      const auto Profile = RISCV::getXAMEProfile(Subtarget.hasXAMEGem5());
+      if (VT != MVT::Other ||
+          Index >= (Acc ? Profile.AccRegisters : Profile.MRegisters))
+        return {0, nullptr};
+      return Acc ? std::make_pair(RISCV::ZTTA0 + Index, &RISCV::ZTTARRegClass)
+                 : std::make_pair(RISCV::ZTTM0 + Index, &RISCV::ZTTMRRegClass);
+    }
+  }
+
   // First, see if this is a constraint that directly corresponds to a RISC-V
   // register class.
   if (Constraint.size() == 1) {

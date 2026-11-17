@@ -13,6 +13,8 @@
 #include "RISCVCallingConv.h"
 #include "RISCVMachineFunctionInfo.h"
 #include "RISCVSubtarget.h"
+#include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCRegister.h"
 
@@ -395,6 +397,34 @@ static MCRegister allocateRVVReg(MVT LocVT, unsigned ValNo, CCState &State,
   llvm_unreachable("Unhandled register class for ValueType");
 }
 
+// ZTT matrix and accumulator values are passed in their independent register
+// files. The concrete MVT selects the register class and group width; no scalar
+// ABI register or stack splitting is involved.
+static bool assignXAMEReg(unsigned ValNo, MVT ValVT, MVT LocVT,
+                          CCValAssign::LocInfo LocInfo, CCState &State) {
+  const MachineFunction &MF = State.getMachineFunction();
+  const RISCVSubtarget &Subtarget = MF.getSubtarget<RISCVSubtarget>();
+  const RISCVTargetLowering &TLI = *Subtarget.getTargetLowering();
+
+  if (!Subtarget.hasVendorXAME())
+    report_fatal_error("ZTT matrix arguments require xame");
+
+  const TargetRegisterClass *RC = TLI.getRegClassFor(ValVT);
+  BitVector Reserved = Subtarget.getRegisterInfo()->getReservedRegs(MF);
+  SmallVector<MCPhysReg, 32> Available;
+  for (MCPhysReg Reg : *RC)
+    if (!Reserved.test(Reg))
+      Available.push_back(Reg);
+
+  MCRegister Reg = State.AllocateReg(Available);
+  if (!Reg)
+    report_fatal_error("ZTT matrix arguments exceed the register file; "
+                       "pass additional matrices through memory");
+
+  State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
+  return false;
+}
+
 // Implements the RISC-V calling convention. Returns true upon failure.
 //
 // This has a slightly different signature to CCAssignFn - it adds `bool IsRet`.
@@ -407,6 +437,9 @@ static bool CC_RISCV_Impl(unsigned ValNo, MVT ValVT, MVT LocVT,
   const DataLayout &DL = MF.getDataLayout();
   const RISCVSubtarget &Subtarget = MF.getSubtarget<RISCVSubtarget>();
   const RISCVTargetLowering &TLI = *Subtarget.getTargetLowering();
+
+  if (ValVT >= MVT::riscv_ztt_m1 && ValVT <= MVT::riscv_ztt_a8)
+    return assignXAMEReg(ValNo, ValVT, LocVT, LocInfo, State);
 
   unsigned XLen = Subtarget.getXLen();
   MVT XLenVT = Subtarget.getXLenVT();
@@ -713,6 +746,9 @@ static bool CC_RISCV_FastCC(unsigned ValNo, MVT ValVT, MVT LocVT,
   const RISCVSubtarget &Subtarget = MF.getSubtarget<RISCVSubtarget>();
   const RISCVTargetLowering &TLI = *Subtarget.getTargetLowering();
   RISCVABI::ABI ABI = Subtarget.getTargetABI();
+
+  if (ValVT >= MVT::riscv_ztt_m1 && ValVT <= MVT::riscv_ztt_a8)
+    return assignXAMEReg(ValNo, ValVT, LocVT, LocInfo, State);
 
   if ((LocVT == MVT::f16 && Subtarget.hasStdExtZfhmin()) ||
       (LocVT == MVT::bf16 && Subtarget.hasStdExtZfbfmin())) {
