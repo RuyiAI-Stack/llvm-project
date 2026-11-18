@@ -2528,6 +2528,10 @@ include "RISCVInstrInfoSFB.td"
 // CHERI
 include "RISCVInstrInfoY.td"
 
+// ZAMES/ZMASYNC matrix extensions
+include "RISCVInstrInfoXSAIZames.td"
+include "RISCVInstrInfoXSAIZamesPatterns.td"
+
 //===----------------------------------------------------------------------===//
 // Vendor extensions
 //===----------------------------------------------------------------------===//
